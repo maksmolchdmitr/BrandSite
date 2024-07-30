@@ -29,4 +29,14 @@ export default {
   flex-wrap: nowrap;
   gap: 36px;
 }
+
+@media (max-width: 768px) {
+  .switchItem {
+    font-size: 12px;
+  }
+
+  .switchBar {
+    gap: 12px;
+  }
+}
 </style>

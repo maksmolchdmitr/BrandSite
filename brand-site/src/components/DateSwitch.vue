@@ -6,7 +6,7 @@
       </div>
       <div v-else>
         <a :href="'#date_' + i">
-          <img src="@/assets/Subtract.svg"  alt="Another date link">
+          <img className="circleSwitcher" src="@/assets/Subtract.svg"  alt="Another date link">
         </a>
       </div>
     </div>
@@ -49,5 +49,24 @@ export default {
   background-color: #D9D9D9;
   display: flex;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .dateSwitcher {
+    gap: 8px;
+  }
+
+  .dateText {
+    font-size: 12px;
+  }
+
+  .dateBlock {
+    height: 16px;
+  }
+
+  .circleSwitcher {
+    height: 12px;
+    width: 12px;
+  }
 }
 </style>

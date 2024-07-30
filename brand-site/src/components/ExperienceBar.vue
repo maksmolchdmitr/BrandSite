@@ -31,4 +31,11 @@ export default {
   padding: 36px;
   gap: 36px;
 }
+
+@media (max-width: 768px) {
+  .bar {
+    padding: 12px;
+    gap: 12px;
+  }
+}
 </style>

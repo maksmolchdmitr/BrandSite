@@ -110,4 +110,22 @@ body {
   flex-wrap: nowrap;
   gap: 64px;
 }
+
+@media (max-width: 768px) {
+  p {
+    font-size: 24px;
+  }
+
+  .switchItem {
+    font-size: 12px;
+  }
+
+  .contentDiv {
+    gap: 12px;
+  }
+
+  .headBar {
+    padding: 20px;
+  }
+}
 </style>

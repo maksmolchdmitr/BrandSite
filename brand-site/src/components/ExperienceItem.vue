@@ -49,4 +49,11 @@ export default {
   color: black;
   white-space: pre-line;
 }
+
+
+@media (max-width: 768px) {
+  .experienceText {
+    font-size: 12px;
+  }
+}
 </style>
