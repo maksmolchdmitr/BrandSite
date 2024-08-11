@@ -25,6 +25,14 @@ export default {
     DateSwitch
   },
   data() {
+    function getDateNow() {
+      const date = new Date();
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = String(date.getFullYear()).slice(-2);
+      return `${day}.${month}.${year}`;
+    }
+
     return {
       mainLogoItem: {
         text: 'MaksMolch',
@@ -50,28 +58,8 @@ export default {
       ],
       experienceItems: [
         {
-          date: '02.04.24-05.07.24',
-          text: 'I did an internship at Yandex:\n'+
-              '- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs\n'+
-              '- Communicated with related teams to solve work problems\n'+
-              '- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb\n'+
-              '- Worked a lot with asynchronous code, actor systems and distributed architecture.'
-        },
-        {
-          date: '02.04.24-05.07.24',
-          text: 'I did an internship at Yandex:\n'+
-              '- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs\n'+
-              '- Communicated with related teams to solve work problems\n'+
-              '- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb\n'+
-              '- Worked a lot with asynchronous code, actor systems and distributed architecture.'
-        },
-        {
-          date: '02.04.24-05.07.24',
-          text: 'I did an internship at Yandex:\n'+
-              '- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs\n'+
-              '- Communicated with related teams to solve work problems\n'+
-              '- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb\n'+
-              '- Worked a lot with asynchronous code, actor systems and distributed architecture.'
+          date: '06.08.24-'+getDateNow(),
+          text: 'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)'
         },
         {
           date: '02.04.24-05.07.24',
