@@ -59,7 +59,8 @@ export default {
       experienceItems: [
         {
           date: '06.08.24-'+getDateNow(),
-          text: 'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)'
+          text: 'Currently working at STM Labs.\n' +
+              'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)'
         },
         {
           date: '02.04.24-05.07.24',
