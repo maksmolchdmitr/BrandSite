@@ -105,7 +105,7 @@ body {
   }
 
   .switchItem {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .contentDiv {

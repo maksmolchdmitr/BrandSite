@@ -53,7 +53,7 @@ export default {
 
 @media (max-width: 768px) {
   .experienceText {
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 </style>

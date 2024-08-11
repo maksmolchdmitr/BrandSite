@@ -32,7 +32,7 @@ export default {
 
 @media (max-width: 768px) {
   .switchItem {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .switchBar {

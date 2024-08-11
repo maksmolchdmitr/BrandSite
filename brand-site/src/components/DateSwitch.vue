@@ -57,16 +57,16 @@ export default {
   }
 
   .dateText {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .dateBlock {
-    height: 16px;
+    height: 24px;
   }
 
   .circleSwitcher {
-    height: 12px;
-    width: 12px;
+    height: 24px;
+    width: 24px;
   }
 }
 </style>
