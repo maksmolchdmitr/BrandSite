@@ -3,9 +3,11 @@
 </template>
 
 <script>
+
+import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 
-export default {
+export default defineComponent({
   components: {HeadBar},
   data() {
     return {
@@ -18,18 +20,19 @@ export default {
         {
           text: 'Touch me',
           ref: '/contact',
-          isMainSwitch: true
+          isMainSwitch: false
         },
         {
           text: 'Products',
           ref: '/products',
-          isMainSwitch: false
+          isMainSwitch: true
         }
       ]
     }
   }
-}
+})
 </script>
 
 <style scoped>
+
 </style>

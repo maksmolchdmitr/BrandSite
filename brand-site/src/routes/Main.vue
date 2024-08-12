@@ -1,9 +1,6 @@
 <template>
   <div className="contentDiv">
-    <div className="headBar">
-      <TextRef :item="mainLogoItem"></TextRef>
-      <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
-    </div>
+    <HeadBar :headItems="headItems"></HeadBar>
     <Description></Description>
     <ExperienceBar :items="experienceItems"></ExperienceBar>
   </div>
@@ -15,9 +12,11 @@ import TextRef from "@/components/TextRef.vue";
 import Description from "@/components/Decsription.vue";
 import ExperienceBar from "@/components/ExperienceBar.vue";
 import DateSwitch from "@/components/DateSwitch.vue";
+import HeadBar from "@/components/HeadBar.vue";
 
 export default {
   components: {
+    HeadBar,
     TextRef,
     SwitchBar,
     Description,
@@ -34,11 +33,6 @@ export default {
     }
 
     return {
-      mainLogoItem: {
-        text: 'MaksMolch',
-        ref: '/',
-        isMainSwitch: true
-      },
       headItems: [
         {
           text: 'Main',
@@ -84,15 +78,6 @@ body {
 </style>
 
 <style scoped>
-.headBar {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  padding: 50px;
-  background-color: white;
-}
-
 .contentDiv {
   display: flex;
   flex-direction: column;
