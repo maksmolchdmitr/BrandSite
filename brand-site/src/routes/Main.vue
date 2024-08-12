@@ -1,7 +1,12 @@
 <template>
-  <main>
-    <RouterView />
-  </main>
+  <div className="contentDiv">
+    <div className="headBar">
+      <TextRef :item="mainLogoItem"></TextRef>
+      <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
+    </div>
+    <Description></Description>
+    <ExperienceBar :items="experienceItems"></ExperienceBar>
+  </div>
 </template>
 
 <script>

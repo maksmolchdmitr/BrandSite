@@ -1,7 +1,7 @@
 <template>
 <!--  <link href='https://fonts.googleapis.com/css?family=Mali' rel='stylesheet'>-->
-  <a v-if="item.isMainSwitch" className="mainSwitch switchItem" href="{{ item.ref }}">{{ item.text }}</a>
-  <a v-else className="switchItem" href="{{ item.ref }}">{{ item.text }}</a>
+  <RouterLink v-if="item.isMainSwitch" className="mainSwitch switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
+  <RouterLink v-else className="switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
 </template>
 
 <script>
