@@ -38,4 +38,14 @@ export default {
   padding: 50px;
   background-color: white;
 }
+
+@media (max-width: 768px) {
+  .headBar {
+    padding: 20px;
+  }
+
+  .switchItem {
+    font-size: 16px;
+  }
+}
 </style>

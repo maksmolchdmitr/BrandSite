@@ -1,12 +1,21 @@
 <template>
   <HeadBar :headItems="headItems"></HeadBar>
+  <div className="container">
+    <template v-for="(link, index) in links" :key="link.id">
+      <Link v-bind:logoImg="link.img" v-bind:logo-text="link.text"></Link>
+      <CircleLinker className="circle" v-if="index < links.length - 1"></CircleLinker>
+    </template>
+  </div>
 </template>
 
 <script>
 import HeadBar from "@/components/HeadBar.vue";
+import LinkRefRect from "@/components/LinkRefRect.vue";
+import CircleLinker from "@/components/CircleLinker.vue";
+import Link from "@/components/Link.vue";
 
 export default {
-  components: {HeadBar},
+  components: {Link, CircleLinker, HeadBar, LinkRefRect},
   data() {
     return {
       headItems: [
@@ -25,6 +34,28 @@ export default {
           ref: '/products',
           isMainSwitch: false
         }
+      ],
+      links: [
+        {
+          img: "src/assets/logo/Telegram.svg",
+          text: "Telegram"
+        },
+        {
+          img: "src/assets/logo/LinkedIn.svg",
+          text: "LinkedIn"
+        },
+        {
+          img: "src/assets/logo/Figma.svg",
+          text: "Figma"
+        },
+        {
+          img: "src/assets/logo/VK.svg",
+          text: "VK"
+        },
+        {
+          img: "src/assets/logo/Gmail.svg",
+          text: "Gmail"
+        },
       ]
     }
   }
@@ -32,4 +63,13 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  display: flex;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.circle{
+  width: 100px;
+}
 </style>

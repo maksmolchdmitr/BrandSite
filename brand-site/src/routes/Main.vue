@@ -90,16 +90,8 @@ body {
     font-size: 24px;
   }
 
-  .switchItem {
-    font-size: 16px;
-  }
-
   .contentDiv {
     gap: 12px;
-  }
-
-  .headBar {
-    padding: 20px;
   }
 }
 </style>
