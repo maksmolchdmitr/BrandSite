@@ -1,6 +1,6 @@
 <template>
   <div className="linkContent">
-    <img :src="`/src/assets/logo/${logoImg}`" v-bind:alt="logoText">
+    <img :src="logoImg" v-bind:alt="logoText">
     <LinkRefRect></LinkRefRect>
     <a className="logoText">{{ logoText }}</a>
   </div>

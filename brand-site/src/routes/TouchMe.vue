@@ -13,6 +13,7 @@ import HeadBar from "@/components/HeadBar.vue";
 import LinkRefRect from "@/components/LinkRefRect.vue";
 import CircleLinker from "@/components/CircleLinker.vue";
 import Link from "@/components/Link.vue";
+import tgImgSource from "@/assets/logo/Telegram.svg";
 
 export default {
   components: {Link, CircleLinker, HeadBar, LinkRefRect},
@@ -37,7 +38,7 @@ export default {
       ],
       links: [
         {
-          img: "Telegram.svg",
+          img: tgImgSource,
           text: "Telegram"
         },
         {
