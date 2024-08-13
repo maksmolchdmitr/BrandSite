@@ -1,10 +1,12 @@
 <template>
-  <HeadBar :headItems="headItems"></HeadBar>
-  <div className="container">
-    <template v-for="(link, index) in links" :key="link.id">
-      <Link v-bind:logoImg="link.img" v-bind:logo-text="link.text"></Link>
-      <CircleLinker className="circle" v-if="index < links.length - 1"></CircleLinker>
-    </template>
+  <div className="mainContainer">
+    <HeadBar :headItems="headItems"></HeadBar>
+    <div className="container">
+      <template v-for="(link, index) in links" :key="link.id">
+        <Link v-bind:logoImg="link.img" v-bind:logo-text="link.text"></Link>
+        <CircleLinker className="circle" v-if="index < links.length - 1"></CircleLinker>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -72,9 +74,14 @@ export default {
   display: flex;
   white-space: nowrap;
   overflow-x: auto;
+  flex-direction: column;
+  align-content: center;
+  gap: 100px;
 }
 
-.circle{
-  width: 100px;
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 100px;
 }
 </style>
