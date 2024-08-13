@@ -3,7 +3,7 @@
     <HeadBar :headItems="headItems"></HeadBar>
     <div className="container">
       <template v-for="(link, index) in links" :key="link.id">
-        <Link v-bind:logoImg="link.img" v-bind:logo-text="link.text"></Link>
+        <Link v-bind:logoImg="link.img" :logoRef="link.ref" v-bind:logo-text="link.text"></Link>
         <CircleLinker className="circle" v-if="index < links.length - 1"></CircleLinker>
       </template>
     </div>
@@ -45,23 +45,28 @@ export default {
       links: [
         {
           img: tgImgSource,
-          text: "Telegram"
+          text: "Telegram",
+          ref: "https://t.me/maksmolch",
         },
         {
           img: linkedInImgSource,
-          text: "LinkedIn"
+          text: "LinkedIn",
+          ref: "https://www.linkedin.com/in/maksmolch/",
         },
         {
           img: figmaImgSource,
-          text: "Figma"
+          text: "Figma",
+          ref: "https://www.figma.com/design/Ke4H9o65cODhhC2crnZmPy/MaksMolch-brend-site?node-id=0-1&t=1qM5NcQafVqDU1hM-0",
         },
         {
           img: vkImgSource,
-          text: "VK"
+          text: "VK",
+          ref: "https://vk.com/maksmolchdmitr",
         },
         {
           img: gmailImgSource,
-          text: "Gmail"
+          text: "Gmail",
+          ref: "mailto:maksmolchdmitr@gmail.com",
         },
       ]
     }

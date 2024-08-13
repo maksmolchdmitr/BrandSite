@@ -1,9 +1,11 @@
 <template>
-  <div className="linkContent">
-    <img :src="logoImg" v-bind:alt="logoText">
-    <LinkRefRect></LinkRefRect>
-    <a className="logoText">{{ logoText }}</a>
-  </div>
+  <a :href="logoRef">
+    <div className="linkContent">
+      <img :src="logoImg" v-bind:alt="logoText">
+      <LinkRefRect></LinkRefRect>
+      <a className="logoText">{{ logoText }}</a>
+    </div>
+  </a>
 </template>
 
 <script>
@@ -21,7 +23,8 @@ export default defineComponent({
     logoText: {
       type: String,
       required: true
-    }
+    },
+    logoRef: String
   }
 })
 </script>
