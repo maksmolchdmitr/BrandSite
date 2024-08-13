@@ -8,7 +8,11 @@
 export default {
   props: {
     item: {
-      type: Object,
+      type: {
+        isMainSwitch: Boolean,
+        text: String,
+        ref: String
+      },
       required: true
     }
   }

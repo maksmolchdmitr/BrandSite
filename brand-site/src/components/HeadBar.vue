@@ -1,5 +1,5 @@
 <template>
-  <div className="headBar">
+  <div @keydown.left="handleLeftArrow" @keydown.right="handleRightArrow" className="headBar" autofocus>
     <TextRef :item="mainLogoItem"></TextRef>
     <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
   </div>
@@ -23,6 +23,24 @@ export default {
         text: 'MaksMolch',
         ref: '/',
         isMainSwitch: true
+      }
+    }
+  },
+  methods: {
+    handleLeftArrow() {
+      const index = this.headItems.findIndex(item => item.isMainSwitch);
+      if (index > 0) {
+        this.headItems[index].isMainSwitch = false;
+        this.headItems[index - 1].isMainSwitch = true;
+        this.$router.push(this.headItems[index - 1].ref);
+      }
+    },
+    handleRightArrow() {
+      const index = this.headItems.findIndex(item => item.isMainSwitch);
+      if (index < this.headItems.length - 1) {
+        this.headItems[index].isMainSwitch = false;
+        this.headItems[index + 1].isMainSwitch = true;
+        this.$router.push(this.headItems[index + 1].ref);
       }
     }
   }
