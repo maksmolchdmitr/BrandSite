@@ -37,23 +37,23 @@ export default {
       ],
       links: [
         {
-          img: "src/assets/logo/Telegram.svg",
+          img: "Telegram.svg",
           text: "Telegram"
         },
         {
-          img: "src/assets/logo/LinkedIn.svg",
+          img: "LinkedIn.svg",
           text: "LinkedIn"
         },
         {
-          img: "src/assets/logo/Figma.svg",
+          img: "Figma.svg",
           text: "Figma"
         },
         {
-          img: "src/assets/logo/VK.svg",
+          img: "VK.svg",
           text: "VK"
         },
         {
-          img: "src/assets/logo/Gmail.svg",
+          img: "Gmail.svg",
           text: "Gmail"
         },
       ]
