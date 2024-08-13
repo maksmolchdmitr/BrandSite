@@ -14,6 +14,10 @@ import LinkRefRect from "@/components/LinkRefRect.vue";
 import CircleLinker from "@/components/CircleLinker.vue";
 import Link from "@/components/Link.vue";
 import tgImgSource from "@/assets/logo/Telegram.svg";
+import figmaImgSource from "@/assets/logo/Figma.svg";
+import vkImgSource from "@/assets/logo/VK.svg";
+import gmailImgSource from "@/assets/logo/Gmail.svg";
+import linkedInImgSource from "@/assets/logo/LinkedIn.svg";
 
 export default {
   components: {Link, CircleLinker, HeadBar, LinkRefRect},
@@ -42,19 +46,19 @@ export default {
           text: "Telegram"
         },
         {
-          img: "LinkedIn.svg",
+          img: linkedInImgSource,
           text: "LinkedIn"
         },
         {
-          img: "Figma.svg",
+          img: figmaImgSource,
           text: "Figma"
         },
         {
-          img: "VK.svg",
+          img: vkImgSource,
           text: "VK"
         },
         {
-          img: "Gmail.svg",
+          img: gmailImgSource,
           text: "Gmail"
         },
       ]
