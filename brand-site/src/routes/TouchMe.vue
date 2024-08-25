@@ -4,7 +4,9 @@
     <div className="container">
       <template v-for="(link, index) in links" :key="link.id">
         <Link v-bind:logoImg="link.img" :logoRef="link.ref" v-bind:logo-text="link.text"></Link>
-        <CircleLinker className="circle" v-if="index < links.length - 1"></CircleLinker>
+        <a :id="'link_' + index" :href="'#link_' + nextLinkIndex(index)">
+          <CircleLinker className="circle"></CircleLinker>
+        </a>
       </template>
     </div>
   </div>
@@ -22,6 +24,14 @@ import gmailImgSource from "@/assets/logo/Gmail.svg";
 import linkedInImgSource from "@/assets/logo/LinkedIn.svg";
 
 export default {
+  methods: {
+    nextLinkIndex(i) {
+      if (i + 1 === this.links.length) {
+        return 0
+      }
+      return i + 1
+    }
+  },
   components: {Link, CircleLinker, HeadBar, LinkRefRect},
   data() {
     return {
@@ -79,9 +89,11 @@ export default {
   display: flex;
   white-space: nowrap;
   overflow-x: auto;
-  flex-direction: column;
+  flex-direction: row;
   align-content: center;
   gap: 100px;
+  padding-left: 100px;
+  padding-right: 100px;
 }
 
 .mainContainer {

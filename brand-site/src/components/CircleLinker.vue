@@ -1,5 +1,5 @@
 <template>
-  <div className="circle"></div>
+  <img className="circle" alt="-" src="@/assets/CircleLinker.svg"/>
 </template>
 
 <script>
