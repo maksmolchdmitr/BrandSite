@@ -14,4 +14,10 @@ export default {
   border-radius: 100px;
   height: 100px;
 }
+
+@media (max-width: 768px) {
+  .circle {
+    height: 50px;
+  }
+}
 </style>

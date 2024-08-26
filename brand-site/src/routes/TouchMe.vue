@@ -101,4 +101,16 @@ export default {
   flex-direction: column;
   gap: 100px;
 }
+
+@media (max-width: 768px) {
+  .container {
+    gap: 50px;
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+
+  .mainContainer {
+    gap: 50px;
+  }
+}
 </style>

@@ -1,7 +1,7 @@
 <template>
   <a :href="logoRef">
     <div className="linkContent">
-      <img :src="logoImg" v-bind:alt="logoText">
+      <img className="logoImage" :src="logoImg" v-bind:alt="logoText">
       <LinkRefRect></LinkRefRect>
       <a className="logoText">{{ logoText }}</a>
     </div>
@@ -46,5 +46,27 @@ export default defineComponent({
   font-size: 36px;
   color: white;
   font-family: Mali, serif;
+}
+
+.logoImage {
+  width: 60px;
+  height: 60px;
+}
+
+@media (max-width: 768px) {
+  .linkContent {
+    gap: 5px;
+    padding: 10px;
+    height: 30px;
+  }
+
+  .logoText {
+    font-size: 18px;
+  }
+
+  .logoImage {
+    width: 30px;
+    height: 30px;
+  }
 }
 </style>

@@ -13,4 +13,11 @@
   background-color: white;
   border-radius: 100px;
 }
+
+@media (max-width: 768px) {
+  .rect {
+    width: 50px;
+    height: 3px;
+  }
+}
 </style>
