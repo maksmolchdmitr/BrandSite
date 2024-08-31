@@ -1,5 +1,5 @@
 <template>
-  <a :href="logoRef">
+  <a :href="logoRef" target="_blank">
     <div className="linkContent">
       <img className="logoImage" :src="logoImg" v-bind:alt="logoText">
       <LinkRefRect></LinkRefRect>

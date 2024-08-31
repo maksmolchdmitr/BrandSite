@@ -22,6 +22,7 @@ import figmaImgSource from "@/assets/logo/Figma.svg";
 import vkImgSource from "@/assets/logo/VK.svg";
 import gmailImgSource from "@/assets/logo/Gmail.svg";
 import linkedInImgSource from "@/assets/logo/LinkedIn.svg";
+import githubImgSource from "@/assets/logo/Github.svg";
 
 export default {
   methods: {
@@ -77,6 +78,11 @@ export default {
           img: gmailImgSource,
           text: "Gmail",
           ref: "mailto:maksmolchdmitr@gmail.com",
+        },
+        {
+          img: githubImgSource,
+          text: "Github",
+          ref: "https://github.com/maksmolchdmitr",
         },
       ]
     }
