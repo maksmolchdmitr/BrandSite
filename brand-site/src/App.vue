@@ -1,6 +1,6 @@
 <template>
   <main>
-    <RouterView />
+    <RouterView/>
   </main>
 </template>
 
@@ -8,4 +8,9 @@
 </script>
 
 <style>
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    scroll-behavior: smooth;
+  }
+}
 </style>
