@@ -54,7 +54,9 @@ export default {
         {
           date: '06.08.24-'+getDateNow(),
           text: 'Currently working at STM Labs.\n' +
-              'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)'
+              'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)' +
+              'Using clean-architecture to deal with legacy code and make it more readable and maintainable' +
+              'Writing complex sql queries on jooq library'
         },
         {
           date: '02.04.24-05.07.24',
@@ -62,7 +64,7 @@ export default {
               '- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs\n'+
               '- Communicated with related teams to solve work problems\n'+
               '- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb\n'+
-              '- Worked a lot with asynchronous code, actor systems and distributed architecture.'
+              '- Worked a lot with asynchronous code, actor systems and distributed architecture'
         }
       ]
     }
