@@ -28,16 +28,18 @@ export default {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  padding: 36px;
   gap: 36px;
-  width: 600px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
 @media (max-width: 768px) {
   .bar {
-    padding: 12px;
     gap: 12px;
     width: auto;
+    justify-content: center;
+    align-items: center;
   }
 }
 </style>

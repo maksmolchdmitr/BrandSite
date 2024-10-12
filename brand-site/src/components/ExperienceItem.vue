@@ -41,6 +41,7 @@ export default {
   padding: 16px;
   background-color: white;
   border-radius: 32px;
+  width: 600px;
 }
 
 .experienceText {
@@ -54,6 +55,10 @@ export default {
 @media (max-width: 768px) {
   .experienceText {
     font-size: 16px;
+  }
+
+  .experienceItem {
+    width: auto;
   }
 }
 </style>
