@@ -32,6 +32,7 @@ export default {
   width: 100%;
   justify-content: center;
   align-items: center;
+  padding: 20px; /* Добавлен padding */
 }
 
 @media (max-width: 768px) {
@@ -40,6 +41,7 @@ export default {
     width: auto;
     justify-content: center;
     align-items: center;
+    padding: 10px; /* Добавлен padding для мобильных устройств */
   }
 }
 </style>
