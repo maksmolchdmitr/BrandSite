@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="30.5" height="30.5" rx="2.25" stroke="black" stroke-width="1.5"/>
+<rect x="4.25" y="3.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="4.25" y="13.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="4.25" y="8.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="4.25" y="18.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="9.25" y="3.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="9.25" y="13.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="9.25" y="8.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="9.25" y="18.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="14.25" y="3.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="14.25" y="13.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="14.25" y="8.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="14.25" y="18.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="19.25" y="3.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="19.25" y="13.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="19.25" y="8.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="19.25" y="18.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="24.25" y="3.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="24.25" y="13.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="24.25" y="8.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<rect x="24.25" y="18.25" width="3.5" height="3.5" rx="0.75" stroke="black" stroke-width="0.5"/>
+<path d="M3.64645 25.6464C3.45118 25.8417 3.45118 26.1583 3.64645 26.3536L6.82843 29.5355C7.02369 29.7308 7.34027 29.7308 7.53553 29.5355C7.7308 29.3403 7.7308 29.0237 7.53553 28.8284L4.70711 26L7.53553 23.1716C7.7308 22.9763 7.7308 22.6597 7.53553 22.4645C7.34027 22.2692 7.02369 22.2692 6.82843 22.4645L3.64645 25.6464ZM28 25.5L4 25.5V26.5L28 26.5V25.5Z" fill="black"/>
+</svg>

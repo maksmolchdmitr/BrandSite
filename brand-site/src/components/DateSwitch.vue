@@ -6,7 +6,7 @@
       </div>
       <div v-else>
         <a :href="'#date_' + i">
-          <img className="circleSwitcher" src="@/assets/Subtract.svg"  alt="Another date link">
+          <img className="circleSwitcher" src="@/assets/DateFromButton.svg"  alt="Another date link">
         </a>
       </div>
     </div>
