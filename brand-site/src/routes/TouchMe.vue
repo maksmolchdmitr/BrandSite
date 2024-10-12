@@ -2,9 +2,14 @@
   <div className="mainContainer">
     <HeadBar :headItems="headItems"></HeadBar>
     <div className="container">
+      <!-- Дополнительный элемент перед всеми -->
+      <a :id="'link_0'" :href="'#link_1'">
+        <CircleLinker className="circle"></CircleLinker>
+      </a>
+      <!-- Существующие элементы с увеличенными индексами -->
       <template v-for="(link, index) in links" :key="link.id">
         <Link v-bind:logoImg="link.img" :logoRef="link.ref" v-bind:logo-text="link.text"></Link>
-        <a :id="'link_' + index" :href="'#link_' + nextLinkIndex(index)">
+        <a :id="'link_' + (index + 1)" :href="'#link_' + nextLinkIndex(index + 1)">
           <CircleLinker className="circle"></CircleLinker>
         </a>
       </template>
@@ -27,7 +32,7 @@ import githubImgSource from "@/assets/logo/Github.svg";
 export default {
   methods: {
     nextLinkIndex(i) {
-      if (i + 1 === this.links.length) {
+      if (i === this.links.length) {
         return 0
       }
       return i + 1
@@ -91,15 +96,21 @@ export default {
 </script>
 
 <style scoped>
+html {
+  scroll-behavior: smooth; /* Добавлено для медленной прокрутки */
+}
+
 .container {
   display: flex;
   white-space: nowrap;
   overflow-x: auto;
-  flex-direction: row;
+  flex-direction: column;
   align-content: center;
   gap: 100px;
   padding-left: 100px;
   padding-right: 100px;
+  justify-content: center;
+  align-items: center;
 }
 
 .mainContainer {
