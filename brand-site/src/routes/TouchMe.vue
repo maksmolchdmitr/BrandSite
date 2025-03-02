@@ -85,11 +85,6 @@ export default {
           ref: "https://www.figma.com/design/Ke4H9o65cODhhC2crnZmPy/MaksMolch-brend-site?node-id=0-1&t=1qM5NcQafVqDU1hM-0",
         },
         {
-          img: vkImgSource,
-          text: "VK",
-          ref: "https://vk.com/maksmolchdmitr",
-        },
-        {
           img: gmailImgSource,
           text: "Gmail",
           ref: "mailto:maksmolchdmitr@gmail.com",
