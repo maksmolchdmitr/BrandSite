@@ -1,18 +1,14 @@
 <template>
   <div className="mainContainer">
     <HeadBar :headItems="headItems"></HeadBar>
-    <div className="container">
-      <!-- Дополнительный элемент перед всеми -->
-      <a :id="'link_0'" :href="'#link_1'">
-        <CircleLinker className="circle"></CircleLinker>
-      </a>
-      <!-- Существующие элементы с увеличенными индексами -->
+    <div className="container" ref="linksContainer">
       <template v-for="(link, index) in links" :key="link.id">
         <Link v-bind:logoImg="link.img" :logoRef="link.ref" v-bind:logo-text="link.text"></Link>
-        <a :id="'link_' + (index + 1)" :href="'#link_' + nextLinkIndex(index + 1)">
-          <CircleLinker className="circle"></CircleLinker>
-        </a>
       </template>
+    </div>
+    <div class="startRouletteContainer">
+      <img @click="startRoulette" class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
+      <span class="spin-text">Spin</span>
     </div>
   </div>
 </template>
@@ -31,11 +27,25 @@ import githubImgSource from "@/assets/logo/Github.svg";
 
 export default {
   methods: {
-    nextLinkIndex(i) {
-      if (i === this.links.length) {
-        return 0
-      }
-      return i + 1
+    startRoulette() {
+      const container = this.$refs.linksContainer;
+      const links = this.links;
+      let currentIndex = 0;
+      const interval = 100; // Speed of the roulette
+      const rounds = 5; // Number of full rounds
+      const totalSteps = rounds * links.length + Math.floor(Math.random() * links.length);
+      let stepsTaken = 0;
+
+      const rouletteInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % links.length;
+        container.scrollTop = (currentIndex * container.scrollHeight) / links.length;
+        stepsTaken++;
+
+        if (stepsTaken >= totalSteps) {
+          clearInterval(rouletteInterval);
+          // Optionally, you can trigger a click or highlight the selected link here
+        }
+      }, interval);
     }
   },
   components: {Link, CircleLinker, HeadBar, LinkRefRect},
@@ -97,15 +107,14 @@ export default {
 
 <style scoped>
 html {
-  scroll-behavior: smooth; /* Добавлено для медленной прокрутки */
+  scroll-behavior: smooth;
 }
 
 .container {
   display: flex;
-  white-space: nowrap;
-  overflow-x: auto;
   flex-direction: column;
-  align-content: center;
+  overflow-y: auto;
+  height: 300px; /* Adjust height as needed */
   gap: 100px;
   padding-left: 100px;
   padding-right: 100px;
@@ -117,6 +126,33 @@ html {
   display: flex;
   flex-direction: column;
   gap: 100px;
+}
+
+.circle {
+  width: 100px;
+  height: 100px;
+}
+
+.startRouletteContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.circle {
+  display: block;
+}
+
+.spin-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: black; /* Цвет текста */
+  font-size: 24px; /* Размер текста */
+  font-weight: bold; /* Жирность текста */
+  pointer-events: none; /* Чтобы текст не мешал кликать по изображению */
 }
 
 @media (max-width: 768px) {
