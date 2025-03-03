@@ -2,9 +2,7 @@
   <div className="mainContainer">
     <HeadBar :headItems="headItems"></HeadBar>
     <div className="container" ref="linksContainer">
-      <template v-for="(link, index) in links" :key="link.id">
-        <Link v-bind:logoImg="link.img" :logoRef="link.ref" v-bind:logo-text="link.text"></Link>
-      </template>
+      <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref" :logo-text="currentLink.text"></Link>
     </div>
     <div class="startRouletteContainer">
       <img @click="startRoulette" class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
@@ -15,8 +13,6 @@
 
 <script>
 import HeadBar from "@/components/HeadBar.vue";
-import LinkRefRect from "@/components/LinkRefRect.vue";
-import CircleLinker from "@/components/CircleLinker.vue";
 import Link from "@/components/Link.vue";
 import tgImgSource from "@/assets/logo/Telegram.svg";
 import figmaImgSource from "@/assets/logo/Figma.svg";
@@ -28,17 +24,16 @@ import githubImgSource from "@/assets/logo/Github.svg";
 export default {
   methods: {
     startRoulette() {
-      const container = this.$refs.linksContainer;
       const links = this.links;
-      let currentIndex = 0;
+      let currentIndex = this.currentIndex;
       const interval = 100; // Speed of the roulette
-      const rounds = 5; // Number of full rounds
+      const rounds = Math.floor(Math.random() * 9) + 5; // Random number of full rounds between 5 and 13
       const totalSteps = rounds * links.length + Math.floor(Math.random() * links.length);
       let stepsTaken = 0;
 
       const rouletteInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % links.length;
-        container.scrollTop = (currentIndex * container.scrollHeight) / links.length;
+        this.currentIndex = currentIndex;
         stepsTaken++;
 
         if (stepsTaken >= totalSteps) {
@@ -48,7 +43,7 @@ export default {
       }, interval);
     }
   },
-  components: {Link, CircleLinker, HeadBar, LinkRefRect},
+  components: { Link, HeadBar },
   data() {
     return {
       headItems: [
@@ -94,7 +89,13 @@ export default {
           text: "Github",
           ref: "https://github.com/maksmolchdmitr",
         },
-      ]
+      ],
+      currentIndex: 0
+    }
+  },
+  computed: {
+    currentLink() {
+      return this.links[this.currentIndex];
     }
   }
 }
@@ -107,14 +108,10 @@ html {
 
 .container {
   display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  height: 300px; /* Adjust height as needed */
-  gap: 100px;
-  padding-left: 100px;
-  padding-right: 100px;
   justify-content: center;
   align-items: center;
+  height: 200px; /* Adjusted height to fit one link */
+  overflow: hidden;
 }
 
 .mainContainer {
@@ -152,9 +149,7 @@ html {
 
 @media (max-width: 768px) {
   .container {
-    gap: 50px;
-    padding-left: 50px;
-    padding-right: 50px;
+    height: 150px; /* Adjusted height for smaller screens */
   }
 
   .mainContainer {
