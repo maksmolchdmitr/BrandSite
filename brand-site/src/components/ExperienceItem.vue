@@ -1,12 +1,11 @@
 <template>
   <div className="experienceItem">
     <DateSwitch :dateData="getDateData()"></DateSwitch>
-    <a className="experienceText">{{ data.experienceText }}</a>
+    <div className="experienceText" v-html="data.experienceText"></div>
   </div>
 </template>
 
 <script>
-
 import DateSwitch from "@/components/DateSwitch.vue";
 
 export default {
@@ -50,7 +49,6 @@ export default {
   color: black;
   white-space: pre-line;
 }
-
 
 @media (max-width: 768px) {
   .experienceText {

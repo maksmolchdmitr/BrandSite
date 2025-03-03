@@ -2,7 +2,7 @@
   <div className="contentDiv">
     <HeadBar :headItems="headItems"></HeadBar>
     <Description></Description>
-    <ExperienceBar :items="experienceItems"></ExperienceBar>
+    <ExperienceBar :items="formattedExperienceItems"></ExperienceBar>
   </div>
 </template>
 
@@ -52,22 +52,43 @@ export default {
       ],
       experienceItems: [
         {
-          date: '06.08.24-' + getDateNow(),
-          text: 'Currently working at STM Labs \n' +
-              'Working on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework) \n' +
-              'Using clean-architecture to deal with legacy code and make it more readable and maintainable \n' +
-              'Writing complex sql queries on jooq library \n' +
-              'Add dynamic and customizable validators through config \n'
+          date: '05.03.25-' + getDateNow(),
+          text: `Came to work in *Yandex*`
+        },
+        {
+          date: '06.08.24-27.02.25',
+          text: `Worked at *STM Labs*
+- Worked on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)
+- Used clean-architecture to deal with legacy code and make it more readable and maintainable
+- Wrote complex SQL queries using the jOOQ library
+- Added dynamic and customizable validators through configuration
+`
         },
         {
           date: '02.04.24-05.07.24',
-          text: 'I did an internship at Yandex: \n' +
-              '- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs \n' +
-              '- Communicated with related teams to solve work problems \n' +
-              '- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb \n' +
-              '- Worked a lot with asynchronous code, actor systems and distributed architecture \n'
-        }
+          text: `I did an internship at *Yandex*:
+- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs
+- Communicated with related teams to solve work problems
+- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb
+- Worked a lot with asynchronous code, actor systems and distributed architecture
+`
+        },
       ]
+    }
+  },
+  computed: {
+    formattedExperienceItems() {
+      return this.experienceItems.map(item => {
+        return {
+          ...item,
+          text: this.formatText(item.text)
+        };
+      });
+    }
+  },
+  methods: {
+    formatText(text) {
+      return text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
     }
   }
 }

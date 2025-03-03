@@ -7,7 +7,6 @@
 </template>
 
 <script>
-
 import ExperienceItem from "@/components/ExperienceItem.vue";
 
 export default {
@@ -32,7 +31,7 @@ export default {
   width: 100%;
   justify-content: center;
   align-items: center;
-  padding: 36px; /* Добавлен padding */
+  padding: 36px;
 }
 
 @media (max-width: 768px) {
@@ -41,7 +40,7 @@ export default {
     width: auto;
     justify-content: center;
     align-items: center;
-    padding: 12px; /* Добавлен padding для мобильных устройств */
+    padding: 12px;
   }
 }
 </style>
