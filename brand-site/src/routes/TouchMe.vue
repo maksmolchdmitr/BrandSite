@@ -2,7 +2,8 @@
   <div className="mainContainer">
     <HeadBar :headItems="headItems"></HeadBar>
     <div className="container" ref="linksContainer">
-      <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref" :logo-text="currentLink.text"></Link>
+      <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref"
+            :logo-text="currentLink.text"></Link>
     </div>
     <div class="startRouletteContainer">
       <img @click="startRoulette" class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
@@ -16,7 +17,6 @@ import HeadBar from "@/components/HeadBar.vue";
 import Link from "@/components/Link.vue";
 import tgImgSource from "@/assets/logo/Telegram.svg";
 import figmaImgSource from "@/assets/logo/Figma.svg";
-import vkImgSource from "@/assets/logo/VK.svg";
 import gmailImgSource from "@/assets/logo/Gmail.svg";
 import linkedInImgSource from "@/assets/logo/LinkedIn.svg";
 import githubImgSource from "@/assets/logo/Github.svg";
@@ -43,7 +43,7 @@ export default {
       }, interval);
     }
   },
-  components: { Link, HeadBar },
+  components: {Link, HeadBar},
   data() {
     return {
       headItems: [
@@ -95,6 +95,7 @@ export default {
   },
   computed: {
     currentLink() {
+      this.currentIndex = Math.floor(Math.random() * this.links.length);
       return this.links[this.currentIndex];
     }
   }
@@ -141,10 +142,11 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: black; /* Цвет текста */
-  font-size: 24px; /* Размер текста */
   font-weight: bold; /* Жирность текста */
   pointer-events: none; /* Чтобы текст не мешал кликать по изображению */
+  font-size: 24px;
+  color: black;
+  font-family: Mali, serif;
 }
 
 @media (max-width: 768px) {
