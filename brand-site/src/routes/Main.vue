@@ -53,7 +53,10 @@ export default {
       experienceItems: [
         {
           date: '05.03.25-' + getDateNow(),
-          text: `Came to work in *Yandex*`
+          text: `Came to work in *Yandex*
+Synchronise data from different tables with Yson using YQL queries.
+Migrating project to a new version of JUnit, Java and Spring boot for the internal framework
+`
         },
         {
           date: '06.08.24-27.02.25',
