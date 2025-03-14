@@ -5,8 +5,8 @@
       <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref"
             :logo-text="currentLink.text"></Link>
     </div>
-    <div class="startRouletteContainer">
-      <img @click="startRoulette" class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
+    <div class="startRouletteContainer" @click="startRoulette">
+      <img class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
       <span class="spin-text">Spin</span>
     </div>
   </div>
@@ -124,6 +124,8 @@ html {
 .circle {
   width: 100px;
   height: 100px;
+  cursor: pointer;
+  transition: filter 0.3s;
 }
 
 .startRouletteContainer {
@@ -147,6 +149,15 @@ html {
   font-size: 24px;
   color: black;
   font-family: Mali, serif;
+}
+
+.circle:hover {
+  transform: scale(1.1);
+  filter: brightness(90%);
+}
+
+.circle:active {
+  filter: brightness(70%);
 }
 
 @media (max-width: 768px) {
