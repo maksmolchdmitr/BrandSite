@@ -1,5 +1,11 @@
 <template>
   <HeadBar :headItems="headItems"></HeadBar>
+  <div class="random-walk-link">
+    <a href="https://random-walk-app.firebaseapp.com/" target="_blank">
+      <img src="@/assets/RandomWalk.svg" alt="Random Walk"/>
+      <span>Random Walk</span>
+    </a>
+  </div>
 </template>
 
 <script>
@@ -34,5 +40,21 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.random-walk-link {
+  margin-top: 20px;
+  text-align: center;
+}
 
+.random-walk-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.random-walk-link img {
+  width: 50%; /* Adjust size as needed */
+  height: 50%; /* Adjust size as needed */
+}
 </style>
