@@ -1,9 +1,9 @@
 <template>
   <HeadBar :headItems="headItems"></HeadBar>
   <div class="random-walk-link">
-    <a href="https://random-walk-app.firebaseapp.com/" target="_blank">
+    <a href="https://github.com/ru-random-walk/mobile_app/releases/download/v0.0.7-beta/app-release.apk" target="_blank">
       <img src="@/assets/RandomWalk.svg" alt="Random Walk"/>
-      <span>Random Walk</span>
+      <span>Random Walk Android App</span>
     </a>
   </div>
 </template>
