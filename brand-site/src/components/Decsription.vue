@@ -1,5 +1,5 @@
 <template>
-  <p>Hello, I’m <a className="refText">Maks</a> <br> I work as Backend Software Engineer and have studied at HSE</p>
+  <p>Hi, I’m <a className="refText">Maks</a> <br> I work as Backend Software Engineer and have studied at HSE</p>
 </template>
 
 <script>
