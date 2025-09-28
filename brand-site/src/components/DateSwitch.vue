@@ -6,7 +6,7 @@
       </div>
       <div v-else>
         <a :href="'#date_' + i">
-          <img className="circleSwitcher" src="@/assets/DateFromButton.svg"  alt="Another date link">
+          <img className="circleSwitcher" :src="iconSrc" alt="Another date link">
         </a>
       </div>
     </div>
@@ -14,11 +14,33 @@
 </template>
 
 <script>
+import DateFromButtonDefault from '@/assets/DateFromButton.svg'
+import DateFromButtonWhite from '@/assets/DateFromButton-white.svg'
+
 export default {
   props: {
     dateData: {
       type: Object,
       required: true
+    }
+  },
+  data() {
+    return {
+      isDarkMode: false
+    }
+  },
+  mounted() {
+    // Проверяем текущее состояние темного режима
+    this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Слушаем изменения системной темы
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      this.isDarkMode = e.matches;
+    });
+  },
+  computed: {
+    iconSrc() {
+      return this.isDarkMode ? DateFromButtonWhite : DateFromButtonDefault;
     }
   }
 }
@@ -49,6 +71,10 @@ export default {
   background-color: #D9D9D9;
   display: flex;
   justify-content: center;
+}
+
+.circleSwitcher {
+  transition: opacity 0.3s ease;
 }
 
 @media (max-width: 768px) {
