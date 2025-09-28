@@ -2,7 +2,7 @@
   <div className="dateSwitcher">
     <div v-for="i in Array(dateData.count).fill().map((_, idx) => idx)" :key="i">
       <div className="dateBlock" v-if="i === dateData.number">
-        <a :id="'date_' + dateData.number" className="dateText">{{ dateData.text }}</a>
+        <a className="dateText">{{ dateData.text }}</a>
       </div>
       <div v-else>
         <a :href="'#date_' + i">

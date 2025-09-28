@@ -1,5 +1,5 @@
 <template>
-  <div className="experienceItem">
+  <div :id="'date_' + this.data.dateNumber" className="experienceItem">
     <DateSwitch :dateData="getDateData()"></DateSwitch>
     <div className="experienceText" v-html="data.experienceText"></div>
   </div>
@@ -21,7 +21,6 @@ export default {
   methods: {
     getDateData() {
       return {
-        number: this.data.dateNumber,
         text: this.data.dateText,
         count: this.data.dateCount
       }
