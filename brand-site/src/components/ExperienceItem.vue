@@ -21,6 +21,7 @@ export default {
   methods: {
     getDateData() {
       return {
+        number: this.data.dateNumber,
         text: this.data.dateText,
         count: this.data.dateCount
       }
