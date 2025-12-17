@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-api-client": "openapi-generator-cli generate -i public/badminton-service.openapi.yaml -g typescript-axios -o src/badminton/generated --additional-properties=supportsES6=true,withInterfaces=true"
   },
   "dependencies": {
     "vite-plugin-vue-setup-extend": "^0.4.0",
@@ -14,6 +15,7 @@
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.13.0",
     "@vitejs/plugin-vue": "^5.0.5",
     "vite": "^5.3.1"
   }

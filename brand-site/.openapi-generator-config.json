@@ -1,0 +1,11 @@
+{
+  "generatorName": "typescript-axios",
+  "inputSpec": "public/badminton-service.openapi.yaml",
+  "outputDir": "src/badminton/generated",
+  "additionalProperties": {
+    "supportsES6": true,
+    "withInterfaces": true,
+    "npmName": "@badminton/api-client"
+  }
+}
+

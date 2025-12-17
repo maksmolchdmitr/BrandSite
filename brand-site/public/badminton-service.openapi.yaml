@@ -204,6 +204,41 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /groups/{groupId}/participants/search:
+    get:
+      tags: [Participants]
+      summary: Search participants in group with pagination (member-only)
+      description: |
+        Search participants by name with pagination. Results are sorted alphabetically.
+        Returns paginated list of participants matching the query.
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: query
+          description: Search query (filters by name, case-insensitive)
+          schema: { type: string, default: "" }
+        - in: query
+          name: page
+          description: Page number (0-based)
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: pageSize
+          description: Number of items per page
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        "200":
+          description: Paginated participants
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParticipantSearchResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
     post:
       tags: [Participants]
       summary: Create participant (admin-only)
@@ -456,6 +491,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserStats"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/games-stats:
+    get:
+      tags: [Stats]
+      summary: Current user game statistics with recent matches
+      description: Returns detailed stats including recent matches list
+      parameters:
+        - in: query
+          name: groupId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Game stats with recent matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGamesStats"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -734,6 +788,29 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
 
+    ParticipantSearchResult:
+      type: object
+      additionalProperties: false
+      description: Paginated search result for participants
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+        page:
+          type: integer
+          description: Current page number (0-based)
+        pageSize:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of matching participants
+        hasMore:
+          type: boolean
+          description: Whether there are more pages available
+      required: [items, page, pageSize, total, hasMore]
+
     LinkUserRequest:
       type: object
       additionalProperties: false
@@ -799,7 +876,11 @@ components:
       additionalProperties: false
       properties:
         kind: { $ref: "#/components/schemas/MatchKind" }
-        startedAt: { type: string, format: date-time }
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Match start time. If not provided, backend sets current time.
         notes: { type: string }
         teamA:
           type: array
@@ -813,7 +894,7 @@ components:
           maxItems: 2
         score:
           $ref: "#/components/schemas/MatchScore"
-      required: [kind, startedAt, teamA, teamB, score]
+      required: [kind, teamA, teamB, score]
 
     MatchUpdateRequest:
       type: object
@@ -857,6 +938,23 @@ components:
           $ref: "#/components/schemas/StatsBlock"
       required: [userId, singles, doubles]
 
+    UserGamesStats:
+      type: object
+      additionalProperties: false
+      description: Extended user stats with recent matches
+      properties:
+        userId: { type: string }
+        singles:
+          $ref: "#/components/schemas/StatsBlock"
+        doubles:
+          $ref: "#/components/schemas/StatsBlock"
+        recentMatches:
+          type: array
+          description: Recent matches involving the user
+          items:
+            $ref: "#/components/schemas/Match"
+      required: [userId, singles, doubles, recentMatches]
+
     GroupStats:
       type: object
       additionalProperties: false
@@ -889,11 +987,21 @@ components:
           type: number
           format: double
           description: Current singles Elo (in selected group or global aggregation)
-        doublesElo:
-          type: number
-          format: double
-          description: Current doubles Elo (in selected group or global aggregation)
-      required: [userId, singlesElo, doublesElo]
+        doublesByPartner:
+          type: array
+          description: Doubles Elo ratings grouped by partner
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              partnerUserId: { type: string }
+              partnerName: { type: string }
+              games: { type: integer, minimum: 0 }
+              wins: { type: integer, minimum: 0 }
+              losses: { type: integer, minimum: 0 }
+              elo: { type: number, format: double }
+            required: [partnerUserId, partnerName, games, wins, losses, elo]
+      required: [userId, singlesElo, doublesByPartner]
 
     RatingRowSingles:
       type: object

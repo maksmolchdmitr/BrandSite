@@ -146,11 +146,11 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const user = db.users.find(u => u.id === userId);
     if (!user) {
       // Fallback to first user
-      return db.users[0] || {id: "u_maks", displayName: "Молчанов Максим", username: "maks"};
+      return db.users[0] || {id: "u_alex", telegramId: 20001, displayName: "Alex Chen", username: "alex_shuttle", createdAt: new Date().toISOString()};
     }
     return user;
   },
@@ -160,7 +160,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (!u) {
       return [];
@@ -188,7 +188,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (!u) {
       throw new Error("User not found");
@@ -211,7 +211,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (!u) {
       return db.participants.filter(p => p.groupId === groupId);
@@ -230,7 +230,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (u) {
       // Ensure membership
@@ -327,7 +327,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (u) {
       // Ensure membership
@@ -393,10 +393,10 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (!u) {
-      return {userId: "u_maks", singlesElo: 1200, doublesElo: 1100, doublesByPartner: []};
+      return {userId: "u_alex", singlesElo: 1200, doublesElo: 1100, doublesByPartner: []};
     }
     const singlesElo = calcSinglesElo(db, u.id);
     const doublesByPartner = calcDoublesPerPartner(db, u.id);
@@ -411,11 +411,11 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (!u) {
       return {
-        userId: "u_maks",
+        userId: "u_alex",
         singles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
         doubles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
         recentMatches: [],
@@ -443,7 +443,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (u) {
       // Ensure membership
@@ -476,7 +476,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_maks";
+    const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (u) {
       // Ensure membership

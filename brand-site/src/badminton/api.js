@@ -1,166 +1,207 @@
-const TOKEN_KEY = "badminton.accessToken";
+/**
+ * Real API client for Badminton Service.
+ * 
+ * This file provides a wrapper around the generated OpenAPI client.
+ * The generated client is created from badminton-service.openapi.yaml
+ * using: npm run generate-api-client
+ * 
+ * For now, this is a manual implementation matching the OpenAPI spec.
+ * When the backend is ready, uncomment the generated client import below.
+ */
 
-export function getBadmintonApiBaseUrl() {
-  return (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
-}
+import {getBadmintonApiBaseUrl, getAccessToken, setAccessToken} from "./apiHelpers.js";
 
-export function getAccessToken() {
-  return localStorage.getItem(TOKEN_KEY) || "";
-}
+const BASE_URL = getBadmintonApiBaseUrl();
 
-export function setAccessToken(token) {
-  if (!token) {
-    localStorage.removeItem(TOKEN_KEY);
-    return;
-  }
-  localStorage.setItem(TOKEN_KEY, token);
-}
+async function apiRequest(path, options = {}) {
+  const {method = "GET", body, headers = {}} = options;
+  
+  const url = `${BASE_URL}${path}`;
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    ...headers,
+  };
 
-export function isAuthed() {
-  return Boolean(getAccessToken());
-}
-
-export async function apiFetch(path, { method = "GET", body, headers = {}, auth = true } = {}) {
-  const baseUrl = getBadmintonApiBaseUrl();
-  if (!baseUrl) {
-    throw new Error("Missing VITE_BADMINTON_API_BASE_URL");
-  }
-
-  const finalHeaders = { ...headers };
-  if (auth) {
-    const token = getAccessToken();
-    if (token) finalHeaders.Authorization = `Bearer ${token}`;
+  const token = getAccessToken();
+  if (token) {
+    requestHeaders.Authorization = `Bearer ${token}`;
   }
 
-  let finalBody = body;
-  if (body !== undefined && body !== null && !(body instanceof FormData) && typeof body !== "string") {
-    finalHeaders["Content-Type"] = finalHeaders["Content-Type"] || "application/json";
-    finalBody = JSON.stringify(body);
+  const config = {
+    method,
+    headers: requestHeaders,
+  };
+
+  if (body !== undefined && body !== null) {
+    config.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`${baseUrl}${path}`, { method, headers: finalHeaders, body: finalBody });
-
-  const contentType = res.headers.get("content-type") || "";
-  const isJson = contentType.includes("application/json");
-  const payload = isJson ? await res.json().catch(() => null) : await res.text().catch(() => "");
-
-  if (!res.ok) {
-    const msg =
-      (payload && payload.message) ||
-      (typeof payload === "string" && payload) ||
-      `Request failed: ${res.status}`;
-    const err = new Error(msg);
-    err.status = res.status;
-    err.payload = payload;
-    throw err;
+  const response = await fetch(url, config);
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({message: response.statusText}));
+    const error = new Error(errorData.message || `HTTP ${response.status}`);
+    error.status = response.status;
+    error.data = errorData;
+    throw error;
   }
 
-  return payload;
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
 }
 
-// Auth
-export function authTelegramStart({ redirectUrl }) {
-  return apiFetch("/auth/telegram/start", { method: "POST", auth: false, body: { redirectUrl } });
-}
-
-export function authTelegramComplete({ state, telegram }) {
-  return apiFetch("/auth/telegram/complete", { method: "POST", auth: false, body: { state, telegram } });
-}
-
-export function logout() {
-  return apiFetch("/auth/logout", { method: "POST" });
-}
-
-// Me
-export function getMe() {
-  return apiFetch("/me");
-}
-
-export function getMyGroups() {
-  return apiFetch("/groups");
-}
-
-export function getMyStats({ groupId } = {}) {
-  const qs = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
-  return apiFetch(`/me/stats${qs}`);
-}
-
-export function getMyRatings({ groupId } = {}) {
-  const qs = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
-  return apiFetch(`/me/ratings${qs}`);
-}
-
-// Groups
-export function createGroup({ name }) {
-  return apiFetch("/groups", { method: "POST", body: { name } });
-}
-
-export function getGroup(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}`);
-}
-
-// Participants
-export function listParticipants(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/participants`);
-}
-
-export function createParticipant(groupId, { name }) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/participants`, { method: "POST", body: { name } });
-}
-
-export function updateParticipant(groupId, participantId, { name }) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
-    method: "PATCH",
-    body: { name },
+// Auth endpoints
+export async function authTelegramStart({redirectUrl}) {
+  return apiRequest("/auth/telegram/start", {
+    method: "POST",
+    body: {redirectUrl},
+    headers: {Authorization: undefined}, // No auth for this endpoint
   });
 }
 
-export function deleteParticipant(groupId, participantId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
+export async function authTelegramComplete({state, telegram}) {
+  const result = await apiRequest("/auth/telegram/complete", {
+    method: "POST",
+    body: {state, telegram},
+    headers: {Authorization: undefined}, // No auth for this endpoint
+  });
+  
+  if (result.accessToken) {
+    setAccessToken(result.accessToken);
+  }
+  
+  return result;
+}
+
+export async function logout() {
+  await apiRequest("/auth/logout", {method: "POST"});
+  setAccessToken(null);
+}
+
+// User endpoints
+export async function getMe() {
+  return apiRequest("/me");
+}
+
+export async function getMyGroups({limit, cursor} = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (cursor) params.append("cursor", cursor);
+  const query = params.toString();
+  return apiRequest(`/groups${query ? `?${query}` : ""}`);
+}
+
+export async function getMyStats({groupId} = {}) {
+  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+  return apiRequest(`/me/stats${query}`);
+}
+
+export async function getMyRatings({groupId} = {}) {
+  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+  return apiRequest(`/me/ratings${query}`);
+}
+
+export async function getMyGamesStats({groupId} = {}) {
+  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+  return apiRequest(`/me/games-stats${query}`);
+}
+
+// Group endpoints
+export async function createGroup({name}) {
+  return apiRequest("/groups", {
+    method: "POST",
+    body: {name},
+  });
+}
+
+export async function getGroup(groupId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}`);
+}
+
+// Participant endpoints
+export async function listParticipants(groupId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants`);
+}
+
+export async function searchParticipants(groupId, {query = "", page = 0, pageSize = 10} = {}) {
+  const params = new URLSearchParams();
+  if (query) params.append("query", query);
+  params.append("page", page);
+  params.append("pageSize", pageSize);
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants/search?${params.toString()}`);
+}
+
+export async function createParticipant(groupId, {name}) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants`, {
+    method: "POST",
+    body: {name},
+  });
+}
+
+export async function updateParticipant(groupId, participantId, {name}) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
+    method: "PATCH",
+    body: {name},
+  });
+}
+
+export async function deleteParticipant(groupId, participantId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "DELETE",
   });
 }
 
-export function linkUserToParticipant(groupId, participantId, { userId }) {
-  return apiFetch(
-    `/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}/link-user`,
-    { method: "POST", body: { userId } },
-  );
+export async function linkUserToParticipant(groupId, participantId, {userId}) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}/link-user`, {
+    method: "POST",
+    body: {userId},
+  });
 }
 
-// Matches
-export function listMatches(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/matches`);
+// Match endpoints
+export async function listMatches(groupId, {from, to, limit, cursor} = {}) {
+  const params = new URLSearchParams();
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
+  if (limit) params.append("limit", limit);
+  if (cursor) params.append("cursor", cursor);
+  const query = params.toString();
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/matches${query ? `?${query}` : ""}`);
 }
 
-export function createMatch(groupId, match) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/matches`, { method: "POST", body: match });
+export async function createMatch(groupId, match) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/matches`, {
+    method: "POST",
+    body: match,
+  });
 }
 
-export function updateMatch(groupId, matchId, patch) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
+export async function updateMatch(groupId, matchId, patch) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
     method: "PATCH",
     body: patch,
   });
 }
 
-export function deleteMatch(groupId, matchId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
+export async function deleteMatch(groupId, matchId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
     method: "DELETE",
   });
 }
 
-// Ratings
-export function getSinglesLeaderboard(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/ratings/singles`);
+// Rating endpoints
+export async function getSinglesLeaderboard(groupId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/ratings/singles`);
 }
 
-export function getDoublesLeaderboard(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/ratings/doubles`);
+export async function getDoublesLeaderboard(groupId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/ratings/doubles`);
 }
 
-export function getGroupStats(groupId) {
-  return apiFetch(`/groups/${encodeURIComponent(groupId)}/stats`);
+export async function getGroupStats(groupId) {
+  return apiRequest(`/groups/${encodeURIComponent(groupId)}/stats`);
 }
-
-
