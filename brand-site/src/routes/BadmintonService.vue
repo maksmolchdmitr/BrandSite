@@ -9,19 +9,19 @@
       </p>
 
       <div class="ctaRow">
-        <RouterLink class="cta" to="/badminton-service/ratings">
+        <RouterLink class="cta" to="/?page=badminton&section=ratings">
           <span class="ctaText">My ratings</span>
         </RouterLink>
-        <RouterLink class="cta secondary" to="/badminton-service/games">
+        <RouterLink class="cta secondary" to="/?page=badminton&section=games">
           <span class="ctaText">My games</span>
         </RouterLink>
-        <RouterLink class="cta secondary" to="/badminton-service/groups">
+        <RouterLink class="cta secondary" to="/?page=badminton&section=groups">
           <span class="ctaText">My groups</span>
         </RouterLink>
         <a class="cta secondary" href="/badminton-service.openapi.yaml" target="_blank" rel="noreferrer">
           <span class="ctaText">OpenAPI spec</span>
         </a>
-        <RouterLink class="cta secondary" to="/products">
+        <RouterLink class="cta secondary" to="/?page=products">
           <span class="ctaText">← Back to Products</span>
         </RouterLink>
       </div>
@@ -38,9 +38,9 @@ export default defineComponent({
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Touch me", ref: "/contact", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Touch me", ref: "/?page=contact", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
       ],
     };
   },

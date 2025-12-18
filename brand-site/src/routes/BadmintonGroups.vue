@@ -29,7 +29,7 @@
         <div v-if="groups.length === 0 && !loading" class="empty">No groups yet.</div>
 
         <div class="list">
-          <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="`/badminton-service/groups/${g.id}`">
+          <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="`/?page=badminton&section=groups&groupId=${g.id}`">
             <div class="groupName">{{ g.name }}</div>
             <div class="groupMeta">
               <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ g.myRole }}</span>
@@ -52,9 +52,9 @@ export default defineComponent({
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
-        {text: "Badminton", ref: "/badminton-service", isMainSwitch: true},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
+        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
       ],
       loading: false,
       loadingCreate: false,
@@ -86,7 +86,7 @@ export default defineComponent({
         const g = await badmintonClient.createGroup({name: this.newGroupName});
         this.newGroupName = "";
         this.groups = [g, ...this.groups];
-        this.$router.push(`/badminton-service/groups/${g.id}`);
+        this.$router.push(`/?page=badminton&section=groups&groupId=${g.id}`);
       } catch (e) {
         this.error = e?.message || "Failed to create group";
       } finally {
@@ -95,7 +95,7 @@ export default defineComponent({
     },
     async logout() {
       await badmintonClient.logout();
-      this.$router.replace("/badminton-service");
+      this.$router.replace("/?page=badminton");
     },
   },
 });

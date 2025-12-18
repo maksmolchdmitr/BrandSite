@@ -37,16 +37,28 @@ import {getLoggedInUserId} from "@/badminton/cookies.js";
 
 export default defineComponent({
   components: {HeadBar},
+  props: {
+    userId: {
+      type: String,
+      default: null
+    }
+  },
   async mounted() {
-    // Always redirect to ratings - login is not needed anymore
-    this.$router.replace("/badminton-service/ratings");
+    // If userId is provided in query params, auto-login
+    if (this.userId) {
+      console.log("Auto-login with userId:", this.userId);
+      await this.loginAs(this.userId);
+    } else {
+      // Otherwise redirect to ratings - login is not needed anymore
+      this.$router.replace("/?page=badminton&section=ratings");
+    }
   },
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
-        {text: "Badminton", ref: "/badminton-service", isMainSwitch: true},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
+        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
       ],
       loading: false,
       error: "",
@@ -74,14 +86,14 @@ export default defineComponent({
         await new Promise(resolve => setTimeout(resolve, 150));
         
         // Navigate to ratings page - use push instead of replace to ensure navigation
-        console.log("Navigating to /badminton-service/ratings");
+        console.log("Navigating to /?page=badminton&section=ratings");
         try {
-          await this.$router.push("/badminton-service/ratings");
+          await this.$router.push("/?page=badminton&section=ratings");
           console.log("Navigation complete");
         } catch (navError) {
           console.error("Navigation error:", navError);
           // Fallback: try replace
-          await this.$router.replace("/badminton-service/ratings");
+          await this.$router.replace("/?page=badminton&section=ratings");
         }
       } catch (e) {
         console.error("Login error:", e);

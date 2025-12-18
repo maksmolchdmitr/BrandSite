@@ -36,17 +36,17 @@ export default {
       headItems: [
         {
           text: 'Main',
-          ref: '/',
+          ref: '/?page=main',
           isMainSwitch: true
         },
         {
           text: 'Touch me',
-          ref: '/contact',
+          ref: '/?page=contact',
           isMainSwitch: false
         },
         {
           text: 'Products',
-          ref: '/products',
+          ref: '/?page=products',
           isMainSwitch: false
         }
       ],

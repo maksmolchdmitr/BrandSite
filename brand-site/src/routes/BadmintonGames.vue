@@ -6,8 +6,8 @@
       <div class="topRow">
         <h1 class="title">My games</h1>
         <div class="topActions">
-          <RouterLink class="linkBtn" to="/badminton-service/ratings">My ratings</RouterLink>
-          <RouterLink class="linkBtn" to="/badminton-service/groups">My groups</RouterLink>
+          <RouterLink class="linkBtn" to="/?page=badminton&section=ratings">My ratings</RouterLink>
+          <RouterLink class="linkBtn" to="/?page=badminton&section=groups">My groups</RouterLink>
           <button class="linkBtn logoutBtn" @click="logout">Logout</button>
         </div>
       </div>
@@ -97,9 +97,9 @@ export default defineComponent({
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
-        {text: "Badminton", ref: "/badminton-service", isMainSwitch: true},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
+        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
       ],
       error: "",
       stats: null,
@@ -171,7 +171,7 @@ export default defineComponent({
     },
     async logout() {
       await badmintonClient.logout();
-      this.$router.replace("/badminton-service");
+      this.$router.replace("/?page=badminton");
     },
   },
 });

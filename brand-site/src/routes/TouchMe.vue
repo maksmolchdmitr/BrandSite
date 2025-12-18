@@ -49,17 +49,17 @@ export default {
       headItems: [
         {
           text: 'Main',
-          ref: '/',
+          ref: '/?page=main',
           isMainSwitch: false
         },
         {
           text: 'Touch me',
-          ref: '/contact',
+          ref: '/?page=contact',
           isMainSwitch: true
         },
         {
           text: 'Products',
-          ref: '/products',
+          ref: '/?page=products',
           isMainSwitch: false
         }
       ],

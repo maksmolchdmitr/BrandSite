@@ -6,8 +6,8 @@
       <div class="topRow">
         <h1 class="title">My ratings</h1>
         <div class="topActions">
-          <RouterLink class="linkBtn" to="/badminton-service/games">My games</RouterLink>
-          <RouterLink class="linkBtn" to="/badminton-service/groups">My groups</RouterLink>
+          <RouterLink class="linkBtn" to="/?page=badminton&section=games">My games</RouterLink>
+          <RouterLink class="linkBtn" to="/?page=badminton&section=groups">My groups</RouterLink>
         </div>
       </div>
 
@@ -77,9 +77,9 @@ export default defineComponent({
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
-        {text: "Badminton", ref: "/badminton-service", isMainSwitch: true},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
+        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
       ],
       error: "",
       me: null,

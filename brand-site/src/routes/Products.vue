@@ -3,7 +3,7 @@
     <HeadBar :headItems="headItems"></HeadBar>
 
     <div class="content">
-      <RouterLink class="productCard" to="/badminton-service">
+      <RouterLink class="productCard" to="/?page=badminton">
         <div class="cardInner">
           <div class="cardTitle">Badminton Service</div>
           <div class="cardSubtitle">Groups • Matches • Elo • Telegram auth</div>
@@ -31,17 +31,17 @@ export default defineComponent({
       headItems: [
         {
           text: 'Main',
-          ref: '/',
+          ref: '/?page=main',
           isMainSwitch: false
         },
         {
           text: 'Touch me',
-          ref: '/contact',
+          ref: '/?page=contact',
           isMainSwitch: false
         },
         {
           text: 'Products',
-          ref: '/products',
+          ref: '/?page=products',
           isMainSwitch: true
         }
       ]

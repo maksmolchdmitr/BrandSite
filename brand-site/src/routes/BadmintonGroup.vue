@@ -6,7 +6,7 @@
       <div class="topRow">
         <div>
           <div class="crumbs">
-            <RouterLink class="crumb" to="/badminton-service/groups">Groups</RouterLink>
+            <RouterLink class="crumb" to="/?page=badminton&section=groups">Groups</RouterLink>
             <span class="sep">/</span>
             <span class="crumb current">{{ groupId }}</span>
           </div>
@@ -525,9 +525,9 @@ export default defineComponent({
   data() {
     return {
       headItems: [
-        {text: "Main", ref: "/", isMainSwitch: false},
-        {text: "Products", ref: "/products", isMainSwitch: false},
-        {text: "Badminton", ref: "/badminton-service", isMainSwitch: true},
+        {text: "Main", ref: "/?page=main", isMainSwitch: false},
+        {text: "Products", ref: "/?page=products", isMainSwitch: false},
+        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
       ],
       loading: false,
       error: "",

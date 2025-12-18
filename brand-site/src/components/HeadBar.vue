@@ -21,7 +21,7 @@ export default {
     return {
       mainLogoItem: {
         text: 'MaksMolch',
-        ref: '/',
+        ref: '/?page=main',
         isMainSwitch: true
       }
     }
