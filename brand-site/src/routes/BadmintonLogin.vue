@@ -104,13 +104,22 @@ export default defineComponent({
       let botUsername = 'maksmolch_badminton_service_bot';
       
       try {
+        const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+        console.log('🚀 Starting Telegram auth:', {
+          redirectUrl: redirectUrl,
+          currentUrl: window.location.href
+        });
+        
         // Get state from backend
         const startResponse = await badmintonClient.authTelegramStart({
-          redirectUrl: `${window.location.origin}${window.location.pathname}`
+          redirectUrl: redirectUrl
         });
+        
+        console.log('✅ Telegram auth start response:', JSON.stringify(startResponse, null, 2));
         state = startResponse.state;
         botUsername = startResponse.botUsername || botUsername;
-        console.log('Telegram auth started, state:', state);
+        console.log('🔐 Auth state received:', state);
+        console.log('🤖 Bot username:', botUsername);
       } catch (e) {
         console.error('Failed to get auth state from backend:', e);
         this.error = 'Не удалось инициализировать авторизацию Telegram';
@@ -182,13 +191,22 @@ export default defineComponent({
     setupTelegramCallback() {
       // Handle Telegram callback via postMessage (fallback)
       this.telegramMessageHandler = (event) => {
+        console.log('📨 Telegram postMessage event received:', {
+          origin: event.origin,
+          data: event.data,
+          type: typeof event.data,
+          isTelegram: event.origin.includes('https://t.me') || event.origin.includes('https://telegram.org')
+        });
+        
         // Check origin
         if (event.origin.includes('https://t.me') || event.origin.includes('https://telegram.org')) {
-          console.log('Данные от Telegram (postMessage):', event.data);
+          console.log('✅ Telegram postMessage data:', JSON.stringify(event.data, null, 2));
           
           // Telegram sends data in format: {id, first_name, last_name, username, photo_url, auth_date, hash}
           if (event.data && typeof event.data === 'object') {
             this.handleTelegramAuth(event.data);
+          } else {
+            console.warn('⚠️ Telegram postMessage data is not an object:', event.data);
           }
         }
       };
@@ -197,10 +215,26 @@ export default defineComponent({
       
       // Check URL params for callback (Telegram widget redirects to auth-url with data in query params)
       const urlParams = new URLSearchParams(window.location.search);
+      const allParams = {};
+      for (const [key, value] of urlParams.entries()) {
+        allParams[key] = value;
+      }
+      
+      console.log('🔍 Checking URL params for Telegram callback:', {
+        fullUrl: window.location.href,
+        search: window.location.search,
+        allParams: allParams
+      });
       
       // Telegram sends data as: id, first_name, last_name, username, photo_url, auth_date, hash
       const telegramParams = ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'];
       const hasTelegramData = telegramParams.some(param => urlParams.has(param));
+      
+      console.log('📋 Telegram params check:', {
+        hasTelegramData,
+        foundParams: telegramParams.filter(param => urlParams.has(param)),
+        missingParams: telegramParams.filter(param => !urlParams.has(param))
+      });
       
       if (hasTelegramData) {
         const telegramData = {};
@@ -216,12 +250,16 @@ export default defineComponent({
           }
         });
         
-        console.log('Данные от Telegram (URL redirect):', telegramData);
+        console.log('✅ Telegram callback data received (URL redirect):', JSON.stringify(telegramData, null, 2));
+        console.log('📤 Processing Telegram auth with data:', telegramData);
         this.handleTelegramAuth(telegramData);
         
         // Clean URL after processing
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
+        console.log('🧹 URL cleaned, redirecting to:', cleanUrl);
+      } else {
+        console.log('ℹ️ No Telegram callback data found in URL params');
       }
     },
     async handleTelegramAuth(telegramData) {
@@ -229,28 +267,68 @@ export default defineComponent({
       this.error = '';
       
       try {
-        console.log('Обработка авторизации Telegram:', telegramData);
+        console.log('🔄 ===== TELEGRAM AUTH HANDLER =====');
+        console.log('📥 Received Telegram data:', JSON.stringify(telegramData, null, 2));
+        console.log('📊 Telegram data details:', {
+          userId: telegramData.id,
+          firstName: telegramData.first_name,
+          lastName: telegramData.last_name,
+          username: telegramData.username,
+          photoUrl: telegramData.photo_url,
+          authDate: telegramData.auth_date,
+          hash: telegramData.hash ? telegramData.hash.substring(0, 20) + '...' : 'missing'
+        });
         
         // Get state from sessionStorage (stored during authTelegramStart)
         const state = sessionStorage.getItem('telegram_auth_state') || 'mock-state';
+        console.log('🔐 Auth state from sessionStorage:', state);
         
-        // Send telegram data to backend
-        const result = await badmintonClient.authTelegramComplete({
+        const requestPayload = {
           state: state,
           telegram: telegramData
+        };
+        
+        console.log('📤 Sending request to backend:', {
+          endpoint: '/auth/telegram/complete',
+          payload: {
+            state: requestPayload.state,
+            telegram: {
+              id: requestPayload.telegram.id,
+              first_name: requestPayload.telegram.first_name,
+              last_name: requestPayload.telegram.last_name,
+              username: requestPayload.telegram.username,
+              auth_date: requestPayload.telegram.auth_date,
+              hash: requestPayload.telegram.hash ? requestPayload.telegram.hash.substring(0, 20) + '...' : 'missing'
+            }
+          }
         });
         
-        console.log('Авторизация успешна:', result);
+        // Send telegram data to backend
+        const result = await badmintonClient.authTelegramComplete(requestPayload);
+        
+        console.log('✅ ===== AUTH SUCCESS =====');
+        console.log('📥 Backend response:', JSON.stringify(result, null, 2));
+        console.log('🔑 Access token received:', result.accessToken ? result.accessToken.substring(0, 20) + '...' : 'missing');
+        console.log('⏱️ Token expires in:', result.expiresInSec, 'seconds');
         
         // Clear state
         sessionStorage.removeItem('telegram_auth_state');
+        console.log('🧹 Cleared auth state from sessionStorage');
         
         // Navigate to ratings page
+        console.log('🧭 Navigating to ratings page...');
         await new Promise(resolve => setTimeout(resolve, 150));
         await this.$router.push('/?page=badminton&section=ratings');
+        console.log('✅ Navigation complete');
         
       } catch (e) {
-        console.error('Ошибка авторизации Telegram:', e);
+        console.error('❌ ===== AUTH ERROR =====');
+        console.error('🚨 Error details:', {
+          message: e?.message,
+          stack: e?.stack,
+          status: e?.status,
+          data: e?.data
+        });
         this.error = e?.message || 'Ошибка авторизации через Telegram';
         this.loading = false;
       }
