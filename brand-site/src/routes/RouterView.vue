@@ -4,11 +4,10 @@
 
 <script>
 import {defineComponent, markRaw} from "vue";
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import Main from "@/routes/Main.vue";
 import TouchMe from "@/routes/TouchMe.vue";
 import Products from "@/routes/Products.vue";
-import BadmintonService from "@/routes/BadmintonService.vue";
 import BadmintonLogin from "@/routes/BadmintonLogin.vue";
 import BadmintonGroups from "@/routes/BadmintonGroups.vue";
 import BadmintonGroup from "@/routes/BadmintonGroup.vue";
@@ -18,10 +17,24 @@ import BadmintonGames from "@/routes/BadmintonGames.vue";
 export default defineComponent({
   setup() {
     const route = useRoute();
-    return { route };
+    const router = useRouter();
+    return { route, router };
   },
-  mounted() {
+  async mounted() {
     console.log('RouterView mounted with query:', this.route.query);
+    
+    // Redirect /?page=badminton to ratings for logged in users, or login for not logged in
+    if (this.page === 'badminton' && !this.section) {
+      const {getLoggedInUserId} = await import("@/badminton/cookies.js");
+      const userId = getLoggedInUserId();
+      if (userId && userId.trim() !== '') {
+        // User is logged in, redirect to ratings
+        await this.router.replace('/?page=badminton&section=ratings');
+      } else {
+        // User is not logged in, redirect to login
+        await this.router.replace('/?page=badminton&section=login');
+      }
+    }
   },
   computed: {
     page() {
@@ -53,7 +66,8 @@ export default defineComponent({
         } else if (this.section === 'games') {
           return markRaw(BadmintonGames);
         }
-        return markRaw(BadmintonService);
+        // If no section and not redirected, show login (shouldn't happen due to mounted redirect)
+        return markRaw(BadmintonLogin);
       }
       
       // Main pages routing

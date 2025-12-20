@@ -527,7 +527,7 @@ export default defineComponent({
       headItems: [
         {text: "Main", ref: "/?page=main", isMainSwitch: false},
         {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
+        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
       ],
       loading: false,
       error: "",

@@ -5,7 +5,21 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">My groups</h1>
-        <button class="linkBtn logoutBtn" @click="logout">Logout</button>
+      </div>
+
+      <div class="ctaRow">
+        <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
+          <span class="ctaText">My ratings</span>
+        </RouterLink>
+        <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
+          <span class="ctaText">My games</span>
+        </RouterLink>
+        <button class="cta secondary cta-logout" :disabled="loading" @click="logout">
+          <span class="ctaText">Logout</span>
+        </button>
+        <RouterLink class="cta secondary cta-back" to="/?page=products">
+          <span class="ctaText">← Back to Products</span>
+        </RouterLink>
       </div>
 
       <div v-if="error" class="errorBox">{{ error }}</div>
@@ -54,7 +68,7 @@ export default defineComponent({
       headItems: [
         {text: "Main", ref: "/?page=main", isMainSwitch: false},
         {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
+        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
       ],
       loading: false,
       loadingCreate: false,
@@ -94,8 +108,15 @@ export default defineComponent({
       }
     },
     async logout() {
-      await badmintonClient.logout();
-      this.$router.replace("/?page=badminton");
+      this.loading = true;
+      this.error = "";
+      try {
+        await badmintonClient.logout();
+        await this.$router.push("/?page=badminton&section=login");
+      } catch (e) {
+        this.error = e?.message || "Logout failed";
+        this.loading = false;
+      }
     },
   },
 });
@@ -107,6 +128,7 @@ export default defineComponent({
 .page { display: flex; flex-direction: column; gap: 64px; }
 .content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.topActions { display: flex; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: 'Mali','sans-serif'; font-size: 40px; font-weight: 700; }
 
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -120,7 +142,81 @@ export default defineComponent({
 .btn:disabled { opacity: 0.7; cursor: default; }
 
 .linkBtn { text-decoration: none; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
-.logoutBtn { background: none; border: none; cursor: pointer; padding: 0; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
+
+.ctaRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  text-decoration: none;
+  background-color: #4F3DFF;
+  border-radius: 100px;
+  padding: 16px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.cta.secondary {
+  background-color: white;
+  border: 2px solid #4F3DFF;
+}
+
+/* My ratings - фиолетовый */
+.cta-ratings.secondary {
+  background-color: #F3E5F5;
+  border-color: #9C27B0;
+}
+.cta-ratings.secondary .ctaText {
+  color: #9C27B0;
+}
+
+/* My games - яркий синий */
+.cta-games.secondary {
+  background-color: #E3F2FD;
+  border-color: #2196F3;
+}
+.cta-games.secondary .ctaText {
+  color: #2196F3;
+}
+
+/* Logout - красноватый */
+.cta-logout.secondary {
+  background-color: #FFE8E8;
+  border-color: #FF6B6B;
+}
+.cta-logout.secondary .ctaText {
+  color: #FF6B6B;
+}
+
+/* Back to Products - серый */
+.cta-back.secondary {
+  background-color: #F5F5F5;
+  border-color: #888888;
+}
+.cta-back.secondary .ctaText {
+  color: #888888;
+}
+
+.cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.ctaText {
+  font-family: 'Mali', 'sans-serif';
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.cta.secondary .ctaText {
+  color: #4F3DFF;
+}
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali','sans-serif'; }
 .empty { font-family: 'Mali','sans-serif'; opacity: 0.7; margin-top: 8px; }
@@ -138,6 +234,7 @@ export default defineComponent({
   .content { padding: 0 20px 20px 20px; }
   .title { font-size: 28px; }
   .input { min-width: calc(100vw - 40px); }
+  .ctaText { font-size: 18px; }
 }
 </style>
 

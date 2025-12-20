@@ -52,12 +52,17 @@ export default defineComponent({
     }
   },
   async mounted() {
+    // Check if Telegram callback data is in route.query (from RouterView)
+    this.checkRouteQueryForTelegramData();
+    
     // Setup message listener for Telegram callback first
     this.setupTelegramCallback();
     
-    // Load mock users for fallback
+    // Load mock users for fallback (only for mock client)
     try {
-      this.users = await badmintonClient.listMockUsers();
+      if (badmintonClient.listMockUsers) {
+        this.users = await badmintonClient.listMockUsers();
+      }
     } catch (e) {
       console.warn('Failed to load mock users:', e);
     }
@@ -85,14 +90,53 @@ export default defineComponent({
       headItems: [
         {text: "Main", ref: "/?page=main", isMainSwitch: false},
         {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
+        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
       ],
       loading: false,
       error: "",
       users: [],
+      telegramAuthProcessed: false, // Flag to prevent double processing
     };
   },
   methods: {
+    checkRouteQueryForTelegramData() {
+      // Prevent double processing
+      if (this.telegramAuthProcessed) {
+        return;
+      }
+      
+      // Check if route.query contains Telegram callback data
+      const route = this.$route;
+      if (!route || !route.query) {
+        return;
+      }
+      
+      const query = route.query;
+      const telegramParams = ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'];
+      const hasTelegramData = telegramParams.some(param => query.hasOwnProperty(param));
+      
+      if (hasTelegramData) {
+        console.log('🔍 Found Telegram data in route.query:', query);
+        this.telegramAuthProcessed = true; // Mark as processed
+        
+        const telegramData = {};
+        telegramParams.forEach(param => {
+          if (query.hasOwnProperty(param)) {
+            const value = query[param];
+            // Parse numeric values
+            if (param === 'id' || param === 'auth_date') {
+              telegramData[param] = typeof value === 'string' ? parseInt(value, 10) : value;
+            } else {
+              telegramData[param] = value;
+            }
+          }
+        });
+        
+        console.log('✅ Parsed Telegram data from route.query:', telegramData);
+        // Process Telegram auth
+        this.handleTelegramAuth(telegramData);
+      }
+    },
     async loadTelegramWidget() {
       // Check if script already loaded
       if (document.querySelector('script[src*="telegram-widget.js"]')) {
@@ -203,8 +247,11 @@ export default defineComponent({
           console.log('✅ Telegram postMessage data:', JSON.stringify(event.data, null, 2));
           
           // Telegram sends data in format: {id, first_name, last_name, username, photo_url, auth_date, hash}
-          if (event.data && typeof event.data === 'object') {
+          if (event.data && typeof event.data === 'object' && !this.telegramAuthProcessed) {
+            this.telegramAuthProcessed = true; // Mark as processed
             this.handleTelegramAuth(event.data);
+          } else if (this.telegramAuthProcessed) {
+            console.log('ℹ️ Telegram data already processed, ignoring postMessage');
           } else {
             console.warn('⚠️ Telegram postMessage data is not an object:', event.data);
           }
@@ -236,7 +283,8 @@ export default defineComponent({
         missingParams: telegramParams.filter(param => !urlParams.has(param))
       });
       
-      if (hasTelegramData) {
+      if (hasTelegramData && !this.telegramAuthProcessed) {
+        this.telegramAuthProcessed = true; // Mark as processed
         const telegramData = {};
         telegramParams.forEach(param => {
           if (urlParams.has(param)) {
@@ -258,8 +306,10 @@ export default defineComponent({
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
         console.log('🧹 URL cleaned, redirecting to:', cleanUrl);
-      } else {
+      } else if (!hasTelegramData) {
         console.log('ℹ️ No Telegram callback data found in URL params');
+      } else {
+        console.log('ℹ️ Telegram data already processed, skipping');
       }
     },
     async handleTelegramAuth(telegramData) {

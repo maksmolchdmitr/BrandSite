@@ -5,10 +5,21 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">My ratings</h1>
-        <div class="topActions">
-          <RouterLink class="linkBtn" to="/?page=badminton&section=games">My games</RouterLink>
-          <RouterLink class="linkBtn" to="/?page=badminton&section=groups">My groups</RouterLink>
-        </div>
+      </div>
+
+      <div class="ctaRow">
+        <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
+          <span class="ctaText">My games</span>
+        </RouterLink>
+        <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
+          <span class="ctaText">My groups</span>
+        </RouterLink>
+        <button class="cta secondary cta-logout" :disabled="loading" @click="handleLogout">
+          <span class="ctaText">Logout</span>
+        </button>
+        <RouterLink class="cta secondary cta-back" to="/?page=products">
+          <span class="ctaText">← Back to Products</span>
+        </RouterLink>
       </div>
 
       <div v-if="error" class="errorBox">{{ error }}</div>
@@ -79,8 +90,9 @@ export default defineComponent({
       headItems: [
         {text: "Main", ref: "/?page=main", isMainSwitch: false},
         {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton", isMainSwitch: true},
+        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
       ],
+      loading: false,
       error: "",
       me: null,
       ratings: null,
@@ -91,6 +103,7 @@ export default defineComponent({
   },
   methods: {
     async load() {
+      this.loading = true;
       this.error = "";
       try {
         const [me, ratings] = await Promise.all([badmintonClient.getMe(), badmintonClient.getMyRatings()]);
@@ -98,6 +111,19 @@ export default defineComponent({
         this.ratings = ratings;
       } catch (e) {
         this.error = e?.message || "Failed to load ratings";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async handleLogout() {
+      this.loading = true;
+      this.error = "";
+      try {
+        await badmintonClient.logout();
+        await this.$router.push("/?page=badminton&section=login");
+      } catch (e) {
+        this.error = e?.message || "Logout failed";
+        this.loading = false;
       }
     },
   },
@@ -114,6 +140,90 @@ export default defineComponent({
 .title { margin: 0; font-family: 'Mali','sans-serif'; font-size: 40px; font-weight: 700; }
 .linkBtn { text-decoration: none; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
 .logoutBtn { background: none; border: none; cursor: pointer; padding: 0; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
+
+.ctaRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  text-decoration: none;
+  background-color: #4F3DFF;
+  border-radius: 100px;
+  padding: 16px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.cta.secondary {
+  background-color: white;
+  border: 2px solid #4F3DFF;
+}
+
+/* My ratings - фиолетовый */
+.cta-ratings.secondary {
+  background-color: #F3E5F5;
+  border-color: #9C27B0;
+}
+.cta-ratings.secondary .ctaText {
+  color: #9C27B0;
+}
+
+/* My games - яркий синий */
+.cta-games.secondary {
+  background-color: #E3F2FD;
+  border-color: #2196F3;
+}
+.cta-games.secondary .ctaText {
+  color: #2196F3;
+}
+
+/* My groups - зеленый */
+.cta-groups.secondary {
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
+}
+.cta-groups.secondary .ctaText {
+  color: #4CAF50;
+}
+
+/* Logout - красноватый */
+.cta-logout.secondary {
+  background-color: #FFE8E8;
+  border-color: #FF6B6B;
+}
+.cta-logout.secondary .ctaText {
+  color: #FF6B6B;
+}
+
+/* Back to Products - серый */
+.cta-back.secondary {
+  background-color: #F5F5F5;
+  border-color: #888888;
+}
+.cta-back.secondary .ctaText {
+  color: #888888;
+}
+
+.cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.ctaText {
+  font-family: 'Mali', 'sans-serif';
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.cta.secondary .ctaText {
+  color: #4F3DFF;
+}
 
 .card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 .cardTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 20px; color: #4F3DFF; }
@@ -138,6 +248,7 @@ export default defineComponent({
   .title { font-size: 28px; }
   .card { padding: 16px; }
   .table th, .table td { padding: 10px 12px; font-size: 14px; }
+  .ctaText { font-size: 18px; }
 }
 </style>
 
