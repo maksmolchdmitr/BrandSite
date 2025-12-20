@@ -16,6 +16,14 @@
         </button>
       </div>
 
+      <div class="widgetBox">
+        <div class="widgetTitle">Вход через Telegram</div>
+        <div id="telegram-login-widget"></div>
+        <div class="widgetHint">
+          Используйте виджет Telegram для авторизации
+        </div>
+      </div>
+
       <div class="usersBox">
         <div class="widgetTitle">Mock users</div>
         <div class="usersGrid">
@@ -44,13 +52,32 @@ export default defineComponent({
     }
   },
   async mounted() {
+    // Setup message listener for Telegram callback first
+    this.setupTelegramCallback();
+    
+    // Load mock users for fallback
+    try {
+      this.users = await badmintonClient.listMockUsers();
+    } catch (e) {
+      console.warn('Failed to load mock users:', e);
+    }
+    
+    // Wait for DOM to be ready, then load Telegram widget
+    await this.$nextTick();
+    setTimeout(() => {
+      this.loadTelegramWidget();
+    }, 100);
+    
     // If userId is provided in query params, auto-login
     if (this.userId) {
       console.log("Auto-login with userId:", this.userId);
       await this.loginAs(this.userId);
-    } else {
-      // Otherwise redirect to ratings - login is not needed anymore
-      this.$router.replace("/?page=badminton&section=ratings");
+    }
+  },
+  beforeUnmount() {
+    // Clean up message listener
+    if (this.telegramMessageHandler) {
+      window.removeEventListener("message", this.telegramMessageHandler);
     }
   },
   data() {
@@ -66,6 +93,168 @@ export default defineComponent({
     };
   },
   methods: {
+    async loadTelegramWidget() {
+      // Check if script already loaded
+      if (document.querySelector('script[src*="telegram-widget.js"]')) {
+        return;
+      }
+
+      // Get state from backend
+      let state = null;
+      let botUsername = 'maksmolch_badminton_service_bot';
+      
+      try {
+        // Get state from backend
+        const startResponse = await badmintonClient.authTelegramStart({
+          redirectUrl: `${window.location.origin}${window.location.pathname}`
+        });
+        state = startResponse.state;
+        botUsername = startResponse.botUsername || botUsername;
+        console.log('Telegram auth started, state:', state);
+      } catch (e) {
+        console.error('Failed to get auth state from backend:', e);
+        this.error = 'Не удалось инициализировать авторизацию Telegram';
+        return;
+      }
+
+      // Create script element for Telegram widget
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://telegram.org/js/telegram-widget.js?7';
+      script.setAttribute('data-telegram-login', botUsername);
+      script.setAttribute('data-size', 'large');
+      script.setAttribute('data-userpic', 'false');
+      script.setAttribute('data-request-access', 'write');
+      
+      // Use callback URL - current page
+      const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+      script.setAttribute('data-auth-url', callbackUrl);
+      
+      // Add state if available (Telegram widget supports state parameter)
+      if (state) {
+        // Note: Telegram widget doesn't directly support state in data-state,
+        // but we store it in sessionStorage and verify it in handleTelegramAuth
+      }
+      
+      // Find container and append script
+      const container = document.getElementById('telegram-login-widget');
+      if (!container) {
+        console.error('Telegram widget container not found');
+        this.error = 'Ошибка: контейнер виджета не найден';
+        return;
+      }
+      
+      // Clear container first
+      container.innerHTML = '';
+      
+      // Append script to container - Telegram widget will render here
+      container.appendChild(script);
+      
+      console.log('Telegram widget script added to container', {
+        botUsername,
+        callbackUrl,
+        container: container.id,
+        scriptAttrs: {
+          'data-telegram-login': script.getAttribute('data-telegram-login'),
+          'data-size': script.getAttribute('data-size'),
+          'data-auth-url': script.getAttribute('data-auth-url')
+        }
+      });
+      
+      // Wait for script to load and widget to render
+      script.onload = () => {
+        console.log('Telegram widget script loaded');
+        setTimeout(() => {
+          const iframe = container.querySelector('iframe');
+          if (iframe) {
+            console.log('Telegram widget iframe rendered successfully');
+          } else {
+            console.warn('Telegram widget iframe not found - widget may not be rendering. Check bot username and domain settings in Telegram BotFather.');
+          }
+        }, 500);
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Telegram widget script');
+        this.error = 'Не удалось загрузить виджет Telegram';
+      };
+    },
+    setupTelegramCallback() {
+      // Handle Telegram callback via postMessage (fallback)
+      this.telegramMessageHandler = (event) => {
+        // Check origin
+        if (event.origin.includes('https://t.me') || event.origin.includes('https://telegram.org')) {
+          console.log('Данные от Telegram (postMessage):', event.data);
+          
+          // Telegram sends data in format: {id, first_name, last_name, username, photo_url, auth_date, hash}
+          if (event.data && typeof event.data === 'object') {
+            this.handleTelegramAuth(event.data);
+          }
+        }
+      };
+      
+      window.addEventListener('message', this.telegramMessageHandler, false);
+      
+      // Check URL params for callback (Telegram widget redirects to auth-url with data in query params)
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Telegram sends data as: id, first_name, last_name, username, photo_url, auth_date, hash
+      const telegramParams = ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'];
+      const hasTelegramData = telegramParams.some(param => urlParams.has(param));
+      
+      if (hasTelegramData) {
+        const telegramData = {};
+        telegramParams.forEach(param => {
+          if (urlParams.has(param)) {
+            const value = urlParams.get(param);
+            // Parse numeric values
+            if (param === 'id' || param === 'auth_date') {
+              telegramData[param] = parseInt(value, 10);
+            } else {
+              telegramData[param] = value;
+            }
+          }
+        });
+        
+        console.log('Данные от Telegram (URL redirect):', telegramData);
+        this.handleTelegramAuth(telegramData);
+        
+        // Clean URL after processing
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    },
+    async handleTelegramAuth(telegramData) {
+      this.loading = true;
+      this.error = '';
+      
+      try {
+        console.log('Обработка авторизации Telegram:', telegramData);
+        
+        // Get state from sessionStorage (stored during authTelegramStart)
+        const state = sessionStorage.getItem('telegram_auth_state') || 'mock-state';
+        
+        // Send telegram data to backend
+        const result = await badmintonClient.authTelegramComplete({
+          state: state,
+          telegram: telegramData
+        });
+        
+        console.log('Авторизация успешна:', result);
+        
+        // Clear state
+        sessionStorage.removeItem('telegram_auth_state');
+        
+        // Navigate to ratings page
+        await new Promise(resolve => setTimeout(resolve, 150));
+        await this.$router.push('/?page=badminton&section=ratings');
+        
+      } catch (e) {
+        console.error('Ошибка авторизации Telegram:', e);
+        this.error = e?.message || 'Ошибка авторизации через Telegram';
+        this.loading = false;
+      }
+    },
     async loginAs(userId) {
       this.loading = true;
       this.error = "";
@@ -189,6 +378,17 @@ export default defineComponent({
   border-radius: 18px;
   padding: 16px;
   max-width: 420px;
+}
+
+#telegram-login-widget {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#telegram-login-widget iframe {
+  border: none;
 }
 
 .usersBox {

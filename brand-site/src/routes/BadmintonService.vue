@@ -9,18 +9,22 @@
       </p>
 
       <div class="ctaRow">
-        <RouterLink class="cta" to="/?page=badminton&section=ratings">
-          <span class="ctaText">My ratings</span>
-        </RouterLink>
-        <RouterLink class="cta secondary" to="/?page=badminton&section=games">
-          <span class="ctaText">My games</span>
-        </RouterLink>
-        <RouterLink class="cta secondary" to="/?page=badminton&section=groups">
-          <span class="ctaText">My groups</span>
-        </RouterLink>
-        <a class="cta secondary" href="/badminton-service.openapi.yaml" target="_blank" rel="noreferrer">
-          <span class="ctaText">OpenAPI spec</span>
-        </a>
+        <template v-if="!isLoggedIn">
+          <RouterLink class="cta" to="/?page=badminton&section=login">
+            <span class="ctaText">🔐 Login / Авторизация</span>
+          </RouterLink>
+        </template>
+        <template v-else>
+          <RouterLink class="cta" to="/?page=badminton&section=ratings">
+            <span class="ctaText">My ratings</span>
+          </RouterLink>
+          <RouterLink class="cta secondary" to="/?page=badminton&section=games">
+            <span class="ctaText">My games</span>
+          </RouterLink>
+          <RouterLink class="cta secondary" to="/?page=badminton&section=groups">
+            <span class="ctaText">My groups</span>
+          </RouterLink>
+        </template>
         <RouterLink class="cta secondary" to="/?page=products">
           <span class="ctaText">← Back to Products</span>
         </RouterLink>
@@ -32,6 +36,7 @@
 <script>
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
+import {getLoggedInUserId} from "@/badminton/cookies.js";
 
 export default defineComponent({
   components: {HeadBar},
@@ -42,7 +47,33 @@ export default defineComponent({
         {text: "Touch me", ref: "/?page=contact", isMainSwitch: false},
         {text: "Products", ref: "/?page=products", isMainSwitch: false},
       ],
+      isLoggedIn: false,
     };
+  },
+  mounted() {
+    this.updateAuthStatus();
+    // Listen for storage events to update when login happens in another tab/window
+    window.addEventListener('storage', this.updateAuthStatus);
+    // Also listen for custom login events
+    window.addEventListener('badminton-login', this.updateAuthStatus);
+    window.addEventListener('badminton-logout', this.updateAuthStatus);
+  },
+  beforeUnmount() {
+    window.removeEventListener('storage', this.updateAuthStatus);
+    window.removeEventListener('badminton-login', this.updateAuthStatus);
+    window.removeEventListener('badminton-logout', this.updateAuthStatus);
+  },
+  watch: {
+    // Watch for route changes to update auth status
+    '$route'() {
+      this.updateAuthStatus();
+    },
+  },
+  methods: {
+    updateAuthStatus() {
+      const userId = getLoggedInUserId();
+      this.isLoggedIn = Boolean(userId && userId.trim() !== '');
+    },
   },
 });
 </script>
