@@ -339,7 +339,7 @@ export default defineComponent({
         };
         
         console.log('📤 Sending request to backend:', {
-          endpoint: '/auth/telegram/complete',
+          endpoint: '/api/auth/telegram/complete',
           payload: {
             state: requestPayload.state,
             telegram: {

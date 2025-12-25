@@ -119,7 +119,7 @@ function calcTotals(matches, myParticipantIds) {
 
 export const mockClient = {
   async authTelegramStart({redirectUrl}) {
-    logRequest("POST", "/auth/telegram/start", {redirectUrl});
+    logRequest("POST", "/api/auth/telegram/start", {redirectUrl});
     await delay();
     // Generate a mock state token
     const state = `mock_state_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -135,7 +135,7 @@ export const mockClient = {
   },
 
   async authTelegramComplete({state, telegram}) {
-    logRequest("POST", "/auth/telegram/complete", {state, telegram});
+    logRequest("POST", "/api/auth/telegram/complete", {state, telegram});
     await delay(150);
     
     const db = loadDb();
@@ -194,13 +194,13 @@ export const mockClient = {
   },
 
   async logout() {
-    logRequest("POST", "/auth/logout");
+    logRequest("POST", "/api/auth/logout");
     await delay(80);
     setLoggedInUserId("");
   },
 
   async getMe() {
-    logRequest("GET", "/me");
+    logRequest("GET", "/api/me");
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -214,7 +214,7 @@ export const mockClient = {
   },
 
   async getMyGroups() {
-    logRequest("GET", "/groups");
+    logRequest("GET", "/api/groups");
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -230,7 +230,7 @@ export const mockClient = {
   },
 
   async createGroup({name}) {
-    logRequest("POST", "/groups", {name});
+    logRequest("POST", "/api/groups", {name});
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
@@ -242,7 +242,7 @@ export const mockClient = {
   },
 
   async getGroup(groupId) {
-    logRequest("GET", `/groups/${groupId}`);
+    logRequest("GET", `/api/groups/${groupId}`);
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -265,7 +265,7 @@ export const mockClient = {
   },
 
   async listParticipants(groupId) {
-    logRequest("GET", `/groups/${groupId}/participants`);
+    logRequest("GET", `/api/groups/${groupId}/participants`);
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -284,7 +284,7 @@ export const mockClient = {
   },
 
   async searchParticipants(groupId, {query = "", page = 0, pageSize = 10}) {
-    logRequest("GET", `/groups/${groupId}/participants/search`, {query, page, pageSize});
+    logRequest("GET", `/api/groups/${groupId}/participants/search`, {query, page, pageSize});
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -326,7 +326,7 @@ export const mockClient = {
   },
 
   async createParticipant(groupId, {name}) {
-    logRequest("POST", `/groups/${groupId}/participants`, {name});
+    logRequest("POST", `/api/groups/${groupId}/participants`, {name});
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -338,7 +338,7 @@ export const mockClient = {
   },
 
   async updateParticipant(groupId, participantId, {name}) {
-    logRequest("PUT", `/groups/${groupId}/participants/${participantId}`, {name});
+    logRequest("PUT", `/api/groups/${groupId}/participants/${participantId}`, {name});
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -351,7 +351,7 @@ export const mockClient = {
   },
 
   async deleteParticipant(groupId, participantId) {
-    logRequest("DELETE", `/groups/${groupId}/participants/${participantId}`);
+    logRequest("DELETE", `/api/groups/${groupId}/participants/${participantId}`);
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -363,7 +363,7 @@ export const mockClient = {
   },
 
   async linkUserToParticipant(groupId, participantId, {userId}) {
-    logRequest("POST", `/groups/${groupId}/participants/${participantId}/link-user`, {userId});
+    logRequest("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, {userId});
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -381,7 +381,7 @@ export const mockClient = {
   },
 
   async listMatches(groupId) {
-    logRequest("GET", `/groups/${groupId}/matches`);
+    logRequest("GET", `/api/groups/${groupId}/matches`);
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -400,7 +400,7 @@ export const mockClient = {
   },
 
   async createMatch(groupId, match) {
-    logRequest("POST", `/groups/${groupId}/matches`, match);
+    logRequest("POST", `/api/groups/${groupId}/matches`, match);
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
@@ -424,7 +424,7 @@ export const mockClient = {
   },
 
   async updateMatch(groupId, matchId, patch) {
-    logRequest("PUT", `/groups/${groupId}/matches/${matchId}`, patch);
+    logRequest("PUT", `/api/groups/${groupId}/matches/${matchId}`, patch);
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -437,7 +437,7 @@ export const mockClient = {
   },
 
   async deleteMatch(groupId, matchId) {
-    logRequest("DELETE", `/groups/${groupId}/matches/${matchId}`);
+    logRequest("DELETE", `/api/groups/${groupId}/matches/${matchId}`);
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -447,7 +447,7 @@ export const mockClient = {
   },
 
   async getMyRatings() {
-    logRequest("GET", "/me/ratings");
+    logRequest("GET", "/api/me/ratings");
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -465,7 +465,7 @@ export const mockClient = {
   },
 
   async getMyGamesStats() {
-    logRequest("GET", "/me/games-stats");
+    logRequest("GET", "/api/me/games-stats");
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -497,7 +497,7 @@ export const mockClient = {
   },
 
   async getSinglesLeaderboard(groupId) {
-    logRequest("GET", `/groups/${groupId}/ratings/singles`);
+    logRequest("GET", `/api/groups/${groupId}/ratings/singles`);
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -530,7 +530,7 @@ export const mockClient = {
   },
 
   async getDoublesLeaderboard(groupId) {
-    logRequest("GET", `/groups/${groupId}/ratings/doubles`);
+    logRequest("GET", `/api/groups/${groupId}/ratings/doubles`);
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -574,6 +574,7 @@ export const mockClient = {
   },
 
   async getGroupStats(groupId) {
+    logRequest("GET", `/api/groups/${groupId}/stats`);
     await delay();
     const db = loadDb();
     requireAuth(db);

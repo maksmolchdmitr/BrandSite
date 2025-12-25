@@ -13,41 +13,23 @@ servers:
     description: Production
   - url: http://localhost:8080
     description: Local
-
 tags:
-  - name: Auth
+  - name: TelegramAuth
   - name: Users
   - name: Groups
   - name: Participants
   - name: Matches
   - name: Stats
   - name: Ratings
-
 security:
   - bearerAuth: []
-
 paths:
-  /health:
-    get:
-      tags: [Users]
-      security: []
-      summary: Health check
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  status: { type: string, example: ok }
-
-  /auth/telegram/start:
+  /api/auth/telegram/login:
     post:
-      tags: [Auth]
+      tags: [TelegramAuth]
       security: []
-      summary: Start Telegram authentication
+      summary: Login via Telegram authorization data
+      operationId: telegramLogin
       description: |
         Returns parameters for Telegram Login Widget and a nonce/state identifier.
         Client then completes Telegram login and submits payload to `/auth/telegram/complete`.
@@ -56,60 +38,90 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthTelegramStartRequest"
+              $ref: '#/components/schemas/TelegramUser'
+            example:
+              id: 1319061322
+              auth_date: 1766345094
+              hash: b4af7f35972edeaced1348fd7a8c29bbf42e984f0b42eb5cc22155c6fb9c016e
+              first_name: Maks
+              last_name: Molch
+              username: maksmolch
+              photo_url: https://t.me/i/userpic/320/UEfLx103sdNTvYSrIxFEV8Ug_Z8nBWTrGu1eBRgmbmY.jpg
       responses:
-        "200":
-          description: Start data
+        '200':
+          description: Successfully authenticated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthTelegramStartResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OiR7c2VydmVyLnBvcnR9Iiwic3ViIjoiMTMxOTA2MTMyMiIsImlhdCI6MTc2NjM0NTA5NCwiZXhwIjoxNzY2MzQ4Njk0fQ.H3MEPxHKiNlLyybB1m_YHg13EAfD-VzgDR4Isw8tiSirsQ4Zzn4JgDDe0ulLws1qARV_oiiT0MR22f7wjghYsc0JkXPSE2amHQP6Jw-0bFy9myeLA_LPV7CBzk1RUoDqzrAudPiaeiT3rguI-GoRE0uXHMTWlmhXSHgVNiXQiQEYcxiUlqRG0xiQoJlma0L4cI2vYOnMiI0d03IGXu2Aod76GNiBRnOHzWowX658CvAlSGYaKf6sxfy1Zfclp_zgo65vC3f5e0GZDc4gqV9cia1hggyK6dQlxfVS3_TKKPKJ7rAH0c1e4d7ruMVNCz-CPC1XqejlssFH64ecTKjIkw
+                refreshToken: 1bdc818f-7851-4aef-b31a-a6999a4cab52
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /auth/telegram/complete:
+  /api/auth/refresh:
     post:
-      tags: [Auth]
-      security: []
-      summary: Complete Telegram authentication
-      description: |
-        Verifies Telegram auth payload signature and returns JWT access token.
+      tags: [TelegramAuth]
+      summary: Generate new access and refresh tokens using refresh token
+      operationId: refreshToken
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthTelegramCompleteRequest"
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: 1bdc818f-7851-4aef-b31a-a6999a4cab52
       responses:
-        "200":
-          description: Auth tokens
+        '200':
+          description: Successfully refreshed tokens
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthTokens"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          description: Conflict (e.g. user already linked to another participant, depending on business rules)
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OiR7c2VydmVyLnBvcnR9Iiwic3ViIjoiMTMxOTA2MTMyMiIsImlhdCI6MTc2NjM0NTA5NCwiZXhwIjoxNzY2MzQ4Njk0fQ.H3MEPxHKiNlLyybB1m_YHg13EAfD-VzgDR4Isw8tiSirsQ4Zzn4JgDDe0ulLws1qARV_oiiT0MR22f7wjghYsc0JkXPSE2amHQP6Jw-0bFy9myeLA_LPV7CBzk1RUoDqzrAudPiaeiT3rguI-GoRE0uXHMTWlmhXSHgVNiXQiQEYcxiUlqRG0xiQoJlma0L4cI2vYOnMiI0d03IGXu2Aod76GNiBRnOHzWowX658CvAlSGYaKf6sxfy1Zfclp_zgo65vC3f5e0GZDc4gqV9cia1hggyK6dQlxfVS3_TKKPKJ7rAH0c1e4d7ruMVNCz-CPC1XqejlssFH64ecTKjIkw
+                refreshToken: 1bdc818f-7851-4aef-b31a-a6999a4cab52
+        '400':
+          description: Bad request (invalid refresh token)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (expired or invalid refresh token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /auth/logout:
+  /api/auth/logout:
     post:
-      tags: [Auth]
+      tags: [TelegramAuth]
       summary: Logout current session (token revocation if supported)
+      operationId: logout
       responses:
         "204":
           description: Logged out
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /me:
+  /api/me:
     get:
       tags: [Users]
       summary: Current user profile
+      operationId: getCurrentUser
       responses:
         "200":
           description: Profile
@@ -120,10 +132,11 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /groups:
+  /api/groups:
     get:
       tags: [Groups]
       summary: List groups where current user is a member (via linked participant)
+      operationId: listGroups
       parameters:
         - in: query
           name: limit
@@ -144,6 +157,7 @@ paths:
     post:
       tags: [Groups]
       summary: Create new group
+      operationId: createGroup
       requestBody:
         required: true
         content:
@@ -162,7 +176,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /groups/{groupId}:
+  /api/groups/{groupId}:
     get:
       tags: [Groups]
       summary: Get group by id (member-only)
@@ -182,7 +196,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/participants:
+  /api/groups/{groupId}/participants:
     get:
       tags: [Participants]
       summary: List participants in group (member-only)
@@ -204,7 +218,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/participants/search:
+  /api/groups/{groupId}/participants/search:
     get:
       tags: [Participants]
       summary: Search participants in group with pagination (member-only)
@@ -270,9 +284,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /groups/{groupId}/participants/{participantId}:
+  /api/groups/{groupId}/participants/{participantId}:
     patch:
       tags: [Participants]
       summary: Update participant (admin-only)
@@ -317,7 +331,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/participants/{participantId}/link-user:
+  /api/groups/{groupId}/participants/{participantId}/link-user:
     post:
       tags: [Participants]
       summary: Link registered user to participant (admin-only)
@@ -353,9 +367,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /groups/{groupId}/matches:
+  /api/groups/{groupId}/matches:
     get:
       tags: [Matches]
       summary: List matches in group (member-only)
@@ -417,7 +431,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/matches/{matchId}:
+  /api/groups/{groupId}/matches/{matchId}:
     patch:
       tags: [Matches]
       summary: Update match result (admin-only)
@@ -462,7 +476,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /me/groups:
+  /api/me/groups:
     get:
       tags: [Groups]
       summary: Same as /groups (alias for convenience)
@@ -476,7 +490,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /me/stats:
+  /api/me/stats:
     get:
       tags: [Stats]
       summary: Current user stats across all groups (or filter by group)
@@ -494,7 +508,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /me/games-stats:
+  /api/me/games-stats:
     get:
       tags: [Stats]
       summary: Current user game statistics with recent matches
@@ -513,7 +527,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /me/ratings:
+  /api/me/ratings:
     get:
       tags: [Ratings]
       summary: Current user ratings (singles + doubles)
@@ -531,7 +545,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /groups/{groupId}/ratings/singles:
+  /api/groups/{groupId}/ratings/singles:
     get:
       tags: [Ratings]
       summary: Singles Elo leaderboard in group (member-only)
@@ -553,7 +567,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/ratings/doubles:
+  /api/groups/{groupId}/ratings/doubles:
     get:
       tags: [Ratings]
       summary: Doubles Elo leaderboard in group (member-only)
@@ -575,7 +589,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /groups/{groupId}/stats:
+  /api/groups/{groupId}/stats:
     get:
       tags: [Stats]
       summary: Group stats (member-only)
@@ -625,96 +639,84 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
       description: Forbidden
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Not found
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
-    Error:
+    TelegramUser:
       type: object
-      additionalProperties: false
+      required:
+        - id
+        - auth_date
+        - hash
       properties:
-        code: { type: string, example: bad_request }
-        message: { type: string, example: Invalid input }
-        details:
-          type: object
-          additionalProperties: true
-
-    AuthTelegramStartRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        redirectUrl:
+        id:
+          type: integer
+          format: int64
+        first_name:
           type: string
-          description: Where to redirect user after successful login in frontend
-          example: https://brand.example.com/badminton-service
-      required: [redirectUrl]
-
-    AuthTelegramStartResponse:
-      type: object
-      additionalProperties: false
-      properties:
-        state:
+        last_name:
           type: string
-          description: Anti-CSRF state nonce
-          example: 8f1b2c90b6a44d61a6b1
-        botUsername:
+        username:
           type: string
-          example: my_badminton_bot
-        widgetOrigin:
+        photo_url:
           type: string
-          example: https://oauth.telegram.org
-      required: [state, botUsername]
-
-    AuthTelegramCompleteRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        state:
+        auth_date:
+          type: integer
+          format: int64
+        hash:
           type: string
-          description: Must match issued state from /auth/telegram/start
-        telegram:
-          $ref: "#/components/schemas/TelegramAuthPayload"
-      required: [state, telegram]
 
-    TelegramAuthPayload:
+    TokenResponse:
       type: object
-      additionalProperties: false
-      description: Telegram login widget payload (fields depend on Telegram)
+      required:
+        - accessToken
+        - refreshToken
       properties:
-        id: { type: integer, format: int64, description: Telegram user id }
-        first_name: { type: string }
-        last_name: { type: string }
-        username: { type: string }
-        photo_url: { type: string }
-        auth_date: { type: integer, format: int64 }
-        hash: { type: string, description: Telegram signature hash }
-      required: [id, auth_date, hash]
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
 
-    AuthTokens:
+    RefreshRequest:
       type: object
-      additionalProperties: false
+      required:
+        - refreshToken
       properties:
-        accessToken: { type: string }
-        tokenType: { type: string, example: Bearer }
-        expiresInSec: { type: integer, example: 3600 }
-      required: [accessToken, tokenType, expiresInSec]
+        refreshToken:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+        path:
+          type: string
 
     User:
       type: object
@@ -1033,5 +1035,3 @@ components:
         elo: { type: number, format: double }
         games: { type: integer, minimum: 0 }
       required: [pairKey, participantIds, participantNames, elo, games]
-
-
