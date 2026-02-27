@@ -49,33 +49,65 @@ export default {
           ref: '/?page=products',
           isMainSwitch: false
         }
-      ],
-      experienceItems: [
+      ],experienceItems: [
         {
           date: '05.03.25-' + getDateNow(),
-          text: `Came to work in *Yandex*
-Synchronise data from different tables with Yson using YQL queries.
-Migrating project to a new version of JUnit, Java and Spring boot for the internal framework
+          text: `Joined *Yandex Market Ads* as a backend engineer.
+
+Own full-cycle development of product and infrastructure features — from requirements clarification and API design to rollout, monitoring and on-call support in a high-load distributed environment.
+
+Worked on CPM / CPA advertising systems, Game Center mechanics and bonus programs:
+- Built and supported admin APIs, analytics exports (YT + Temporal workflows), billing & targeting integrations
+- Migrated targeting logic from hardcoded rules to configuration-driven YT tables
+- Improved observability through logging and workflow instrumentation
+- Optimized latency and response time of critical endpoints
+- Removed large volumes of legacy code, simplifying architecture and reducing technical debt
+
+Key impact:
+- Led rollout of new game mechanics to 100% of audience → DAU +350%, revenue +78%
+- Built backend infrastructure for multi-creative campaigns, enabling bandit-based optimization (CTR +59.7%, CPC −37.4%)
+- Delivered multiple bonus mechanics improving advertiser engagement and conversion rates
 `
         },
+
         {
           date: '06.08.24-27.02.25',
-          text: `Worked at *STM Labs*
-- Worked on a high-load service with a reactive stack (Spring Webflux) and advanced security (Spring Security and custom RPC framework)
-- Used clean-architecture to deal with legacy code and make it more readable and maintainable
-- Wrote complex SQL queries using the jOOQ library
-- Added dynamic and customizable validators through configuration
+          text: `Backend Engineer at *STM Labs* (B2G).
+
+Developed and optimized high-load reactive services (Spring WebFlux + custom RPC framework).
+
+- Integrated distributed tracing into internal RPC library, improving incident investigation
+- Refactored legacy components using clean architecture principles
+- Automated code quality validation and improved CI reliability
+- Contributed to MapReduce-style large-scale data processing pipelines
+- Participated in performance tuning and production incident analysis
 `
         },
+
         {
           date: '02.04.24-05.07.24',
-          text: `I did an internship at *Yandex*:
-- Added endpoints with new functionality, changed the behavior of legacy code and tested my implementation in pre-production, looked at traces and logs to find bugs
-- Communicated with related teams to solve work problems
-- Taught the balancers of the entire Yandex monitoring to ban shards, while maintaining the persistence of the cache and saving the state in Ydb
-- Worked a lot with asynchronous code, actor systems and distributed architecture
+          text: `Backend Engineering Intern at *Yandex*.
+
+- Implemented shard banning logic in monitoring balancers while preserving cache persistence in YDB
+- Designed and implemented new endpoints; modified legacy services with full pre-production validation
+- Worked extensively with asynchronous code, actor-based systems and distributed architecture
+- Analyzed traces and logs to identify and resolve production-level issues
 `
         },
+
+        {
+          date: '09.2024-06.2025',
+          text: `Founder at *Random Walk*.
+
+Led a cross-functional team (mobile, QA, design, backend).
+
+- Designed and implemented a distributed WebSocket-based backend service
+- Developed a dynamic GraphQL-based web platform
+- Managed product lifecycle from ideation to production release
+
+GitHub – https://github.com/ru-random-walk
+`
+        }
       ]
     }
   },
@@ -91,7 +123,18 @@ Migrating project to a new version of JUnit, Java and Spring boot for the intern
   },
   methods: {
     formatText(text) {
-      return text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+      return text
+          // жирный текст
+          .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+
+          // автоматическое превращение ссылок в <a>
+          .replace(
+              /(https?:\/\/[^\s]+)/g,
+              '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+          )
+
+          // переносы строк
+          .replace(/\n/g, '<br>');
     }
   }
 }
