@@ -1,1 +1,4 @@
+# Прокси API на бекенд (позволяет обойтись без HTTPS на беке: браузер → Netlify HTTPS → бек по HTTP)
+/api/*  http://badminton-service.website/api/:splat  200
+
 /* /index.html 200

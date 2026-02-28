@@ -12,6 +12,9 @@ export const TELEGRAM_OAUTH_BOT_ID = "7685244546";
 export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
 
 export function getBadmintonApiBaseUrl() {
+  if (typeof window !== "undefined" && window.location?.hostname?.includes("netlify.app")) {
+    return "";
+  }
   let url = (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
   if (typeof window !== "undefined" && window.location?.protocol === "https:" && url.startsWith("http://")) {
     url = "https" + url.slice(4);

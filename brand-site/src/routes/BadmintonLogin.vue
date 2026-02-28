@@ -194,7 +194,12 @@ export default defineComponent({
         await this.$router.push("/?page=badminton&section=ratings");
       } catch (e) {
         tgLog("7. telegramLogin failed", e?.message);
-        this.error = e?.message || "Ошибка авторизации через Telegram";
+        const msg = e?.message || "";
+        if (msg === "Failed to fetch" || (msg && msg.includes("fetch"))) {
+          this.error = "Не удалось подключиться к серверу. Проверьте, что у бекенда (badminton-service.website) настроен валидный HTTPS-сертификат.";
+        } else {
+          this.error = msg || "Ошибка авторизации через Telegram";
+        }
       } finally {
         this.loading = false;
       }
