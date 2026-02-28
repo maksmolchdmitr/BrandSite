@@ -11,6 +11,7 @@ import {
   setTokens,
   clearTokens,
 } from "./apiHelpers.js";
+import { setLoggedInUserId } from "./cookies.js";
 
 const BASE_URL = getBadmintonApiBaseUrl();
 
@@ -116,8 +117,11 @@ export async function refreshToken() {
 export async function logout() {
   try {
     await apiRequest("/api/auth/logout", { method: "POST" });
+  } catch (_) {
+    // Игнорируем ошибку сети/ответа — всегда чистим локальное состояние
   } finally {
     clearTokens();
+    setLoggedInUserId("");
   }
 }
 

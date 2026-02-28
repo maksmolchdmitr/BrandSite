@@ -46,6 +46,9 @@ import {badmintonClient} from "@/badminton/client.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 import {TELEGRAM_OAUTH_BOT_ID} from "@/badminton/apiHelpers.js";
 
+// Ссылку на popup храним вне data(), иначе Vue делает её реактивной и браузер кидает SecurityError на Window
+let telegramPopupRef = null;
+
 export default defineComponent({
   components: {HeadBar},
   props: {
@@ -72,7 +75,8 @@ export default defineComponent({
     if (this.telegramMessageHandler) {
       window.removeEventListener("message", this.telegramMessageHandler);
     }
-    if (this.telegramPopup) try { this.telegramPopup.close(); } catch (_) {}
+    if (telegramPopupRef) try { telegramPopupRef.close(); } catch (_) {}
+    telegramPopupRef = null;
   },
   data() {
     return {
@@ -85,7 +89,6 @@ export default defineComponent({
       error: "",
       users: [],
       telegramAuthProcessed: false,
-      telegramPopup: null,
     };
   },
   methods: {
@@ -97,9 +100,8 @@ export default defineComponent({
         this.error = "Не удалось определить origin страницы";
         return;
       }
-      // OAuth на /auth редиректит на /auth/push, который отдаёт данные через postMessage в opener — поэтому открываем в popup
       const w = window.open(url, "tg_oauth", "width=500,height=600,scrollbars=yes,resizable=yes");
-      this.telegramPopup = w;
+      telegramPopupRef = w;
       if (!w) {
         console.warn("[TG Auth] Popup blocked? Falling back to full redirect.");
         window.location.assign(url);
@@ -147,8 +149,8 @@ export default defineComponent({
           if (hasId) {
             console.log("[TG Auth] postMessage from Telegram", event.origin, event.data);
             this.telegramAuthProcessed = true;
-            if (this.telegramPopup) try { this.telegramPopup.close(); } catch (_) {}
-            this.telegramPopup = null;
+            if (telegramPopupRef) try { telegramPopupRef.close(); } catch (_) {}
+            telegramPopupRef = null;
             this.handleTelegramAuth(event.data);
           }
         }
