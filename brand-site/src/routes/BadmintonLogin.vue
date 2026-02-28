@@ -167,15 +167,17 @@ export default defineComponent({
           if (BADMINTON_DEBUG && data) tgLog("postMessage from TG skipped", typeof data, this.telegramAuthProcessed);
           return;
         }
-        const hasId = "id" in data && "hash" in data;
+        // Telegram может присылать { event, result, origin } — данные пользователя в result
+        const payload = (data.result && typeof data.result === "object") ? data.result : data;
+        const hasId = payload && "id" in payload && "hash" in payload;
         if (hasId) {
-          tgLog("4. Valid Telegram data", data.id, data.first_name);
+          tgLog("4. Valid Telegram data", payload.id, payload.first_name);
           this.telegramAuthProcessed = true;
           if (telegramPopupRef) try { telegramPopupRef.close(); } catch (_) {}
           telegramPopupRef = null;
-          this.handleTelegramAuth(data);
+          this.handleTelegramAuth(payload);
         } else {
-          tgLog("postMessage from TG no id/hash", Object.keys(data || {}));
+          tgLog("postMessage from TG no id/hash", Object.keys(data || {}), payload ? Object.keys(payload) : "-");
         }
       };
       window.addEventListener("message", this.telegramMessageHandler, false);
