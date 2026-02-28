@@ -118,61 +118,29 @@ function calcTotals(matches, myParticipantIds) {
 }
 
 export const mockClient = {
-  async authTelegramStart({redirectUrl}) {
-    logRequest("POST", "/api/auth/telegram/start", {redirectUrl});
-    await delay();
-    // Generate a mock state token
-    const state = `mock_state_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    // Store in sessionStorage for later verification
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('telegram_auth_state', state);
-    }
-    return {
-      state,
-      botUsername: 'maksmolch_badminton_service_bot',
-      widgetOrigin: 'https://oauth.telegram.org'
-    };
-  },
-
-  async authTelegramComplete({state, telegram}) {
-    logRequest("POST", "/api/auth/telegram/complete", {state, telegram});
+  async telegramLogin(telegram) {
+    logRequest("POST", "/api/auth/telegram/login", { telegram: "..." });
     await delay(150);
-    
     const db = loadDb();
-    
-    // Verify state (in real implementation, this would be verified against stored state)
-    const storedState = typeof window !== 'undefined' ? sessionStorage.getItem('telegram_auth_state') : null;
-    if (storedState && storedState !== state) {
-      throw new Error("Invalid state");
-    }
-    
-    // Find or create user by telegramId
     const telegramId = String(telegram.id);
     let user = db.users.find(u => String(u.telegramId) === telegramId);
-    
     if (!user) {
-      // Create new user from Telegram data
       const username = telegram.username || `tg_${telegram.id}`;
-      const displayName = [telegram.first_name, telegram.last_name].filter(Boolean).join(' ') || username;
+      const displayName = [telegram.first_name, telegram.last_name].filter(Boolean).join(" ") || username;
       user = {
         id: uuid("u"),
         telegramId: parseInt(telegram.id, 10),
-        username: username,
-        displayName: displayName,
-        createdAt: nowIso()
+        username,
+        displayName,
+        createdAt: nowIso(),
       };
       db.users.push(user);
       saveDb(db);
     }
-    
-    // Set as logged in user
     setLoggedInUserId(user.id);
-    
-    // Return mock token (in real implementation, this would be a JWT)
     return {
       accessToken: `mock_token_${user.id}_${Date.now()}`,
-      tokenType: 'Bearer',
-      expiresInSec: 3600
+      refreshToken: `mock_refresh_${user.id}_${Date.now()}`,
     };
   },
 

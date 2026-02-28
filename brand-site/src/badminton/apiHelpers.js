@@ -2,22 +2,48 @@
  * Helper functions for API client
  */
 
-const TOKEN_KEY = "badminton.accessToken";
+const ACCESS_TOKEN_KEY = "badminton.accessToken";
+const REFRESH_TOKEN_KEY = "badminton.refreshToken";
+
+/** Telegram OAuth: bot_id for https://oauth.telegram.org/auth */
+export const TELEGRAM_OAUTH_BOT_ID = "7685244546";
 
 export function getBadmintonApiBaseUrl() {
   return (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
 }
 
 export function getAccessToken() {
-  return localStorage.getItem(TOKEN_KEY) || "";
+  return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
 }
 
 export function setAccessToken(token) {
   if (!token) {
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
     return;
   }
-  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_TOKEN_KEY) || "";
+}
+
+export function setRefreshToken(token) {
+  if (!token) {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    return;
+  }
+  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+}
+
+export function setTokens(accessToken, refreshToken) {
+  setAccessToken(accessToken);
+  setRefreshToken(refreshToken);
+}
+
+export function clearTokens() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 export function isAuthed() {

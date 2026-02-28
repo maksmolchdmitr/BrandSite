@@ -1,18 +1,15 @@
 /**
  * Real API client for Badminton Service.
- * This is a wrapper around the API functions to match mockClient interface.
+ * Wrapper around api.js to match mockClient interface.
+ * Auth: Telegram OAuth → telegramLogin(telegramUser) → Bearer + refresh.
  */
 
 import * as api from "./api.js";
 
 export const realClient = {
-  // Auth endpoints
-  async authTelegramStart({redirectUrl}) {
-    return api.authTelegramStart({redirectUrl});
-  },
-
-  async authTelegramComplete({state, telegram}) {
-    return api.authTelegramComplete({state, telegram});
+  // Auth: один вызов — данные от Telegram в telegramLogin
+  async telegramLogin(telegramUser) {
+    return api.telegramLogin(telegramUser);
   },
 
   async logout() {
@@ -24,8 +21,8 @@ export const realClient = {
     return api.getMe();
   },
 
-  async getMyGroups({limit, cursor} = {}) {
-    return api.getMyGroups({limit, cursor});
+  async getMyGroups({ limit, pageToken } = {}) {
+    return api.getMyGroups({ limit, pageToken });
   },
 
   async getMyStats({groupId} = {}) {
@@ -75,8 +72,8 @@ export const realClient = {
   },
 
   // Match endpoints
-  async listMatches(groupId, {from, to, limit, cursor} = {}) {
-    return api.listMatches(groupId, {from, to, limit, cursor});
+  async listMatches(groupId, { from, to, limit, pageToken } = {}) {
+    return api.listMatches(groupId, { from, to, limit, pageToken });
   },
 
   async createMatch(groupId, match) {

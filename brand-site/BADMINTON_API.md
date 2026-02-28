@@ -31,13 +31,15 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 ## API Endpoints
 
 ### Authentication
-- `POST /auth/telegram/start` - Start Telegram authentication
-- `POST /auth/telegram/complete` - Complete Telegram authentication
-- `POST /auth/logout` - Logout
+
+Флоу: пользователь авторизуется через [Telegram OAuth](https://oauth.telegram.org/auth?bot_id=7685244546) (кнопка на фронте ведёт туда), после редиректа обратно фронт отправляет полученные данные в `telegramLogin`. Дальше все запросы — с заголовком `Authorization: Bearer <access_token>`. При 401 фронт пробует `refreshToken` и повторяет запрос.
+
+- `POST /api/auth/telegram/login` — логин: тело = данные от Telegram (id, first_name, last_name, username, photo_url, auth_date, hash). Ответ: `{ accessToken, refreshToken }`.
+- `POST /api/auth/refresh` — обновление токенов: тело `{ refreshToken }`, ответ `{ accessToken, refreshToken }`.
+- `POST /api/auth/logout` — выход (инвалидация сессии при поддержке на беке).
 
 ### User
-- `GET /me` - Get current user profile
-- `GET /me/groups` - List user's groups
+- `GET /api/me` - Get current user profile
 - `GET /me/stats` - Get user statistics
 - `GET /me/ratings` - Get user Elo ratings
 - `GET /me/games-stats` - Get user game statistics with recent matches

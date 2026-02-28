@@ -1,21 +1,22 @@
 /**
  * Real API client for Badminton Service.
- * 
- * This file provides a wrapper around the generated OpenAPI client.
- * The generated client is created from badminton-service.openapi.yaml
- * using: npm run generate-api-client
- * 
- * For now, this is a manual implementation matching the OpenAPI spec.
- * When the backend is ready, uncomment the generated client import below.
+ * Auth flow: Telegram OAuth (oauth.telegram.org) → telegramLogin → Bearer access token.
+ * On 401 we try refreshToken once and retry.
  */
 
-import {getBadmintonApiBaseUrl, getAccessToken, setAccessToken} from "./apiHelpers.js";
+import {
+  getBadmintonApiBaseUrl,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens,
+} from "./apiHelpers.js";
 
 const BASE_URL = getBadmintonApiBaseUrl();
 
-async function apiRequest(path, options = {}) {
-  const {method = "GET", body, headers = {}} = options;
-  
+async function apiRequest(path, options = {}, skipRefresh = false) {
+  const { method = "GET", body, headers = {} } = options;
+
   const url = `${BASE_URL}${path}`;
   const requestHeaders = {
     "Content-Type": "application/json",
@@ -37,16 +38,27 @@ async function apiRequest(path, options = {}) {
   }
 
   const response = await fetch(url, config);
-  
+
+  // 401: try refresh once and retry (except for auth endpoints)
+  if (response.status === 401 && !skipRefresh && getRefreshToken()) {
+    try {
+      const refreshed = await doRefreshToken();
+      if (refreshed) {
+        return apiRequest(path, options, true);
+      }
+    } catch (_) {
+      clearTokens();
+    }
+  }
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({message: response.statusText}));
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
     const error = new Error(errorData.message || `HTTP ${response.status}`);
     error.status = response.status;
     error.data = errorData;
     throw error;
   }
 
-  // Handle 204 No Content
   if (response.status === 204) {
     return null;
   }
@@ -54,32 +66,56 @@ async function apiRequest(path, options = {}) {
   return response.json();
 }
 
-// Auth endpoints
-export async function authTelegramStart({redirectUrl}) {
-  return apiRequest("/api/auth/telegram/start", {
+async function doRefreshToken() {
+  const refresh = getRefreshToken();
+  if (!refresh) return false;
+  const result = await fetch(`${BASE_URL}/api/auth/refresh`, {
     method: "POST",
-    body: {redirectUrl},
-    headers: {Authorization: undefined}, // No auth for this endpoint
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: refresh }),
   });
+  if (!result.ok) return false;
+  const data = await result.json();
+  if (data.accessToken && data.refreshToken) {
+    setTokens(data.accessToken, data.refreshToken);
+    return true;
+  }
+  return false;
 }
 
-export async function authTelegramComplete({state, telegram}) {
-  const result = await apiRequest("/api/auth/telegram/complete", {
+// Auth: один шаг — отправляем данные от Telegram в telegramLogin
+export async function telegramLogin(telegramUser) {
+  const result = await apiRequest("/api/auth/telegram/login", {
     method: "POST",
-    body: {state, telegram},
-    headers: {Authorization: undefined}, // No auth for this endpoint
-  });
-  
-  if (result.accessToken) {
-    setAccessToken(result.accessToken);
+    body: telegramUser,
+    headers: { Authorization: undefined },
+  }, true);
+  if (result.accessToken && result.refreshToken) {
+    setTokens(result.accessToken, result.refreshToken);
   }
-  
+  return result;
+}
+
+export async function refreshToken() {
+  const refresh = getRefreshToken();
+  if (!refresh) throw new Error("No refresh token");
+  const result = await apiRequest("/api/auth/refresh", {
+    method: "POST",
+    body: { refreshToken: refresh },
+    headers: { Authorization: undefined },
+  }, true);
+  if (result.accessToken && result.refreshToken) {
+    setTokens(result.accessToken, result.refreshToken);
+  }
   return result;
 }
 
 export async function logout() {
-  await apiRequest("/api/auth/logout", {method: "POST"});
-  setAccessToken(null);
+  try {
+    await apiRequest("/api/auth/logout", { method: "POST" });
+  } finally {
+    clearTokens();
+  }
 }
 
 // User endpoints
@@ -87,10 +123,10 @@ export async function getMe() {
   return apiRequest("/api/me");
 }
 
-export async function getMyGroups({limit, cursor} = {}) {
+export async function getMyGroups({ limit, pageToken } = {}) {
   const params = new URLSearchParams();
   if (limit) params.append("limit", limit);
-  if (cursor) params.append("cursor", cursor);
+  if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
   return apiRequest(`/api/groups${query ? `?${query}` : ""}`);
 }
@@ -163,12 +199,12 @@ export async function linkUserToParticipant(groupId, participantId, {userId}) {
 }
 
 // Match endpoints
-export async function listMatches(groupId, {from, to, limit, cursor} = {}) {
+export async function listMatches(groupId, { from, to, limit, pageToken } = {}) {
   const params = new URLSearchParams();
   if (from) params.append("from", from);
   if (to) params.append("to", to);
   if (limit) params.append("limit", limit);
-  if (cursor) params.append("cursor", cursor);
+  if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches${query ? `?${query}` : ""}`);
 }
