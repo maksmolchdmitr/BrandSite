@@ -22,17 +22,16 @@ tags:
   - name: Stats
   - name: Ratings
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 paths:
   /api/auth/telegram/login:
     post:
-      tags: [TelegramAuth]
-      security: []
+      tags: [ TelegramAuth ]
+      security: [ ]
       summary: Login via Telegram authorization data
       operationId: telegramLogin
       description: |
-        Returns parameters for Telegram Login Widget and a nonce/state identifier.
-        Client then completes Telegram login and submits payload to `/auth/telegram/complete`.
+        Returns access and refresh tokens for the user.
       requestBody:
         required: true
         content:
@@ -72,7 +71,7 @@ paths:
 
   /api/auth/refresh:
     post:
-      tags: [TelegramAuth]
+      tags: [ TelegramAuth ]
       summary: Generate new access and refresh tokens using refresh token
       operationId: refreshToken
       requestBody:
@@ -108,7 +107,7 @@ paths:
 
   /api/auth/logout:
     post:
-      tags: [TelegramAuth]
+      tags: [ TelegramAuth ]
       summary: Logout current session (token revocation if supported)
       operationId: logout
       responses:
@@ -119,7 +118,7 @@ paths:
 
   /api/me:
     get:
-      tags: [Users]
+      tags: [ Users ]
       summary: Current user profile
       operationId: getCurrentUser
       responses:
@@ -134,7 +133,7 @@ paths:
 
   /api/groups:
     get:
-      tags: [Groups]
+      tags: [ Groups ]
       summary: List groups where current user is a member (via linked participant)
       operationId: listGroups
       parameters:
@@ -142,7 +141,7 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
         - in: query
-          name: cursor
+          name: pageToken
           schema: { type: string }
       responses:
         "200":
@@ -155,7 +154,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
 
     post:
-      tags: [Groups]
+      tags: [ Groups ]
       summary: Create new group
       operationId: createGroup
       requestBody:
@@ -178,7 +177,7 @@ paths:
 
   /api/groups/{groupId}:
     get:
-      tags: [Groups]
+      tags: [ Groups ]
       summary: Get group by id (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -198,7 +197,7 @@ paths:
 
   /api/groups/{groupId}/participants:
     get:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: List participants in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -220,7 +219,7 @@ paths:
 
   /api/groups/{groupId}/participants/search:
     get:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: Search participants in group with pagination (member-only)
       description: |
         Search participants by name with pagination. Results are sorted alphabetically.
@@ -254,7 +253,7 @@ paths:
           $ref: "#/components/responses/NotFound"
 
     post:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: Create participant (admin-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -288,7 +287,7 @@ paths:
 
   /api/groups/{groupId}/participants/{participantId}:
     patch:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: Update participant (admin-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -316,7 +315,7 @@ paths:
           $ref: "#/components/responses/NotFound"
 
     delete:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: Delete participant (admin-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -333,7 +332,7 @@ paths:
 
   /api/groups/{groupId}/participants/{participantId}/link-user:
     post:
-      tags: [Participants]
+      tags: [ Participants ]
       summary: Link registered user to participant (admin-only)
       description: |
         Binds a registered user (by id) to a participant entry in a group.
@@ -371,7 +370,7 @@ paths:
 
   /api/groups/{groupId}/matches:
     get:
-      tags: [Matches]
+      tags: [ Matches ]
       summary: List matches in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -387,7 +386,7 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
         - in: query
-          name: cursor
+          name: pageToken
           schema: { type: string }
       responses:
         "200":
@@ -404,7 +403,7 @@ paths:
           $ref: "#/components/responses/NotFound"
 
     post:
-      tags: [Matches]
+      tags: [ Matches ]
       summary: Create match result (admin-only)
       description: Supports singles and doubles.
       parameters:
@@ -433,7 +432,7 @@ paths:
 
   /api/groups/{groupId}/matches/{matchId}:
     patch:
-      tags: [Matches]
+      tags: [ Matches ]
       summary: Update match result (admin-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -461,7 +460,7 @@ paths:
           $ref: "#/components/responses/NotFound"
 
     delete:
-      tags: [Matches]
+      tags: [ Matches ]
       summary: Delete match result (admin-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -476,23 +475,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /api/me/groups:
-    get:
-      tags: [Groups]
-      summary: Same as /groups (alias for convenience)
-      responses:
-        "200":
-          description: Groups page
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GroupPage"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
   /api/me/stats:
     get:
-      tags: [Stats]
+      tags: [ Stats ]
       summary: Current user stats across all groups (or filter by group)
       parameters:
         - in: query
@@ -510,7 +495,7 @@ paths:
 
   /api/me/games-stats:
     get:
-      tags: [Stats]
+      tags: [ Stats ]
       summary: Current user game statistics with recent matches
       description: Returns detailed stats including recent matches list
       parameters:
@@ -529,7 +514,7 @@ paths:
 
   /api/me/ratings:
     get:
-      tags: [Ratings]
+      tags: [ Ratings ]
       summary: Current user ratings (singles + doubles)
       parameters:
         - in: query
@@ -547,7 +532,7 @@ paths:
 
   /api/groups/{groupId}/ratings/singles:
     get:
-      tags: [Ratings]
+      tags: [ Ratings ]
       summary: Singles Elo leaderboard in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -569,7 +554,7 @@ paths:
 
   /api/groups/{groupId}/ratings/doubles:
     get:
-      tags: [Ratings]
+      tags: [ Ratings ]
       summary: Doubles Elo leaderboard in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -591,7 +576,7 @@ paths:
 
   /api/groups/{groupId}/stats:
     get:
-      tags: [Stats]
+      tags: [ Stats ]
       summary: Group stats (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -724,10 +709,12 @@ components:
       properties:
         id: { type: string }
         telegramId: { type: integer, format: int64 }
-        username: { type: string }
-        displayName: { type: string }
         createdAt: { type: string, format: date-time }
-      required: [id, telegramId, createdAt]
+        username: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        photoUrl: { type: string }
+      required: [ id, telegramId, createdAt ]
 
     Group:
       type: object
@@ -740,15 +727,15 @@ components:
         myRole:
           type: string
           description: Role of current user in this group
-          enum: [member, admin]
-      required: [id, name, createdAt]
+          enum: [ member, admin ]
+      required: [ id, name, createdAt ]
 
     GroupCreateRequest:
       type: object
       additionalProperties: false
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
-      required: [name]
+      required: [ name ]
 
     GroupPage:
       type: object
@@ -758,10 +745,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Group"
-        nextCursor:
+        pageToken:
           type: string
           nullable: true
-      required: [items]
+      required: [ items ]
 
     Participant:
       type: object
@@ -775,14 +762,14 @@ components:
           nullable: true
           description: Linked registered user id (if any)
         createdAt: { type: string, format: date-time }
-      required: [id, groupId, name, createdAt]
+      required: [ id, groupId, name, createdAt ]
 
     ParticipantCreateRequest:
       type: object
       additionalProperties: false
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
-      required: [name]
+      required: [ name ]
 
     ParticipantUpdateRequest:
       type: object
@@ -811,18 +798,18 @@ components:
         hasMore:
           type: boolean
           description: Whether there are more pages available
-      required: [items, page, pageSize, total, hasMore]
+      required: [ items, page, pageSize, total, hasMore ]
 
     LinkUserRequest:
       type: object
       additionalProperties: false
       properties:
         userId: { type: string }
-      required: [userId]
+      required: [ userId ]
 
     MatchKind:
       type: string
-      enum: [singles, doubles]
+      enum: [ singles, doubles ]
 
     Match:
       type: object
@@ -849,7 +836,7 @@ components:
           $ref: "#/components/schemas/MatchScore"
         createdAt: { type: string, format: date-time }
         createdByUserId: { type: string }
-      required: [id, groupId, kind, startedAt, teamA, teamB, score, createdAt]
+      required: [ id, groupId, kind, startedAt, teamA, teamB, score, createdAt ]
 
     MatchScore:
       type: object
@@ -863,7 +850,7 @@ components:
           maxItems: 5
           items:
             $ref: "#/components/schemas/GameScore"
-      required: [games]
+      required: [ games ]
 
     GameScore:
       type: object
@@ -871,7 +858,7 @@ components:
       properties:
         pointsA: { type: integer, minimum: 0 }
         pointsB: { type: integer, minimum: 0 }
-      required: [pointsA, pointsB]
+      required: [ pointsA, pointsB ]
 
     MatchCreateRequest:
       type: object
@@ -896,7 +883,7 @@ components:
           maxItems: 2
         score:
           $ref: "#/components/schemas/MatchScore"
-      required: [kind, teamA, teamB, score]
+      required: [ kind, teamA, teamB, score ]
 
     MatchUpdateRequest:
       type: object
@@ -924,10 +911,10 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/Match" }
-        nextCursor:
+        pageToken:
           type: string
           nullable: true
-      required: [items]
+      required: [ items ]
 
     UserStats:
       type: object
@@ -938,7 +925,7 @@ components:
           $ref: "#/components/schemas/StatsBlock"
         doubles:
           $ref: "#/components/schemas/StatsBlock"
-      required: [userId, singles, doubles]
+      required: [ userId, singles, doubles ]
 
     UserGamesStats:
       type: object
@@ -955,7 +942,7 @@ components:
           description: Recent matches involving the user
           items:
             $ref: "#/components/schemas/Match"
-      required: [userId, singles, doubles, recentMatches]
+      required: [ userId, singles, doubles, recentMatches ]
 
     GroupStats:
       type: object
@@ -964,7 +951,7 @@ components:
         groupId: { type: string }
         totalMatches: { type: integer, minimum: 0 }
         lastMatchAt: { type: string, format: date-time, nullable: true }
-      required: [groupId, totalMatches]
+      required: [ groupId, totalMatches ]
 
     StatsBlock:
       type: object
@@ -978,7 +965,7 @@ components:
           format: double
           minimum: 0
           maximum: 1
-      required: [matchesPlayed, matchesWon, matchesLost, winRate]
+      required: [ matchesPlayed, matchesWon, matchesLost, winRate ]
 
     UserRatings:
       type: object
@@ -1002,8 +989,8 @@ components:
               wins: { type: integer, minimum: 0 }
               losses: { type: integer, minimum: 0 }
               elo: { type: number, format: double }
-            required: [partnerUserId, partnerName, games, wins, losses, elo]
-      required: [userId, singlesElo, doublesByPartner]
+            required: [ partnerUserId, partnerName, games, wins, losses, elo ]
+      required: [ userId, singlesElo, doublesByPartner ]
 
     RatingRowSingles:
       type: object
@@ -1013,7 +1000,7 @@ components:
         participantName: { type: string }
         elo: { type: number, format: double }
         games: { type: integer, minimum: 0 }
-      required: [participantId, participantName, elo, games]
+      required: [ participantId, participantName, elo, games ]
 
     RatingRowDoubles:
       type: object
@@ -1034,4 +1021,4 @@ components:
           maxItems: 2
         elo: { type: number, format: double }
         games: { type: integer, minimum: 0 }
-      required: [pairKey, participantIds, participantNames, elo, games]
+      required: [ pairKey, participantIds, participantNames, elo, games ]
