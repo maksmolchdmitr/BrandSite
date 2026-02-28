@@ -95,17 +95,29 @@ export default defineComponent({
     goToTelegramOAuth() {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
-      console.log("[TG Auth] Opening OAuth popup", { origin, url });
+      console.log("[TG Auth] 1. Opening OAuth popup", { origin, url });
       if (!origin) {
         this.error = "Не удалось определить origin страницы";
         return;
       }
-      const w = window.open(url, "tg_oauth", "width=500,height=600,scrollbars=yes,resizable=yes");
+      const winName = "tg_oauth_" + Date.now();
+      const w = window.open(url, winName, "width=500,height=600,scrollbars=yes,resizable=yes");
       telegramPopupRef = w;
+      const opened = !!w;
+      console.log("[TG Auth] 2. window.open result:", opened ? "popup handle" : "null (blocked?)", "name:", winName);
       if (!w) {
         console.warn("[TG Auth] Popup blocked? Falling back to full redirect.");
         window.location.assign(url);
+        return;
       }
+      setTimeout(() => {
+        try {
+          const closed = w.closed;
+          console.log("[TG Auth] 3. After 800ms popup.closed =", closed, closed ? "(что-то закрыло окно раньше времени)" : "(окно ещё открыто — можно авторизоваться)");
+        } catch (e) {
+          console.log("[TG Auth] 3. After 800ms cannot read popup.closed:", e?.message);
+        }
+      }, 800);
     },
     parseTelegramCallbackFromUrl() {
       if (this.telegramAuthProcessed) return;
@@ -140,35 +152,42 @@ export default defineComponent({
       }
     },
     setupTelegramCallback() {
+      const allowedOrigins = ["https://oauth.telegram.org", "https://t.me", "https://telegram.org"];
       this.telegramMessageHandler = (event) => {
-        const allowedOrigins = ["https://oauth.telegram.org", "https://t.me", "https://telegram.org"];
-        const okOrigin = allowedOrigins.some((o) => event.origin === o || event.origin.startsWith(o + "/"));
-        if (!okOrigin) return;
+        const fromTg = allowedOrigins.some((o) => event.origin === o || event.origin.startsWith(o + "/"));
+        if (fromTg) {
+          console.log("[TG Auth] postMessage from Telegram origin:", event.origin, "data type:", typeof event.data, "keys:", event.data && typeof event.data === "object" ? Object.keys(event.data) : "-");
+        }
+        if (!fromTg) return;
         if (event.data && typeof event.data === "object" && !this.telegramAuthProcessed) {
           const hasId = "id" in event.data && "hash" in event.data;
           if (hasId) {
-            console.log("[TG Auth] postMessage from Telegram", event.origin, event.data);
+            console.log("[TG Auth] 4. Valid Telegram data, calling handleTelegramAuth", event.data.id, event.data.first_name);
             this.telegramAuthProcessed = true;
             if (telegramPopupRef) try { telegramPopupRef.close(); } catch (_) {}
             telegramPopupRef = null;
             this.handleTelegramAuth(event.data);
+          } else {
+            console.log("[TG Auth] postMessage from TG but no id/hash in data, ignoring");
           }
+        } else if (this.telegramAuthProcessed) {
+          console.log("[TG Auth] postMessage from TG but already processed, ignoring");
         }
       };
       window.addEventListener("message", this.telegramMessageHandler, false);
-      console.log("[TG Auth] postMessage listener added");
+      console.log("[TG Auth] 0. postMessage listener added (expect origin oauth.telegram.org / t.me / telegram.org)");
     },
     async handleTelegramAuth(telegramData) {
-      console.log("[TG Auth] handleTelegramAuth", telegramData?.id, telegramData?.first_name);
+      console.log("[TG Auth] 5. handleTelegramAuth start", { id: telegramData?.id, first_name: telegramData?.first_name });
       this.loading = true;
       this.error = "";
       try {
         await badmintonClient.telegramLogin(telegramData);
-        console.log("[TG Auth] telegramLogin OK, navigating to ratings");
+        console.log("[TG Auth] 6. telegramLogin OK, navigating to ratings");
         await new Promise((r) => setTimeout(r, 150));
         await this.$router.push("/?page=badminton&section=ratings");
       } catch (e) {
-        console.error("[TG Auth] telegramLogin failed", e);
+        console.error("[TG Auth] 7. telegramLogin failed", e?.message, e);
         this.error = e?.message || "Ошибка авторизации через Telegram";
       } finally {
         this.loading = false;
