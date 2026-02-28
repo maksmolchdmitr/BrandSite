@@ -22,7 +22,7 @@
           Войти через Telegram
         </button>
         <div class="widgetHint">
-          Откроется авторизация Telegram (oauth.telegram.org), после входа вы вернётесь на эту страницу.
+          Откроется окно авторизации Telegram. Разрешите всплывающие окна для этого сайта, если окно не открылось.
         </div>
       </div>
 
@@ -69,10 +69,10 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
-    // Clean up message listener
     if (this.telegramMessageHandler) {
       window.removeEventListener("message", this.telegramMessageHandler);
     }
+    if (this.telegramPopup) try { this.telegramPopup.close(); } catch (_) {}
   },
   data() {
     return {
@@ -85,14 +85,25 @@ export default defineComponent({
       error: "",
       users: [],
       telegramAuthProcessed: false,
+      telegramPopup: null,
     };
   },
   methods: {
     goToTelegramOAuth() {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      if (!origin) return;
       const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
-      window.location.assign(url);
+      console.log("[TG Auth] Opening OAuth popup", { origin, url });
+      if (!origin) {
+        this.error = "Не удалось определить origin страницы";
+        return;
+      }
+      // OAuth на /auth редиректит на /auth/push, который отдаёт данные через postMessage в opener — поэтому открываем в popup
+      const w = window.open(url, "tg_oauth", "width=500,height=600,scrollbars=yes,resizable=yes");
+      this.telegramPopup = w;
+      if (!w) {
+        console.warn("[TG Auth] Popup blocked? Falling back to full redirect.");
+        window.location.assign(url);
+      }
     },
     parseTelegramCallbackFromUrl() {
       if (this.telegramAuthProcessed) return;
@@ -110,6 +121,7 @@ export default defineComponent({
       const query = new URLSearchParams(this.$route?.query || "");
       const hasQuery = telegramParams.some((p) => query.has(p));
       if (hasQuery && Object.keys(fromQuery(query)).length >= 3) {
+        console.log("[TG Auth] Callback from URL query", fromQuery(query));
         this.telegramAuthProcessed = true;
         this.handleTelegramAuth(fromQuery(query));
         return;
@@ -119,6 +131,7 @@ export default defineComponent({
       const hashParams = new URLSearchParams(hash);
       const hasHash = telegramParams.some((p) => hashParams.has(p));
       if (hasHash && !this.telegramAuthProcessed && Object.keys(fromQuery(hashParams)).length >= 3) {
+        console.log("[TG Auth] Callback from URL hash", fromQuery(hashParams));
         this.telegramAuthProcessed = true;
         this.handleTelegramAuth(fromQuery(hashParams));
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
@@ -126,22 +139,34 @@ export default defineComponent({
     },
     setupTelegramCallback() {
       this.telegramMessageHandler = (event) => {
-        if ((event.origin.includes("https://t.me") || event.origin.includes("https://telegram.org")) &&
-            event.data && typeof event.data === "object" && !this.telegramAuthProcessed) {
-          this.telegramAuthProcessed = true;
-          this.handleTelegramAuth(event.data);
+        const allowedOrigins = ["https://oauth.telegram.org", "https://t.me", "https://telegram.org"];
+        const okOrigin = allowedOrigins.some((o) => event.origin === o || event.origin.startsWith(o + "/"));
+        if (!okOrigin) return;
+        if (event.data && typeof event.data === "object" && !this.telegramAuthProcessed) {
+          const hasId = "id" in event.data && "hash" in event.data;
+          if (hasId) {
+            console.log("[TG Auth] postMessage from Telegram", event.origin, event.data);
+            this.telegramAuthProcessed = true;
+            if (this.telegramPopup) try { this.telegramPopup.close(); } catch (_) {}
+            this.telegramPopup = null;
+            this.handleTelegramAuth(event.data);
+          }
         }
       };
       window.addEventListener("message", this.telegramMessageHandler, false);
+      console.log("[TG Auth] postMessage listener added");
     },
     async handleTelegramAuth(telegramData) {
+      console.log("[TG Auth] handleTelegramAuth", telegramData?.id, telegramData?.first_name);
       this.loading = true;
       this.error = "";
       try {
         await badmintonClient.telegramLogin(telegramData);
+        console.log("[TG Auth] telegramLogin OK, navigating to ratings");
         await new Promise((r) => setTimeout(r, 150));
         await this.$router.push("/?page=badminton&section=ratings");
       } catch (e) {
+        console.error("[TG Auth] telegramLogin failed", e);
         this.error = e?.message || "Ошибка авторизации через Telegram";
       } finally {
         this.loading = false;

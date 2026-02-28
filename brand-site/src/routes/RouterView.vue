@@ -51,7 +51,11 @@ export default defineComponent({
         return telegramParams.filter((k) => q[k] != null).length >= 3;
       };
       const onLogin = this.page === 'badminton' && this.section === 'login';
-      if (!onLogin && (fromHash() || fromQuery())) {
+      const hasCallback = fromHash() || fromQuery();
+      if (hasCallback) {
+        console.log('[TG Auth] RouterView: Telegram callback in URL', { onLogin, hash: !!window.location.hash, query: window.location.search });
+      }
+      if (!onLogin && hasCallback) {
         const hash = window.location.hash || '';
         const search = (window.location.search || '').replace(/^\?/, '');
         const loginQuery = 'page=badminton&section=login' + (search ? '&' + search : '');
