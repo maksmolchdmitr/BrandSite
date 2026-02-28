@@ -18,9 +18,11 @@
 
       <div class="widgetBox">
         <div class="widgetTitle">Вход через Telegram</div>
-        <a :href="telegramOAuthUrl" class="btn telegramBtn" rel="noopener">Войти через Telegram</a>
+        <button type="button" class="btn telegramBtn" :disabled="loading" @click="goToTelegramOAuth">
+          Войти через Telegram
+        </button>
         <div class="widgetHint">
-          Откроется авторизация Telegram (oauth.telegram.org), после входа данные отправятся на бек и вы получите доступ.
+          Откроется авторизация Telegram (oauth.telegram.org), после входа вы вернётесь на эту страницу.
         </div>
       </div>
 
@@ -72,12 +74,6 @@ export default defineComponent({
       window.removeEventListener("message", this.telegramMessageHandler);
     }
   },
-  computed: {
-    telegramOAuthUrl() {
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      return `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
-    },
-  },
   data() {
     return {
       headItems: [
@@ -92,6 +88,12 @@ export default defineComponent({
     };
   },
   methods: {
+    goToTelegramOAuth() {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      if (!origin) return;
+      const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
+      window.location.assign(url);
+    },
     parseTelegramCallbackFromUrl() {
       if (this.telegramAuthProcessed) return;
       const telegramParams = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"];
@@ -327,8 +329,6 @@ export default defineComponent({
 }
 
 .telegramBtn {
-  display: inline-block;
-  text-decoration: none;
   margin-top: 4px;
 }
 

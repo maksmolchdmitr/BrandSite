@@ -21,20 +21,43 @@ export default defineComponent({
     return { route, router };
   },
   async mounted() {
-    console.log('RouterView mounted with query:', this.route.query);
-    
+    // Когда пользователь возвращается с oauth.telegram.org, Telegram редиректит на origin (корень сайта).
+    // Параметры приходят в hash или query — перенаправляем на страницу логина, чтобы их обработать.
+    this.redirectToLoginIfTelegramCallback();
+
     // Redirect /?page=badminton to ratings for logged in users, or login for not logged in
     if (this.page === 'badminton' && !this.section) {
       const {getLoggedInUserId} = await import("@/badminton/cookies.js");
       const userId = getLoggedInUserId();
       if (userId && userId.trim() !== '') {
-        // User is logged in, redirect to ratings
         await this.router.replace('/?page=badminton&section=ratings');
       } else {
-        // User is not logged in, redirect to login
         await this.router.replace('/?page=badminton&section=login');
       }
     }
+  },
+  methods: {
+    redirectToLoginIfTelegramCallback() {
+      if (typeof window === 'undefined') return;
+      const telegramParams = ['id', 'first_name', 'auth_date', 'hash'];
+      const fromHash = () => {
+        const h = window.location.hash.replace(/^#/, '');
+        if (!h) return false;
+        const p = new URLSearchParams(h);
+        return telegramParams.filter((k) => p.has(k)).length >= 3;
+      };
+      const fromQuery = () => {
+        const q = this.route?.query || {};
+        return telegramParams.filter((k) => q[k] != null).length >= 3;
+      };
+      const onLogin = this.page === 'badminton' && this.section === 'login';
+      if (!onLogin && (fromHash() || fromQuery())) {
+        const hash = window.location.hash || '';
+        const search = (window.location.search || '').replace(/^\?/, '');
+        const loginQuery = 'page=badminton&section=login' + (search ? '&' + search : '');
+        this.router.replace('/?' + loginQuery + hash);
+      }
+    },
   },
   computed: {
     page() {
@@ -50,8 +73,6 @@ export default defineComponent({
       return this.route.query.userId || null;
     },
     currentComponent() {
-      console.log('Current page:', this.page, 'section:', this.section);
-      
       // Badminton service routing
       if (this.page === 'badminton') {
         if (this.section === 'login') {
