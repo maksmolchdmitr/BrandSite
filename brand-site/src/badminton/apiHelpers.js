@@ -8,8 +8,15 @@ const REFRESH_TOKEN_KEY = "badminton.refreshToken";
 /** Telegram OAuth: bot_id for https://oauth.telegram.org/auth */
 export const TELEGRAM_OAUTH_BOT_ID = "7685244546";
 
+/** Логи [TG Auth] и дебаг. Выключить: VITE_BADMINTON_DEBUG=false в .env */
+export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
+
 export function getBadmintonApiBaseUrl() {
-  return (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
+  let url = (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
+  if (typeof window !== "undefined" && window.location?.protocol === "https:" && url.startsWith("http://")) {
+    url = "https" + url.slice(4);
+  }
+  return url;
 }
 
 export function getAccessToken() {

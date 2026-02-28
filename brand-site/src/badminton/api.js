@@ -10,6 +10,7 @@ import {
   getRefreshToken,
   setTokens,
   clearTokens,
+  BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { setLoggedInUserId } from "./cookies.js";
 
@@ -86,9 +87,7 @@ async function doRefreshToken() {
 
 // Auth: один шаг — отправляем данные от Telegram в telegramLogin
 export async function telegramLogin(telegramUser) {
-  if (typeof console !== "undefined" && console.log) {
-    console.log("[TG Auth] api.telegramLogin → POST", BASE_URL + "/api/auth/telegram/login", { id: telegramUser?.id, first_name: telegramUser?.first_name });
-  }
+  if (BADMINTON_DEBUG) console.log("[TG Auth] api.telegramLogin → POST", BASE_URL + "/api/auth/telegram/login", { id: telegramUser?.id, first_name: telegramUser?.first_name });
   const result = await apiRequest("/api/auth/telegram/login", {
     method: "POST",
     body: telegramUser,
