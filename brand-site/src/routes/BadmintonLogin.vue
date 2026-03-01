@@ -3,11 +3,6 @@
     <HeadBar :headItems="headItems"></HeadBar>
 
     <div class="content">
-      <h1 class="title">Login</h1>
-      <p class="subtitle">
-        Пока бэк не готов — моковый логин: выбери пользователя, чтобы “войти” (cookie) и потрогать весь интерфейс.
-      </p>
-
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="widgetBox">
@@ -45,7 +40,7 @@ import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG, SHOW_MOCK_USERS} from "@/badminton/apiHelpers.js";
+import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -96,8 +91,9 @@ export default defineComponent({
     };
   },
   computed: {
+    // Мок-юзеры показываются при VITE_BADMINTON_USE_MOCKS=true (тогда badmintonClient = mockClient и есть listMockUsers)
     showMockUsers() {
-      return SHOW_MOCK_USERS && typeof badmintonClient.listMockUsers === "function";
+      return typeof badmintonClient.listMockUsers === "function";
     },
   },
   methods: {

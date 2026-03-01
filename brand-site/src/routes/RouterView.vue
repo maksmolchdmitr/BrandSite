@@ -25,20 +25,30 @@ export default defineComponent({
     // Параметры приходят в hash или query — перенаправляем на страницу логина, чтобы их обработать.
     this.redirectToLoginIfTelegramCallback();
 
-    // Redirect /?page=badminton to ratings for logged in users, or login for not logged in
-    if (this.page === 'badminton' && !this.section) {
-      const {getLoggedInUserId} = await import("@/badminton/cookies.js");
-      const {hasAuth} = await import("@/badminton/apiHelpers.js");
-      const hasTokens = hasAuth();
-      const userId = getLoggedInUserId();
-      if (hasTokens || (userId && userId.trim() !== '')) {
-        await this.router.replace('/?page=badminton&section=ratings');
-      } else {
-        await this.router.replace('/?page=badminton&section=login');
-      }
-    }
+    await this.maybeRedirectBadmintonToSection();
+  },
+  watch: {
+    // При клике по ссылке (например с Products) mounted не вызывается — редирект по смене роута
+    "$route": {
+      handler() {
+        this.redirectToLoginIfTelegramCallback();
+        this.maybeRedirectBadmintonToSection();
+      },
+    },
   },
   methods: {
+    async maybeRedirectBadmintonToSection() {
+      if (this.page !== "badminton" || this.section) return;
+      const { getLoggedInUserId } = await import("@/badminton/cookies.js");
+      const { hasAuth } = await import("@/badminton/apiHelpers.js");
+      const hasTokens = hasAuth();
+      const userId = getLoggedInUserId();
+      if (hasTokens || (userId && userId.trim() !== "")) {
+        await this.router.replace("/?page=badminton&section=ratings");
+      } else {
+        await this.router.replace("/?page=badminton&section=login");
+      }
+    },
     redirectToLoginIfTelegramCallback() {
       if (typeof window === 'undefined') return;
       const telegramParams = ['id', 'first_name', 'auth_date', 'hash'];
