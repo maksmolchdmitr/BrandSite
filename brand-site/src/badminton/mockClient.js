@@ -165,6 +165,9 @@ export const mockClient = {
     logRequest("POST", "/api/auth/logout");
     await delay(80);
     setLoggedInUserId("");
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("badminton.useMockSession");
+    }
   },
 
   async getMe() {

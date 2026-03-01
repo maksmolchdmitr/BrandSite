@@ -38,9 +38,10 @@
 <script>
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
-import {badmintonClient} from "@/badminton/client.js";
+import {badmintonClient, clearMockSession} from "@/badminton/client.js";
+import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG} from "@/badminton/apiHelpers.js";
+import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG, SHOW_MOCK_USERS} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -62,6 +63,8 @@ export default defineComponent({
     try {
       if (badmintonClient.listMockUsers) {
         this.users = await badmintonClient.listMockUsers();
+      } else if (SHOW_MOCK_USERS && mockClient.listMockUsers) {
+        this.users = await mockClient.listMockUsers();
       }
     } catch (e) {
       console.warn("Failed to load mock users:", e);
@@ -91,9 +94,10 @@ export default defineComponent({
     };
   },
   computed: {
-    // Мок-юзеры показываются при VITE_BADMINTON_USE_MOCKS=true (тогда badmintonClient = mockClient и есть listMockUsers)
+    // Блок мок-юзеров: при USE_MOCKS=true список от badmintonClient; при реальном API — от mockClient, если SHOW_MOCK_USERS
     showMockUsers() {
-      return typeof badmintonClient.listMockUsers === "function";
+      if (!SHOW_MOCK_USERS) return false;
+      return typeof badmintonClient.listMockUsers === "function" || typeof mockClient.listMockUsers === "function";
     },
   },
   methods: {
@@ -210,34 +214,28 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       try {
-        console.log("Logging in as:", userId);
-        const user = await badmintonClient.loginAsUser(userId);
-        console.log("Login successful, user:", user);
-        
-        // Verify cookie is set
+        const useMockForLogin =
+          typeof badmintonClient.listMockUsers !== "function";
+        if (useMockForLogin) {
+          sessionStorage.setItem("badminton.useMockSession", "1");
+          await mockClient.loginAsUser(userId);
+        } else {
+          await badmintonClient.loginAsUser(userId);
+        }
         const cookieUserId = getLoggedInUserId();
-        console.log("Cookie after login:", cookieUserId);
-        
         if (!cookieUserId) {
           throw new Error("Cookie was not set after login");
         }
-        
-        // Small delay to ensure everything is ready
-        await new Promise(resolve => setTimeout(resolve, 150));
-        
-        // Navigate to ratings page - use push instead of replace to ensure navigation
-        console.log("Navigating to /?page=badminton&section=ratings");
+        await new Promise((resolve) => setTimeout(resolve, 150));
         try {
           await this.$router.push("/?page=badminton&section=ratings");
-          console.log("Navigation complete");
         } catch (navError) {
-          console.error("Navigation error:", navError);
-          // Fallback: try replace
           await this.$router.replace("/?page=badminton&section=ratings");
         }
       } catch (e) {
         console.error("Login error:", e);
         this.error = e?.message || "Login failed";
+      } finally {
         this.loading = false;
       }
     },
@@ -246,6 +244,7 @@ export default defineComponent({
       this.error = "";
       try {
         await badmintonClient.logout();
+        clearMockSession();
       } catch (e) {
         this.error = e?.message || "Logout failed";
       } finally {

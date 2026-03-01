@@ -11,6 +11,9 @@ export const TELEGRAM_OAUTH_BOT_ID = "7685244546";
 /** Логи [TG Auth] и дебаг. Выключить: VITE_BADMINTON_DEBUG=false в .env */
 export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
 
+/** Показывать блок Mock users на странице входа. Выключить: VITE_BADMINTON_SHOW_MOCK_USERS=false */
+export const SHOW_MOCK_USERS = import.meta.env.VITE_BADMINTON_SHOW_MOCK_USERS !== "false";
+
 export function getBadmintonApiBaseUrl() {
   if (typeof window !== "undefined" && window.location?.hostname?.includes("netlify.app")) {
     return "";
