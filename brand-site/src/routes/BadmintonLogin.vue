@@ -10,12 +10,6 @@
 
       <div v-if="error" class="errorBox">{{ error }}</div>
 
-      <div class="row">
-        <button class="btn secondary" :disabled="loading" @click="logout">
-          {{ loading ? "..." : "Logout (clear cookie)" }}
-        </button>
-      </div>
-
       <div class="widgetBox">
         <div class="widgetTitle">Вход через Telegram</div>
         <button type="button" class="btn telegramBtn" :disabled="loading" @click="goToTelegramOAuth">
@@ -26,7 +20,7 @@
         </div>
       </div>
 
-      <div class="usersBox">
+      <div v-if="showMockUsers" class="usersBox">
         <div class="widgetTitle">Mock users</div>
         <div class="usersGrid">
           <button v-for="u in users" :key="u.id" class="userBtn" :disabled="loading" @click="loginAs(u.id)">
@@ -34,6 +28,13 @@
             <div class="userMeta">id: {{ u.id }} · tg: {{ u.telegramId }}</div>
           </button>
         </div>
+        <div class="widgetHint">Для теста без Telegram — выберите пользователя из списка.</div>
+      </div>
+
+      <div class="row">
+        <button class="btn secondary" :disabled="loading" @click="logout">
+          Выйти (очистить сессию)
+        </button>
       </div>
     </div>
   </div>
@@ -44,7 +45,7 @@ import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG} from "@/badminton/apiHelpers.js";
+import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG, SHOW_MOCK_USERS} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -93,6 +94,11 @@ export default defineComponent({
       users: [],
       telegramAuthProcessed: false,
     };
+  },
+  computed: {
+    showMockUsers() {
+      return SHOW_MOCK_USERS && typeof badmintonClient.listMockUsers === "function";
+    },
   },
   methods: {
     goToTelegramOAuth() {

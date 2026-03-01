@@ -28,8 +28,10 @@ export default defineComponent({
     // Redirect /?page=badminton to ratings for logged in users, or login for not logged in
     if (this.page === 'badminton' && !this.section) {
       const {getLoggedInUserId} = await import("@/badminton/cookies.js");
+      const {hasAuth} = await import("@/badminton/apiHelpers.js");
+      const hasTokens = hasAuth();
       const userId = getLoggedInUserId();
-      if (userId && userId.trim() !== '') {
+      if (hasTokens || (userId && userId.trim() !== '')) {
         await this.router.replace('/?page=badminton&section=ratings');
       } else {
         await this.router.replace('/?page=badminton&section=login');
