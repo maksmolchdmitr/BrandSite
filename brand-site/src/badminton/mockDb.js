@@ -19,16 +19,80 @@ function safeParse(json, fallback) {
 }
 
 function seedDb() {
-  // Test users with diverse names
+  // Test users with diverse names (shape aligned with OpenAPI User schema)
   const users = [
-    {id: "u_alex", telegramId: 20001, username: "alex_shuttle", displayName: "Alex Chen", createdAt: nowIso()},
-    {id: "u_sophia", telegramId: 20002, username: "sophia_smash", displayName: "Sophia Martinez", createdAt: nowIso()},
-    {id: "u_liam", telegramId: 20003, username: "liam_ace", displayName: "Liam O'Connor", createdAt: nowIso()},
-    {id: "u_emma", telegramId: 20004, username: "emma_drop", displayName: "Emma Thompson", createdAt: nowIso()},
-    {id: "u_noah", telegramId: 20005, username: "noah_clear", displayName: "Noah Williams", createdAt: nowIso()},
-    {id: "u_olivia", telegramId: 20006, username: "olivia_lift", displayName: "Olivia Brown", createdAt: nowIso()},
-    {id: "u_james", telegramId: 20007, username: "james_drive", displayName: "James Wilson", createdAt: nowIso()},
-    {id: "u_ava", telegramId: 20008, username: "ava_net", displayName: "Ava Davis", createdAt: nowIso()},
+    {
+      id: "u_alex",
+      telegramId: 20001,
+      username: "alex_shuttle",
+      firstName: "Alex",
+      lastName: "Chen",
+      photoUrl: "https://picsum.photos/seed/alex_shuttle/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_sophia",
+      telegramId: 20002,
+      username: "sophia_smash",
+      firstName: "Sophia",
+      lastName: "Martinez",
+      photoUrl: "https://picsum.photos/seed/sophia_smash/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_liam",
+      telegramId: 20003,
+      username: "liam_ace",
+      firstName: "Liam",
+      lastName: "O'Connor",
+      photoUrl: "https://picsum.photos/seed/liam_ace/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_emma",
+      telegramId: 20004,
+      username: "emma_drop",
+      firstName: "Emma",
+      lastName: "Thompson",
+      photoUrl: "https://picsum.photos/seed/emma_drop/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_noah",
+      telegramId: 20005,
+      username: "noah_clear",
+      firstName: "Noah",
+      lastName: "Williams",
+      photoUrl: "https://picsum.photos/seed/noah_clear/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_olivia",
+      telegramId: 20006,
+      username: "olivia_lift",
+      firstName: "Olivia",
+      lastName: "Brown",
+      photoUrl: "https://picsum.photos/seed/olivia_lift/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_james",
+      telegramId: 20007,
+      username: "james_drive",
+      firstName: "James",
+      lastName: "Wilson",
+      photoUrl: "https://picsum.photos/seed/james_drive/200",
+      createdAt: nowIso(),
+    },
+    {
+      id: "u_ava",
+      telegramId: 20008,
+      username: "ava_net",
+      firstName: "Ava",
+      lastName: "Davis",
+      photoUrl: "https://picsum.photos/seed/ava_net/200",
+      createdAt: nowIso(),
+    },
   ];
 
   // Multiple test groups
@@ -113,7 +177,7 @@ function seedDb() {
   // Add some participants to City Champions
   const cityChampionsNames = ["Sophia Martinez", "Olivia Brown", "James Wilson", "Ava Davis", "Michael Johnson", "Sarah Anderson"];
   cityChampionsNames.forEach((name, idx) => {
-    const user = users.find(u => u.displayName === name);
+    const user = users.find(u => `${u.firstName} ${u.lastName}` === name);
     participants.push({
       id: `p_cc_${idx}`,
       groupId: "g_city_champions",
@@ -126,7 +190,7 @@ function seedDb() {
   // Add some participants to Casual Players
   const casualNames = ["Liam O'Connor", "Emma Thompson", "Noah Williams", "David Lee", "Jessica Taylor"];
   casualNames.forEach((name, idx) => {
-    const user = users.find(u => u.displayName === name);
+    const user = users.find(u => `${u.firstName} ${u.lastName}` === name);
     participants.push({
       id: `p_cp_${idx}`,
       groupId: "g_casual_players",
@@ -228,18 +292,32 @@ export function loadDb() {
     // No data in localStorage - seed fresh data
     const db = seedDb();
     localStorage.setItem(DB_KEY, JSON.stringify(db));
-    console.log("[mockDb] Seeded fresh database with", db.users.length, "users,", db.groups.length, "groups,", db.participants.length, "participants,", db.matches.length, "matches");
     return db;
   }
   const db = safeParse(raw, seedDb());
   // Ensure we have all required data
   if (!db.users || db.users.length === 0 || !db.groups || db.groups.length === 0) {
-    console.log("[mockDb] Database corrupted or empty, reseeding...");
     const freshDb = seedDb();
     localStorage.setItem(DB_KEY, JSON.stringify(freshDb));
     return freshDb;
   }
-  console.log("[mockDb] Loaded database:", db.users.length, "users,", db.groups.length, "groups,", db.participants.length, "participants,", db.matches.length, "matches");
+  // Миграция старых записей пользователей: убираем displayName, раскладываем в firstName/lastName при необходимости
+  db.users = (db.users || []).map((u) => {
+    if (u && u.displayName && (!u.firstName && !u.lastName)) {
+      const parts = String(u.displayName).split(" ");
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      const {displayName, ...rest} = u;
+      return {...rest, firstName, lastName};
+    }
+    if (u && "displayName" in u) {
+      const {displayName, ...rest} = u;
+      return rest;
+    }
+    return u;
+  });
+  // Сохраняем мигрированную БД
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
   return db;
 }
 

@@ -19,7 +19,9 @@
         <div class="widgetTitle">Mock users</div>
         <div class="usersGrid">
           <button v-for="u in users" :key="u.id" class="userBtn" :disabled="loading" @click="loginAs(u.id)">
-            <div class="userName">{{ u.displayName || u.username || u.id }}</div>
+            <div class="userName">
+              {{ [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username || u.id }}
+            </div>
             <div class="userMeta">id: {{ u.id }} · tg: {{ u.telegramId }}</div>
           </button>
         </div>

@@ -132,12 +132,13 @@ export const mockClient = {
     let user = db.users.find(u => String(u.telegramId) === telegramId);
     if (!user) {
       const username = telegram.username || `tg_${telegram.id}`;
-      const displayName = [telegram.first_name, telegram.last_name].filter(Boolean).join(" ") || username;
       user = {
         id: uuid("u"),
         telegramId: parseInt(telegram.id, 10),
         username,
-        displayName,
+        firstName: telegram.first_name || "",
+        lastName: telegram.last_name || "",
+        photoUrl: telegram.photo_url || "",
         createdAt: nowIso(),
       };
       db.users.push(user);
@@ -183,20 +184,43 @@ export const mockClient = {
     // Use default user if not logged in
     const userId = getLoggedInUserId() || "u_alex";
     const user = db.users.find(u => u.id === userId);
-    let result;
-    if (!user) {
-      // Fallback to first user
-      result =
+
+    const toUserDto = (u) => {
+      if (!u) return null;
+      let firstName = u.firstName;
+      let lastName = u.lastName;
+      if ((!firstName || !lastName) && u.displayName) {
+        const parts = String(u.displayName).split(" ");
+        firstName = firstName || parts[0] || "";
+        lastName = lastName || parts.slice(1).join(" ") || "";
+      }
+      return {
+        id: u.id,
+        telegramId: u.telegramId,
+        username: u.username,
+        firstName: firstName || "",
+        lastName: lastName || "",
+        photoUrl: u.photoUrl || "",
+        createdAt: u.createdAt,
+      };
+    };
+
+    let raw = user;
+    if (!raw) {
+      // Fallback to first user or synthetic default
+      raw =
         db.users[0] || {
           id: "u_alex",
           telegramId: 20001,
-          displayName: "Alex Chen",
           username: "alex_shuttle",
+          firstName: "Alex",
+          lastName: "Chen",
+          photoUrl: "",
           createdAt: new Date().toISOString(),
         };
-    } else {
-      result = user;
     }
+
+    const result = toUserDto(raw);
     logResponse("GET", "/api/me", result);
     return result;
   },

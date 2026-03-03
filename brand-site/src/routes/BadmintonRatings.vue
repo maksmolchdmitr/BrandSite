@@ -36,13 +36,16 @@
             </thead>
             <tbody>
               <tr>
-                <td>{{ me?.displayName || me?.username || me?.id || "—" }}</td>
+                <td>
+                  {{
+                    ([me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.username || me?.id || "—")
+                  }}
+                </td>
                 <td class="eloCell">{{ ratings?.singlesElo ?? "—" }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="hint">Formula: base 1200 + wins×8 − losses×6</div>
       </div>
 
       <div class="card">
@@ -72,7 +75,6 @@
             </tbody>
           </table>
         </div>
-        <div class="hint">Formula per partner: base 1100 + pairWins×10 − pairLosses×7</div>
       </div>
     </div>
   </div>
