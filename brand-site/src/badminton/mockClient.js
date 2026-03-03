@@ -9,6 +9,12 @@ function logRequest(method, endpoint, params = {}) {
   console.log(`[API Request] ${method} ${endpoint}`, params);
 }
 
+function logResponse(method, endpoint, data, status = 200) {
+  // Красивый лог ответа мок-бека — как будто это реальный HTTP JSON-ответ.
+  const pretty = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  console.log(`[API Response] ${status} ${method} ${endpoint}\n${pretty}`);
+}
+
 function requireAuth(db) {
   const u = getCurrentUser(db);
   if (!u) throw new Error("Unauthorized: please login");
@@ -177,11 +183,22 @@ export const mockClient = {
     // Use default user if not logged in
     const userId = getLoggedInUserId() || "u_alex";
     const user = db.users.find(u => u.id === userId);
+    let result;
     if (!user) {
       // Fallback to first user
-      return db.users[0] || {id: "u_alex", telegramId: 20001, displayName: "Alex Chen", username: "alex_shuttle", createdAt: new Date().toISOString()};
+      result =
+        db.users[0] || {
+          id: "u_alex",
+          telegramId: 20001,
+          displayName: "Alex Chen",
+          username: "alex_shuttle",
+          createdAt: new Date().toISOString(),
+        };
+    } else {
+      result = user;
     }
-    return user;
+    logResponse("GET", "/api/me", result);
+    return result;
   },
 
   async getMyGroups() {
@@ -424,15 +441,19 @@ export const mockClient = {
     // Use default user if not logged in
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
+    let result;
     if (!u) {
-      return {userId: "u_alex", singlesElo: 1200, doublesElo: 1100, doublesByPartner: []};
+      result = {userId: "u_alex", singlesElo: 1200, doublesElo: 1100, doublesByPartner: []};
+    } else {
+      const singlesElo = calcSinglesElo(db, u.id);
+      const doublesByPartner = calcDoublesPerPartner(db, u.id);
+      const doublesElo = doublesByPartner.length
+        ? Math.round(doublesByPartner.reduce((s, r) => s + r.elo, 0) / doublesByPartner.length)
+        : 1100;
+      result = {userId: u.id, singlesElo, doublesElo, doublesByPartner};
     }
-    const singlesElo = calcSinglesElo(db, u.id);
-    const doublesByPartner = calcDoublesPerPartner(db, u.id);
-    const doublesElo = doublesByPartner.length
-      ? Math.round(doublesByPartner.reduce((s, r) => s + r.elo, 0) / doublesByPartner.length)
-      : 1100;
-    return {userId: u.id, singlesElo, doublesElo, doublesByPartner};
+    logResponse("GET", "/api/me/ratings", result);
+    return result;
   },
 
   async getMyGamesStats() {
@@ -442,29 +463,33 @@ export const mockClient = {
     // Use default user if not logged in
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
+    let result;
     if (!u) {
-      return {
+      result = {
         userId: "u_alex",
         singles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
         doubles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
         recentMatches: [],
       };
+    } else {
+      const myPIds = new Set(db.participants.filter(p => p.userId === u.id).map(p => p.id));
+      const singlesMatches = db.matches.filter(m => m.kind === "singles");
+      const doublesMatches = db.matches.filter(m => m.kind === "doubles");
+      const singles = calcTotals(singlesMatches, myPIds);
+      const doubles = calcTotals(doublesMatches, myPIds);
+      // return also detailed lists for UI
+      result = {
+        userId: u.id,
+        singles,
+        doubles,
+        recentMatches: db.matches
+          .filter(m => (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id)))
+          .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
+          .slice(0, 50),
+      };
     }
-    const myPIds = new Set(db.participants.filter(p => p.userId === u.id).map(p => p.id));
-    const singlesMatches = db.matches.filter(m => m.kind === "singles");
-    const doublesMatches = db.matches.filter(m => m.kind === "doubles");
-    const singles = calcTotals(singlesMatches, myPIds);
-    const doubles = calcTotals(doublesMatches, myPIds);
-    // return also detailed lists for UI
-    return {
-      userId: u.id,
-      singles,
-      doubles,
-      recentMatches: db.matches
-        .filter(m => (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id)))
-        .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
-        .slice(0, 50),
-    };
+    logResponse("GET", "/api/me/games-stats", result);
+    return result;
   },
 
   async getSinglesLeaderboard(groupId) {
