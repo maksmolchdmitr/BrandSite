@@ -50,7 +50,7 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 - `GET /groups/{groupId}` - Get group details
 
 ### Participants
-- `GET /groups/{groupId}/participants` - List participants
+- `GET /groups/{groupId}/participants` - List participants (query: `limit`, `pageToken`; response: `{ items, pageToken }`)
 - `GET /groups/{groupId}/participants/search` - Search participants with pagination
 - `POST /groups/{groupId}/participants` - Create participant (admin)
 - `PATCH /groups/{groupId}/participants/{participantId}` - Update participant (admin)
@@ -58,14 +58,14 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 - `POST /groups/{groupId}/participants/{participantId}/link-user` - Link user to participant (admin)
 
 ### Matches
-- `GET /groups/{groupId}/matches` - List matches
+- `GET /groups/{groupId}/matches` - List matches (query: `limit`, `pageToken`; response: `{ items, pageToken }`)
 - `POST /groups/{groupId}/matches` - Create match (admin)
 - `PATCH /groups/{groupId}/matches/{matchId}` - Update match (admin)
 - `DELETE /groups/{groupId}/matches/{matchId}` - Delete match (admin)
 
 ### Ratings
-- `GET /groups/{groupId}/ratings/singles` - Singles leaderboard
-- `GET /groups/{groupId}/ratings/doubles` - Doubles leaderboard
+- `GET /groups/{groupId}/ratings/singles` - Singles leaderboard (query: `limit`, `pageToken`; response: `{ items, pageToken }`; each item includes `rank` — место в рейтинге)
+- `GET /groups/{groupId}/ratings/doubles` - Doubles leaderboard (query: `limit`, `pageToken`; response: `{ items, pageToken }`; each item includes `rank`)
 
 ### Stats
 - `GET /groups/{groupId}/stats` - Group statistics

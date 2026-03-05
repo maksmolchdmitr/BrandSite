@@ -26,6 +26,7 @@
 
       <div class="card">
         <div class="cardTitle">Individual Elo Rating</div>
+        <p class="hint">Рейтинг рассчитывается по системе Эло после каждой игры.</p>
         <div class="tableWrapper">
           <table class="table">
             <thead>
@@ -50,30 +51,71 @@
 
       <div class="card">
         <div class="cardTitle">Doubles Elo by Partner</div>
-        <div v-if="(ratings?.doublesByPartner || []).length === 0" class="empty">
+        <p class="hint">Рейтинг рассчитывается по системе Эло после каждой игры.</p>
+        <div v-if="currentDoublesPage.items.length === 0" class="empty">
           No doubles games yet.
         </div>
-        <div v-else class="tableWrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Partner</th>
-                <th>Games</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Elo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in (ratings?.doublesByPartner || [])" :key="r.partnerUserId">
-                <td class="nameCell">{{ r.partnerName }}</td>
-                <td>{{ r.games }}</td>
-                <td>{{ r.wins }}</td>
-                <td>{{ r.losses }}</td>
-                <td class="eloCell">{{ r.elo }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else>
+          <div class="tableWrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Partner</th>
+                  <th>Games</th>
+                  <th>Wins</th>
+                  <th>Losses</th>
+                  <th>Elo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in currentDoublesPage.items" :key="r.partnerUserId">
+                  <td class="nameCell">{{ r.partnerName }}</td>
+                  <td>{{ r.games }}</td>
+                  <td>{{ r.wins }}</td>
+                  <td>{{ r.losses }}</td>
+                  <td class="eloCell">{{ r.elo }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagerRow">
+            <button
+              class="pagerButton"
+              :disabled="!canGoPrevDoubles"
+              @click="goPrevDoubles"
+            >
+              ←
+            </button>
+            <span class="pagerPage">Page {{ doublesCurrentPageIndex + 1 }}</span>
+            <button
+              class="pagerButton"
+              :disabled="!canGoNextDoubles"
+              @click="goNextDoubles"
+            >
+              →
+            </button>
+            <div class="pagerLimit">
+              <span class="pagerLimitLabel">Per page:</span>
+              <div class="pagerLimitSelect" @click="toggleDoublesLimitDropdown">
+                <span>{{ doublesLimit }}</span>
+                <span class="pagerLimitArrow">▾</span>
+                <div
+                  v-if="showDoublesLimitDropdown"
+                  class="pagerLimitDropdown"
+                >
+                  <div
+                    v-for="opt in doublesLimitOptions"
+                    :key="opt"
+                    class="pagerLimitOption"
+                    :class="{ active: opt === doublesLimit }"
+                    @click.stop="changeDoublesLimit(opt)"
+                  >
+                    {{ opt }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -98,7 +140,27 @@ export default defineComponent({
       error: "",
       me: null,
       ratings: null,
+      doublesPages: [],
+      doublesCurrentPageIndex: 0,
+      doublesLimit: 10,
+      doublesLimitOptions: [10, 20, 50],
+      showDoublesLimitDropdown: false,
     };
+  },
+  computed: {
+    currentDoublesPage() {
+      if (!this.doublesPages.length) {
+        return { items: [], nextPageToken: null };
+      }
+      return this.doublesPages[this.doublesCurrentPageIndex] || { items: [], nextPageToken: null };
+    },
+    canGoPrevDoubles() {
+      return this.doublesCurrentPageIndex > 0;
+    },
+    canGoNextDoubles() {
+      const page = this.currentDoublesPage;
+      return !!page.nextPageToken;
+    },
   },
   async mounted() {
     await this.load();
@@ -108,14 +170,76 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       try {
-        const [me, ratings] = await Promise.all([badmintonClient.getMe(), badmintonClient.getMyRatings()]);
+        const [me, ratings] = await Promise.all([
+          badmintonClient.getMe(),
+          badmintonClient.getMyRatings({ limit: this.doublesLimit }),
+        ]);
         this.me = me;
         this.ratings = ratings;
+        const first = {
+          items: ratings?.doublesByPartner || [],
+          nextPageToken: ratings?.doublesByPartnerPageToken || null,
+        };
+        this.doublesPages = [first];
+        this.doublesCurrentPageIndex = 0;
       } catch (e) {
         this.error = e?.message || "Failed to load ratings";
       } finally {
         this.loading = false;
       }
+    },
+    async goPrevDoubles() {
+      if (!this.canGoPrevDoubles) return;
+      this.doublesCurrentPageIndex = Math.max(0, this.doublesCurrentPageIndex - 1);
+    },
+    async goNextDoubles() {
+      if (!this.canGoNextDoubles) return;
+      const current = this.currentDoublesPage;
+      const nextToken = current.nextPageToken;
+      if (!nextToken) return;
+      // If we already loaded this page (e.g. after changing page back and forth), just move index
+      const existingIndex = this.doublesPages.findIndex(
+        (p, idx) => idx > this.doublesCurrentPageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex !== -1) {
+        this.doublesCurrentPageIndex = existingIndex;
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        const ratings = await badmintonClient.getMyRatings({
+          limit: this.doublesLimit,
+          pageToken: nextToken,
+        });
+        this.ratings = {
+          ...this.ratings,
+          singlesElo: ratings?.singlesElo ?? this.ratings?.singlesElo,
+        };
+        const page = {
+          items: ratings?.doublesByPartner || [],
+          nextPageToken: ratings?.doublesByPartnerPageToken || null,
+          pageTokenFrom: nextToken,
+        };
+        this.doublesPages.push(page);
+        this.doublesCurrentPageIndex = this.doublesPages.length - 1;
+      } catch (e) {
+        this.error = e?.message || "Failed to load next page";
+      } finally {
+        this.loading = false;
+      }
+    },
+    toggleDoublesLimitDropdown() {
+      this.showDoublesLimitDropdown = !this.showDoublesLimitDropdown;
+    },
+    async changeDoublesLimit(limit) {
+      if (this.doublesLimit === limit) {
+        this.showDoublesLimitDropdown = false;
+        return;
+      }
+      this.doublesLimit = limit;
+      this.showDoublesLimitDropdown = false;
+      await this.load();
     },
     async handleLogout() {
       this.loading = true;
@@ -241,6 +365,97 @@ export default defineComponent({
 .table tbody tr:last-child td { border-bottom: none; }
 .nameCell { font-weight: 600; }
 .eloCell { font-weight: 700; color: #4F3DFF; font-size: 16px; }
+
+.pagerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pagerButton {
+  border: 2px solid #4F3DFF;
+  background-color: white;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: 'Mali','sans-serif';
+  font-size: 16px;
+  font-weight: 700;
+  color: #4F3DFF;
+  cursor: pointer;
+}
+
+.pagerButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pagerPage {
+  font-family: 'Mali','sans-serif';
+  font-size: 16px;
+}
+
+.pagerLimit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.pagerLimitLabel {
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+}
+
+.pagerLimitSelect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  border: 2px solid #4F3DFF;
+  background-color: white;
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+  font-weight: 700;
+  color: #4F3DFF;
+  cursor: pointer;
+}
+
+.pagerLimitArrow {
+  font-size: 10px;
+}
+
+.pagerLimitDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+
+.pagerLimitOption {
+  padding: 8px 12px;
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pagerLimitOption:hover {
+  background-color: #f6f6ff;
+}
+
+.pagerLimitOption.active {
+  font-weight: 700;
+  color: #4F3DFF;
+}
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali','sans-serif'; }
 

@@ -201,15 +201,19 @@ paths:
       summary: List participants in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
       responses:
         "200":
           description: Participants
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Participant"
+                $ref: "#/components/schemas/ParticipantPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -520,6 +524,14 @@ paths:
         - in: query
           name: groupId
           schema: { type: string }
+        - in: query
+          name: limit
+          description: Page size for doubles-by-partner ratings
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: pageToken
+          description: Opaque page token for doubles-by-partner ratings (null for first page)
+          schema: { type: string }
       responses:
         "200":
           description: Ratings
@@ -536,15 +548,19 @@ paths:
       summary: Singles Elo leaderboard in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
       responses:
         "200":
           description: Leaderboard
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RatingRowSingles"
+                $ref: "#/components/schemas/RatingRowSinglesPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -558,15 +574,19 @@ paths:
       summary: Doubles Elo leaderboard in group (member-only)
       parameters:
         - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
       responses:
         "200":
           description: Leaderboard
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RatingRowDoubles"
+                $ref: "#/components/schemas/RatingRowDoublesPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -990,6 +1010,10 @@ components:
               losses: { type: integer, minimum: 0 }
               elo: { type: number, format: double }
             required: [ partnerUserId, partnerName, games, wins, losses, elo ]
+        doublesByPartnerPageToken:
+          type: string
+          nullable: true
+          description: Opaque page token for fetching next page of doubles-by-partner ratings
       required: [ userId, singlesElo, doublesByPartner ]
 
     RatingRowSingles:
@@ -1022,3 +1046,42 @@ components:
         elo: { type: number, format: double }
         games: { type: integer, minimum: 0 }
       required: [ pairKey, participantIds, participantNames, elo, games ]
+
+    ParticipantPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+        pageToken:
+          type: string
+          nullable: true
+      required: [ items ]
+
+    RatingRowSinglesPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingRowSingles"
+        pageToken:
+          type: string
+          nullable: true
+      required: [ items ]
+
+    RatingRowDoublesPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingRowDoubles"
+        pageToken:
+          type: string
+          nullable: true
+      required: [ items ]

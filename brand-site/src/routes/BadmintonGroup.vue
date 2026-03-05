@@ -33,27 +33,50 @@
           </div>
 
           <div v-if="participants.length === 0" class="empty">No participants yet.</div>
-          <div v-else class="tableWrapper">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>User ID</th>
-                  <th v-if="isAdmin">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="p in participants" :key="p.id">
-                  <td class="nameCell">{{ p.name }}</td>
-                  <td class="userIdCell">{{ p.userId || "—" }}</td>
-                  <td v-if="isAdmin" class="actionsCell">
-                    <button class="btn secondary small" @click="startEditParticipant(p)">Edit</button>
-                    <button class="btn secondary small" @click="startLinkUser(p)">Link</button>
-                    <button class="btn danger small" @click="removeParticipant(p)">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else>
+            <div class="tableWrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>User ID</th>
+                    <th v-if="isAdmin">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in participants" :key="p.id">
+                    <td class="nameCell">{{ p.name }}</td>
+                    <td class="userIdCell">{{ p.userId || "—" }}</td>
+                    <td v-if="isAdmin" class="actionsCell">
+                      <button class="btn secondary small" @click="startEditParticipant(p)">Edit</button>
+                      <button class="btn secondary small" @click="startLinkUser(p)">Link</button>
+                      <button class="btn danger small" @click="removeParticipant(p)">Delete</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagerRow">
+              <button class="pagerButton" :disabled="!canGoPrevParticipants" @click="goPrevParticipants">←</button>
+              <span class="pagerPage">Page {{ participantsPageIndex + 1 }}</span>
+              <button class="pagerButton" :disabled="!canGoNextParticipants" @click="goNextParticipants">→</button>
+              <div class="pagerLimit">
+                <span class="pagerLimitLabel">Per page:</span>
+                <div class="pagerLimitSelect" @click="toggleParticipantsLimitDropdown">
+                  <span>{{ participantsLimit }}</span>
+                  <span class="pagerLimitArrow">▾</span>
+                  <div v-if="showParticipantsLimitDropdown" class="pagerLimitDropdown">
+                    <div
+                      v-for="opt in participantsLimitOptions"
+                      :key="opt"
+                      class="pagerLimitOption"
+                      :class="{ active: opt === participantsLimit }"
+                      @click.stop="changeParticipantsLimit(opt)"
+                    >{{ opt }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -132,6 +155,28 @@
               </table>
             </div>
           </div>
+
+          <div v-if="matches.length > 0" class="pagerRow">
+            <button class="pagerButton" :disabled="!canGoPrevMatches" @click="goPrevMatches">←</button>
+            <span class="pagerPage">Page {{ matchesPageIndex + 1 }}</span>
+            <button class="pagerButton" :disabled="!canGoNextMatches" @click="goNextMatches">→</button>
+            <div class="pagerLimit">
+              <span class="pagerLimitLabel">Per page:</span>
+              <div class="pagerLimitSelect" @click="toggleMatchesLimitDropdown">
+                <span>{{ matchesLimit }}</span>
+                <span class="pagerLimitArrow">▾</span>
+                <div v-if="showMatchesLimitDropdown" class="pagerLimitDropdown">
+                  <div
+                    v-for="opt in matchesLimitOptions"
+                    :key="opt"
+                    class="pagerLimitOption"
+                    :class="{ active: opt === matchesLimit }"
+                    @click.stop="changeMatchesLimit(opt)"
+                  >{{ opt }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -147,41 +192,91 @@
           <div class="lbCard">
             <div class="lbTitle">Singles Leaderboard</div>
             <div v-if="singlesLb.length === 0" class="empty">No singles games yet.</div>
-            <div v-else class="tableWrapper">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Elo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="r in singlesLb" :key="r.participantId">
-                    <td class="nameCell">{{ r.participantName }}</td>
-                    <td class="eloCell">{{ r.elo }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-else>
+              <div class="tableWrapper">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Player</th>
+                      <th>Elo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="r in singlesLb" :key="r.participantId">
+                      <td class="rankCell">{{ r.rank }}</td>
+                      <td class="nameCell">{{ r.participantName }}</td>
+                      <td class="eloCell">{{ r.elo }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagerRow">
+                <button class="pagerButton" :disabled="!canGoPrevSinglesLb" @click="goPrevSinglesLb">←</button>
+                <span class="pagerPage">Page {{ singlesLbPageIndex + 1 }}</span>
+                <button class="pagerButton" :disabled="!canGoNextSinglesLb" @click="goNextSinglesLb">→</button>
+                <div class="pagerLimit">
+                  <span class="pagerLimitLabel">Per page:</span>
+                  <div class="pagerLimitSelect" @click="toggleSinglesLbLimitDropdown">
+                    <span>{{ lbLimit }}</span>
+                    <span class="pagerLimitArrow">▾</span>
+                    <div v-if="showSinglesLbLimitDropdown" class="pagerLimitDropdown">
+                      <div
+                        v-for="opt in lbLimitOptions"
+                        :key="'s'+opt"
+                        class="pagerLimitOption"
+                        :class="{ active: opt === lbLimit }"
+                        @click.stop="changeLbLimit(opt, 'singles')"
+                      >{{ opt }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="lbCard">
             <div class="lbTitle">Doubles Leaderboard</div>
             <div v-if="doublesLb.length === 0" class="empty">No doubles games yet.</div>
-            <div v-else class="tableWrapper">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Elo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="r in doublesLb" :key="r.pairKey">
-                    <td class="nameCell">{{ (r.participantNames || []).join(" + ") }}</td>
-                    <td class="eloCell">{{ r.elo }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-else>
+              <div class="tableWrapper">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Team</th>
+                      <th>Elo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="r in doublesLb" :key="r.pairKey">
+                      <td class="rankCell">{{ r.rank }}</td>
+                      <td class="nameCell">{{ (r.participantNames || []).join(" + ") }}</td>
+                      <td class="eloCell">{{ r.elo }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagerRow">
+                <button class="pagerButton" :disabled="!canGoPrevDoublesLb" @click="goPrevDoublesLb">←</button>
+                <span class="pagerPage">Page {{ doublesLbPageIndex + 1 }}</span>
+                <button class="pagerButton" :disabled="!canGoNextDoublesLb" @click="goNextDoublesLb">→</button>
+                <div class="pagerLimit">
+                  <span class="pagerLimitLabel">Per page:</span>
+                  <div class="pagerLimitSelect" @click="toggleDoublesLbLimitDropdown">
+                    <span>{{ lbLimit }}</span>
+                    <span class="pagerLimitArrow">▾</span>
+                    <div v-if="showDoublesLbLimitDropdown" class="pagerLimitDropdown">
+                      <div
+                        v-for="opt in lbLimitOptions"
+                        :key="'d'+opt"
+                        class="pagerLimitOption"
+                        :class="{ active: opt === lbLimit }"
+                        @click.stop="changeLbLimit(opt, 'doubles')"
+                      >{{ opt }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -532,10 +627,27 @@ export default defineComponent({
       loading: false,
       error: "",
       group: null,
-      participants: [],
-      matches: [],
-      singlesLb: [],
-      doublesLb: [],
+      participantNameMap: {},
+      participantsPages: [],
+      participantsPageIndex: 0,
+      participantsLimit: 10,
+      participantsLimitOptions: [10, 20, 50],
+      showParticipantsLimitDropdown: false,
+
+      matchesPages: [],
+      matchesPageIndex: 0,
+      matchesLimit: 10,
+      matchesLimitOptions: [10, 20, 50],
+      showMatchesLimitDropdown: false,
+
+      singlesLbPages: [],
+      singlesLbPageIndex: 0,
+      doublesLbPages: [],
+      doublesLbPageIndex: 0,
+      lbLimit: 10,
+      lbLimitOptions: [10, 20, 50],
+      showSinglesLbLimitDropdown: false,
+      showDoublesLbLimitDropdown: false,
       loadingLb: false,
 
       newParticipantName: "",
@@ -578,11 +690,79 @@ export default defineComponent({
                p.team2Scores.some(s => s > 0);
       }
     },
+    currentParticipantsPage() {
+      if (!this.participantsPages.length) return { items: [], pageToken: null };
+      return this.participantsPages[this.participantsPageIndex] || { items: [], pageToken: null };
+    },
+    participants() {
+      return this.currentParticipantsPage.items || [];
+    },
+    canGoPrevParticipants() {
+      return this.participantsPageIndex > 0;
+    },
+    canGoNextParticipants() {
+      const page = this.currentParticipantsPage;
+      const n = (page.items || []).length;
+      if (n < this.participantsLimit && this.participantsPageIndex === 0) return false;
+      if (n < this.participantsLimit && this.participantsPageIndex > 0) return false;
+      return !!page.pageToken;
+    },
+    currentMatchesPage() {
+      if (!this.matchesPages.length) return { items: [], pageToken: null };
+      return this.matchesPages[this.matchesPageIndex] || { items: [], pageToken: null };
+    },
+    matches() {
+      return this.currentMatchesPage.items || [];
+    },
     singlesMatches() {
       return this.matches.filter(m => m.kind === 'singles');
     },
     doublesMatches() {
       return this.matches.filter(m => m.kind === 'doubles');
+    },
+    canGoPrevMatches() {
+      return this.matchesPageIndex > 0;
+    },
+    canGoNextMatches() {
+      const page = this.currentMatchesPage;
+      const n = (page.items || []).length;
+      if (n < this.matchesLimit && this.matchesPageIndex === 0) return false;
+      if (n < this.matchesLimit && this.matchesPageIndex > 0) return false;
+      return !!page.pageToken;
+    },
+    currentSinglesLbPage() {
+      if (!this.singlesLbPages.length) return { items: [], pageToken: null };
+      return this.singlesLbPages[this.singlesLbPageIndex] || { items: [], pageToken: null };
+    },
+    currentDoublesLbPage() {
+      if (!this.doublesLbPages.length) return { items: [], pageToken: null };
+      return this.doublesLbPages[this.doublesLbPageIndex] || { items: [], pageToken: null };
+    },
+    singlesLb() {
+      return this.currentSinglesLbPage.items || [];
+    },
+    doublesLb() {
+      return this.currentDoublesLbPage.items || [];
+    },
+    canGoPrevSinglesLb() {
+      return this.singlesLbPageIndex > 0;
+    },
+    canGoNextSinglesLb() {
+      const page = this.currentSinglesLbPage;
+      const n = (page.items || []).length;
+      if (n < this.lbLimit && this.singlesLbPageIndex === 0) return false;
+      if (n < this.lbLimit && this.singlesLbPageIndex > 0) return false;
+      return !!page.pageToken;
+    },
+    canGoPrevDoublesLb() {
+      return this.doublesLbPageIndex > 0;
+    },
+    canGoNextDoublesLb() {
+      const page = this.currentDoublesLbPage;
+      const n = (page.items || []).length;
+      if (n < this.lbLimit && this.doublesLbPageIndex === 0) return false;
+      if (n < this.lbLimit && this.doublesLbPageIndex > 0) return false;
+      return !!page.pageToken;
     },
   },
   mounted() {
@@ -590,21 +770,131 @@ export default defineComponent({
     this.loadLeaderboards();
   },
   methods: {
+    mergeParticipantNames(items) {
+      const map = { ...this.participantNameMap };
+      (items || []).forEach(p => { map[p.id] = p.name; });
+      this.participantNameMap = map;
+    },
     async load() {
       this.loading = true;
       this.error = "";
       try {
-        const [group, participants, matches] = await Promise.all([
+        const [group, participantsRes, matchesRes] = await Promise.all([
           badmintonClient.getGroup(this.groupId),
-          badmintonClient.listParticipants(this.groupId),
-          badmintonClient.listMatches(this.groupId),
+          badmintonClient.listParticipants(this.groupId, { limit: this.participantsLimit }),
+          badmintonClient.listMatches(this.groupId, { limit: this.matchesLimit }),
         ]);
         this.group = group;
-        this.participants = participants || [];
-        const mRes = matches;
-        this.matches = Array.isArray(mRes) ? mRes : mRes.items || [];
+        const pItems = participantsRes?.items || [];
+        this.participantsPages = [{ items: pItems, pageToken: participantsRes?.pageToken || null }];
+        this.participantsPageIndex = 0;
+        this.mergeParticipantNames(pItems);
+        const mItems = matchesRes?.items || [];
+        this.matchesPages = [{ items: mItems, pageToken: matchesRes?.pageToken || null }];
+        this.matchesPageIndex = 0;
       } catch (e) {
         this.error = e?.message || "Failed to load group";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async goPrevParticipants() {
+      if (!this.canGoPrevParticipants) return;
+      this.participantsPageIndex = Math.max(0, this.participantsPageIndex - 1);
+    },
+    async goNextParticipants() {
+      if (!this.canGoNextParticipants) return;
+      const current = this.currentParticipantsPage;
+      const nextToken = current.pageToken;
+      if (!nextToken) return;
+      const existingIndex = this.participantsPages.findIndex(
+        (p, idx) => idx > this.participantsPageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex !== -1) {
+        this.participantsPageIndex = existingIndex;
+        return;
+      }
+      this.loading = true;
+      try {
+        const res = await badmintonClient.listParticipants(this.groupId, { limit: this.participantsLimit, pageToken: nextToken });
+        const page = { items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken };
+        this.participantsPages.push(page);
+        this.participantsPageIndex = this.participantsPages.length - 1;
+        this.mergeParticipantNames(page.items);
+      } catch (e) {
+        this.error = e?.message || "Failed to load next page";
+      } finally {
+        this.loading = false;
+      }
+    },
+    toggleParticipantsLimitDropdown() {
+      this.showParticipantsLimitDropdown = !this.showParticipantsLimitDropdown;
+    },
+    async changeParticipantsLimit(limit) {
+      if (this.participantsLimit === limit) {
+        this.showParticipantsLimitDropdown = false;
+        return;
+      }
+      this.participantsLimit = limit;
+      this.showParticipantsLimitDropdown = false;
+      this.loading = true;
+      try {
+        const res = await badmintonClient.listParticipants(this.groupId, { limit });
+        const pItems = res?.items || [];
+        this.participantsPages = [{ items: pItems, pageToken: res?.pageToken || null }];
+        this.participantsPageIndex = 0;
+        this.mergeParticipantNames(pItems);
+      } catch (e) {
+        this.error = e?.message || "Failed to load";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async goPrevMatches() {
+      if (!this.canGoPrevMatches) return;
+      this.matchesPageIndex = Math.max(0, this.matchesPageIndex - 1);
+    },
+    async goNextMatches() {
+      if (!this.canGoNextMatches) return;
+      const current = this.currentMatchesPage;
+      const nextToken = current.pageToken;
+      if (!nextToken) return;
+      const existingIndex = this.matchesPages.findIndex(
+        (p, idx) => idx > this.matchesPageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex !== -1) {
+        this.matchesPageIndex = existingIndex;
+        return;
+      }
+      this.loading = true;
+      try {
+        const res = await badmintonClient.listMatches(this.groupId, { limit: this.matchesLimit, pageToken: nextToken });
+        const page = { items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken };
+        this.matchesPages.push(page);
+        this.matchesPageIndex = this.matchesPages.length - 1;
+      } catch (e) {
+        this.error = e?.message || "Failed to load next page";
+      } finally {
+        this.loading = false;
+      }
+    },
+    toggleMatchesLimitDropdown() {
+      this.showMatchesLimitDropdown = !this.showMatchesLimitDropdown;
+    },
+    async changeMatchesLimit(limit) {
+      if (this.matchesLimit === limit) {
+        this.showMatchesLimitDropdown = false;
+        return;
+      }
+      this.matchesLimit = limit;
+      this.showMatchesLimitDropdown = false;
+      this.loading = true;
+      try {
+        const res = await badmintonClient.listMatches(this.groupId, { limit });
+        this.matchesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
+        this.matchesPageIndex = 0;
+      } catch (e) {
+        this.error = e?.message || "Failed to load";
       } finally {
         this.loading = false;
       }
@@ -614,22 +904,93 @@ export default defineComponent({
       this.loadingLb = true;
       try {
         const [s, d] = await Promise.all([
-          badmintonClient.getSinglesLeaderboard(this.groupId),
-          badmintonClient.getDoublesLeaderboard(this.groupId),
+          badmintonClient.getSinglesLeaderboard(this.groupId, { limit: this.lbLimit }),
+          badmintonClient.getDoublesLeaderboard(this.groupId, { limit: this.lbLimit }),
         ]);
-        this.singlesLb = s || [];
-        this.doublesLb = d || [];
+        this.singlesLbPages = [{ items: s?.items || [], pageToken: s?.pageToken || null }];
+        this.singlesLbPageIndex = 0;
+        this.doublesLbPages = [{ items: d?.items || [], pageToken: d?.pageToken || null }];
+        this.doublesLbPageIndex = 0;
       } catch (e) {
         // don't block main UI
       } finally {
         this.loadingLb = false;
       }
     },
+    async goPrevSinglesLb() {
+      if (!this.canGoPrevSinglesLb) return;
+      this.singlesLbPageIndex = Math.max(0, this.singlesLbPageIndex - 1);
+    },
+    async goNextSinglesLb() {
+      if (!this.canGoNextSinglesLb) return;
+      const current = this.currentSinglesLbPage;
+      const nextToken = current.pageToken;
+      if (!nextToken) return;
+      const existingIndex = this.singlesLbPages.findIndex(
+        (p, idx) => idx > this.singlesLbPageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex !== -1) {
+        this.singlesLbPageIndex = existingIndex;
+        return;
+      }
+      this.loadingLb = true;
+      try {
+        const res = await badmintonClient.getSinglesLeaderboard(this.groupId, { limit: this.lbLimit, pageToken: nextToken });
+        const page = { items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken };
+        this.singlesLbPages.push(page);
+        this.singlesLbPageIndex = this.singlesLbPages.length - 1;
+      } finally {
+        this.loadingLb = false;
+      }
+    },
+    async goPrevDoublesLb() {
+      if (!this.canGoPrevDoublesLb) return;
+      this.doublesLbPageIndex = Math.max(0, this.doublesLbPageIndex - 1);
+    },
+    async goNextDoublesLb() {
+      if (!this.canGoNextDoublesLb) return;
+      const current = this.currentDoublesLbPage;
+      const nextToken = current.pageToken;
+      if (!nextToken) return;
+      const existingIndex = this.doublesLbPages.findIndex(
+        (p, idx) => idx > this.doublesLbPageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex !== -1) {
+        this.doublesLbPageIndex = existingIndex;
+        return;
+      }
+      this.loadingLb = true;
+      try {
+        const res = await badmintonClient.getDoublesLeaderboard(this.groupId, { limit: this.lbLimit, pageToken: nextToken });
+        const page = { items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken };
+        this.doublesLbPages.push(page);
+        this.doublesLbPageIndex = this.doublesLbPages.length - 1;
+      } finally {
+        this.loadingLb = false;
+      }
+    },
+    toggleSinglesLbLimitDropdown() {
+      this.showSinglesLbLimitDropdown = !this.showSinglesLbLimitDropdown;
+    },
+    toggleDoublesLbLimitDropdown() {
+      this.showDoublesLbLimitDropdown = !this.showDoublesLbLimitDropdown;
+    },
+    async changeLbLimit(limit, which) {
+      if (this.lbLimit === limit) {
+        this.showSinglesLbLimitDropdown = false;
+        this.showDoublesLbLimitDropdown = false;
+        return;
+      }
+      this.lbLimit = limit;
+      this.showSinglesLbLimitDropdown = false;
+      this.showDoublesLbLimitDropdown = false;
+      await this.loadLeaderboards();
+    },
 
     formatTeams(m) {
-      const map = new Map(this.participants.map(p => [p.id, p.name]));
-      const a = (m.teamA || []).map(id => map.get(id) || id).join(" + ");
-      const b = (m.teamB || []).map(id => map.get(id) || id).join(" + ");
+      const map = this.participantNameMap || {};
+      const a = (m.teamA || []).map(id => map[id] || id).join(" + ");
+      const b = (m.teamB || []).map(id => map[id] || id).join(" + ");
       return `${a} vs ${b}`;
     },
     formatScore(score) {
@@ -638,8 +999,7 @@ export default defineComponent({
     },
     getParticipantName(participantId) {
       if (!participantId) return "—";
-      const p = this.participants.find(p => p.id === participantId);
-      return p?.name || participantId;
+      return this.participantNameMap[participantId] || participantId;
     },
     getFinalScore(match, side) {
       const games = match.score?.games || [];
@@ -664,7 +1024,11 @@ export default defineComponent({
       try {
         const p = await badmintonClient.createParticipant(this.groupId, {name: this.newParticipantName});
         this.newParticipantName = "";
-        this.participants = [p, ...this.participants];
+        this.mergeParticipantNames([p]);
+        if (this.participantsPages.length && this.participantsPageIndex === 0) {
+          const first = this.participantsPages[0];
+          this.participantsPages = [{ ...first, items: [p, ...(first.items || [])] }];
+        }
       } catch (e) {
         this.error = e?.message || "Failed to add participant";
       } finally {
@@ -680,7 +1044,13 @@ export default defineComponent({
       this.error = "";
       try {
         const upd = await badmintonClient.updateParticipant(this.groupId, this.modal.payload.participantId, {name: this.modal.payload.name});
-        this.participants = this.participants.map(p => (p.id === upd.id ? upd : p));
+        this.mergeParticipantNames([upd]);
+        const idx = this.participantsPageIndex;
+        if (this.participantsPages[idx]) {
+          const items = this.participantsPages[idx].items.map(p => (p.id === upd.id ? upd : p));
+          this.participantsPages = this.participantsPages.slice();
+          this.participantsPages[idx] = { ...this.participantsPages[idx], items };
+        }
         this.closeModal();
       } catch (e) {
         this.error = e?.message || "Failed to update participant";
@@ -697,7 +1067,13 @@ export default defineComponent({
       this.error = "";
       try {
         const upd = await badmintonClient.linkUserToParticipant(this.groupId, this.modal.payload.participantId, {userId: this.modal.payload.userId});
-        this.participants = this.participants.map(p => (p.id === upd.id ? upd : p));
+        this.mergeParticipantNames([upd]);
+        const idx = this.participantsPageIndex;
+        if (this.participantsPages[idx]) {
+          const items = this.participantsPages[idx].items.map(p => (p.id === upd.id ? upd : p));
+          this.participantsPages = this.participantsPages.slice();
+          this.participantsPages[idx] = { ...this.participantsPages[idx], items };
+        }
         this.closeModal();
       } catch (e) {
         this.error = e?.message || "Failed to link user";
@@ -711,7 +1087,14 @@ export default defineComponent({
       this.error = "";
       try {
         await badmintonClient.deleteParticipant(this.groupId, p.id);
-        this.participants = this.participants.filter(x => x.id !== p.id);
+        const { [p.id]: _, ...rest } = this.participantNameMap;
+        this.participantNameMap = rest;
+        const idx = this.participantsPageIndex;
+        if (this.participantsPages[idx]) {
+          const items = this.participantsPages[idx].items.filter(x => x.id !== p.id);
+          this.participantsPages = this.participantsPages.slice();
+          this.participantsPages[idx] = { ...this.participantsPages[idx], items };
+        }
       } catch (e) {
         this.error = e?.message || "Failed to delete participant";
       }
@@ -953,10 +1336,16 @@ export default defineComponent({
         let m;
         if (this.modal.payload.matchId) {
           m = await badmintonClient.updateMatch(this.groupId, this.modal.payload.matchId, payload);
-          this.matches = this.matches.map(x => (x.id === m.id ? m : x));
+          if (this.matchesPages.length && this.matchesPageIndex === 0) {
+            const first = this.matchesPages[0];
+            this.matchesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
+          }
         } else {
           m = await badmintonClient.createMatch(this.groupId, payload);
-          this.matches = [m, ...this.matches];
+          if (this.matchesPages.length && this.matchesPageIndex === 0) {
+            const first = this.matchesPages[0];
+            this.matchesPages = [{ ...first, items: [m, ...(first.items || [])] }];
+          }
         }
 
         this.closeModal();
@@ -972,7 +1361,12 @@ export default defineComponent({
       this.error = "";
       try {
         await badmintonClient.deleteMatch(this.groupId, m.id);
-        this.matches = this.matches.filter(x => x.id !== m.id);
+        const idx = this.matchesPageIndex;
+        if (this.matchesPages[idx]) {
+          const items = this.matchesPages[idx].items.filter(x => x.id !== m.id);
+          this.matchesPages = this.matchesPages.slice();
+          this.matchesPages[idx] = { ...this.matchesPages[idx], items };
+        }
         this.loadLeaderboards();
       } catch (e) {
         this.error = e?.message || "Failed to delete match";
@@ -1040,6 +1434,80 @@ export default defineComponent({
 .lbCard { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 .lbTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 18px; color: #4F3DFF; }
 .eloCell { font-weight: 700; color: #4F3DFF; font-size: 16px; }
+.rankCell { font-weight: 700; opacity: 0.85; font-size: 14px; }
+
+.pagerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.pagerButton {
+  border: 2px solid #4F3DFF;
+  background-color: white;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: 'Mali','sans-serif';
+  font-size: 16px;
+  font-weight: 700;
+  color: #4F3DFF;
+  cursor: pointer;
+}
+.pagerButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pagerPage {
+  font-family: 'Mali','sans-serif';
+  font-size: 16px;
+}
+.pagerLimit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.pagerLimitLabel {
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+}
+.pagerLimitSelect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  border: 2px solid #4F3DFF;
+  background-color: white;
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+  font-weight: 700;
+  color: #4F3DFF;
+  cursor: pointer;
+}
+.pagerLimitArrow { font-size: 10px; }
+.pagerLimitDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+.pagerLimitOption {
+  padding: 8px 12px;
+  font-family: 'Mali','sans-serif';
+  font-size: 14px;
+  cursor: pointer;
+}
+.pagerLimitOption:hover { background-color: #f6f6ff; }
+.pagerLimitOption.active { font-weight: 700; color: #4F3DFF; }
 
 .modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 1000; }
 .modal { width: min(600px, 100%); background: white; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; }

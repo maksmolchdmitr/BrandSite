@@ -29,8 +29,8 @@ export const realClient = {
     return api.getMyStats({groupId});
   },
 
-  async getMyRatings({groupId} = {}) {
-    return api.getMyRatings({groupId});
+  async getMyRatings({groupId, limit, pageToken} = {}) {
+    return api.getMyRatings({groupId, limit, pageToken});
   },
 
   async getMyGamesStats({groupId} = {}) {
@@ -47,8 +47,8 @@ export const realClient = {
   },
 
   // Participant endpoints
-  async listParticipants(groupId) {
-    return api.listParticipants(groupId);
+  async listParticipants(groupId, { limit, pageToken } = {}) {
+    return api.listParticipants(groupId, { limit, pageToken });
   },
 
   async searchParticipants(groupId, {query = "", page = 0, pageSize = 10} = {}) {
@@ -89,12 +89,12 @@ export const realClient = {
   },
 
   // Rating endpoints
-  async getSinglesLeaderboard(groupId) {
-    return api.getSinglesLeaderboard(groupId);
+  async getSinglesLeaderboard(groupId, { limit, pageToken } = {}) {
+    return api.getSinglesLeaderboard(groupId, { limit, pageToken });
   },
 
-  async getDoublesLeaderboard(groupId) {
-    return api.getDoublesLeaderboard(groupId);
+  async getDoublesLeaderboard(groupId, { limit, pageToken } = {}) {
+    return api.getDoublesLeaderboard(groupId, { limit, pageToken });
   },
 
   // Stats endpoints

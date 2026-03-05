@@ -1,6 +1,6 @@
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 
-const DB_KEY = "badminton.mockdb.v3"; // Updated to v3 with new test data
+const DB_KEY = "badminton.mockdb.v4"; // v4: extra doubles for Alex Chen to test Doubles Elo pagination
 
 function uuid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
@@ -241,7 +241,7 @@ function seedDb() {
     }
   });
 
-  // Doubles matches
+  // Doubles matches (base set)
   const doublesMatches = [
     {team1: ["Alex Chen", "Sophia Martinez"], team2: ["Liam O'Connor", "Emma Thompson"], score: [{pointsA: 21, pointsB: 17}, {pointsA: 21, pointsB: 19}]},
     {team1: ["Noah Williams", "Olivia Brown"], team2: ["James Wilson", "Ava Davis"], score: [{pointsA: 19, pointsB: 21}, {pointsA: 21, pointsB: 18}, {pointsA: 21, pointsB: 16}]},
@@ -253,6 +253,23 @@ function seedDb() {
     {team1: ["Andrew Kim", "Jennifer Lopez"], team2: ["Matthew Taylor", "Emily Johnson"], score: [{pointsA: 21, pointsB: 18}, {pointsA: 19, pointsB: 21}, {pointsA: 21, pointsB: 19}]},
     {team1: ["Nathan Anderson", "Ashley Martinez"], team2: ["Jonathan White", "Samantha Garcia"], score: [{pointsA: 21, pointsB: 13}, {pointsA: 21, pointsB: 14}]},
     {team1: ["Robert Rodriguez", "Brittany Kim"], team2: ["William Park", "Amanda Smith"], score: [{pointsA: 16, pointsB: 21}, {pointsA: 21, pointsB: 17}, {pointsA: 21, pointsB: 16}]},
+    // Extra doubles with Alex Chen + many different partners (for testing Doubles Elo by Partner pagination for u_alex)
+    {team1: ["Alex Chen", "Liam O'Connor"], team2: ["Emma Thompson", "Noah Williams"], score: [{pointsA: 21, pointsB: 18}, {pointsA: 21, pointsB: 19}]},
+    {team1: ["Alex Chen", "Emma Thompson"], team2: ["Olivia Brown", "James Wilson"], score: [{pointsA: 19, pointsB: 21}, {pointsA: 21, pointsB: 17}]},
+    {team1: ["Alex Chen", "Noah Williams"], team2: ["Ava Davis", "Michael Johnson"], score: [{pointsA: 21, pointsB: 14}, {pointsA: 21, pointsB: 16}]},
+    {team1: ["Alex Chen", "Olivia Brown"], team2: ["Sarah Anderson", "David Lee"], score: [{pointsA: 21, pointsB: 15}, {pointsA: 18, pointsB: 21}, {pointsA: 21, pointsB: 17}]},
+    {team1: ["Alex Chen", "James Wilson"], team2: ["Jessica Taylor", "Christopher Moore"], score: [{pointsA: 21, pointsB: 12}, {pointsA: 21, pointsB: 13}]},
+    {team1: ["Alex Chen", "Ava Davis"], team2: ["Amanda White", "Daniel Garcia"], score: [{pointsA: 17, pointsB: 21}, {pointsA: 21, pointsB: 19}]},
+    {team1: ["Alex Chen", "Michael Johnson"], team2: ["Michelle Rodriguez", "Kevin Martinez"], score: [{pointsA: 21, pointsB: 16}, {pointsA: 21, pointsB: 18}]},
+    {team1: ["Alex Chen", "Sarah Anderson"], team2: ["Rachel Kim", "Ryan Park"], score: [{pointsA: 21, pointsB: 14}, {pointsA: 19, pointsB: 21}, {pointsA: 21, pointsB: 19}]},
+    {team1: ["Alex Chen", "David Lee"], team2: ["Lauren Smith", "Tyler Brown"], score: [{pointsA: 21, pointsB: 15}, {pointsA: 21, pointsB: 17}]},
+    {team1: ["Alex Chen", "Jessica Taylor"], team2: ["Nicole Davis", "Jordan Miller"], score: [{pointsA: 21, pointsB: 13}, {pointsA: 21, pointsB: 14}]},
+    {team1: ["Alex Chen", "Christopher Moore"], team2: ["Megan Wilson", "Brandon Jones"], score: [{pointsA: 16, pointsB: 21}, {pointsA: 21, pointsB: 18}]},
+    {team1: ["Alex Chen", "Amanda White"], team2: ["Stephanie Lee", "Justin Chen"], score: [{pointsA: 21, pointsB: 17}, {pointsA: 21, pointsB: 19}]},
+    {team1: ["Alex Chen", "Daniel Garcia"], team2: ["Katherine Wang", "Andrew Kim"], score: [{pointsA: 21, pointsB: 12}, {pointsA: 18, pointsB: 21}, {pointsA: 21, pointsB: 16}]},
+    {team1: ["Alex Chen", "Michelle Rodriguez"], team2: ["Jennifer Lopez", "Matthew Taylor"], score: [{pointsA: 21, pointsB: 14}, {pointsA: 21, pointsB: 15}]},
+    {team1: ["Alex Chen", "Kevin Martinez"], team2: ["Emily Johnson", "Nathan Anderson"], score: [{pointsA: 19, pointsB: 21}, {pointsA: 21, pointsB: 17}]},
+    {team1: ["Alex Chen", "Rachel Kim"], team2: ["Ashley Martinez", "Jonathan White"], score: [{pointsA: 21, pointsB: 16}, {pointsA: 21, pointsB: 18}]},
   ];
 
   doublesMatches.forEach((m, idx) => {

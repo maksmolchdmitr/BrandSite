@@ -142,9 +142,13 @@ export async function getMyStats({groupId} = {}) {
   return apiRequest(`/api/me/stats${query}`);
 }
 
-export async function getMyRatings({groupId} = {}) {
-  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
-  return apiRequest(`/api/me/ratings${query}`);
+export async function getMyRatings({groupId, limit, pageToken} = {}) {
+  const params = new URLSearchParams();
+  if (groupId) params.append("groupId", groupId);
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/me/ratings${query ? `?${query}` : ""}`);
 }
 
 export async function getMyGamesStats({groupId} = {}) {
@@ -165,8 +169,12 @@ export async function getGroup(groupId) {
 }
 
 // Participant endpoints
-export async function listParticipants(groupId) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants`);
+export async function listParticipants(groupId, { limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants${query ? `?${query}` : ""}`);
 }
 
 export async function searchParticipants(groupId, {query = "", page = 0, pageSize = 10} = {}) {
@@ -236,12 +244,20 @@ export async function deleteMatch(groupId, matchId) {
 }
 
 // Rating endpoints
-export async function getSinglesLeaderboard(groupId) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/ratings/singles`);
+export async function getSinglesLeaderboard(groupId, { limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/ratings/singles${query ? `?${query}` : ""}`);
 }
 
-export async function getDoublesLeaderboard(groupId) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/ratings/doubles`);
+export async function getDoublesLeaderboard(groupId, { limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/ratings/doubles${query ? `?${query}` : ""}`);
 }
 
 export async function getGroupStats(groupId) {
