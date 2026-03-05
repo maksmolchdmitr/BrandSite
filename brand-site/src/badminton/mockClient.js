@@ -433,15 +433,13 @@ export const mockClient = {
     return db.participants[idx];
   },
 
-  async listMatches(groupId, { from, to, limit = 50, pageToken = null } = {}) {
-    logRequest("GET", `/api/groups/${groupId}/matches`, { from, to, limit, pageToken });
+  async listMatches(groupId, { from, to, kind, limit = 50, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/matches`, { from, to, kind, limit, pageToken });
     await delay();
     const db = loadDb();
-    // Use default user if not logged in
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     if (u) {
-      // Ensure membership
       const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
       if (!exists) {
         db.memberships.push({groupId, userId: u.id, role: "member"});
@@ -449,6 +447,9 @@ export const mockClient = {
       }
     }
     let all = db.matches.filter(m => m.groupId === groupId).sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+    if (kind === "singles" || kind === "doubles") {
+      all = all.filter(m => m.kind === kind);
+    }
     if (from) {
       const fromDate = new Date(from).toISOString();
       all = all.filter(m => m.startedAt >= fromDate);
@@ -579,6 +580,42 @@ export const mockClient = {
       };
     }
     logResponse("GET", "/api/me/games-stats", result);
+    return result;
+  },
+
+  async getMySinglesMatches({ limit = 20, pageToken = null } = {}) {
+    logRequest("GET", "/api/me/matches/singles", { limit, pageToken });
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const u = db.users.find(x => x.id === userId) || db.users[0];
+    const myPIds = new Set((db.participants || []).filter(p => p.userId === u?.id).map(p => p.id));
+    const all = (db.matches || [])
+      .filter(m => m.kind === "singles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
+      .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+    const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
+    const pageItems = all.slice(start, start + limit);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", "/api/me/matches/singles", result);
+    return result;
+  },
+
+  async getMyDoublesMatches({ limit = 20, pageToken = null } = {}) {
+    logRequest("GET", "/api/me/matches/doubles", { limit, pageToken });
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const u = db.users.find(x => x.id === userId) || db.users[0];
+    const myPIds = new Set((db.participants || []).filter(p => p.userId === u?.id).map(p => p.id));
+    const all = (db.matches || [])
+      .filter(m => m.kind === "doubles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
+      .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+    const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
+    const pageItems = all.slice(start, start + limit);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", "/api/me/matches/doubles", result);
     return result;
   },
 

@@ -12,7 +12,9 @@ import BadmintonLogin from "@/routes/BadmintonLogin.vue";
 import BadmintonGroups from "@/routes/BadmintonGroups.vue";
 import BadmintonGroup from "@/routes/BadmintonGroup.vue";
 import BadmintonRatings from "@/routes/BadmintonRatings.vue";
-import BadmintonGames from "@/routes/BadmintonGames.vue";
+import BadmintonGamesHub from "@/routes/badminton/BadmintonGamesHub.vue";
+import BadmintonGamesSingles from "@/routes/badminton/BadmintonGamesSingles.vue";
+import BadmintonGamesDoubles from "@/routes/badminton/BadmintonGamesDoubles.vue";
 
 export default defineComponent({
   setup() {
@@ -98,7 +100,10 @@ export default defineComponent({
         } else if (this.section === 'ratings') {
           return markRaw(BadmintonRatings);
         } else if (this.section === 'games') {
-          return markRaw(BadmintonGames);
+          const tab = this.route?.query?.tab;
+          if (tab === 'singles') return markRaw(BadmintonGamesSingles);
+          if (tab === 'doubles') return markRaw(BadmintonGamesDoubles);
+          return markRaw(BadmintonGamesHub);
         }
         // If no section and not redirected, show login (shouldn't happen due to mounted redirect)
         return markRaw(BadmintonLogin);
@@ -116,17 +121,13 @@ export default defineComponent({
     },
     componentProps() {
       const props = {};
-      
-      // Pass groupId to BadmintonGroup component
       if (this.page === 'badminton' && this.section === 'groups' && this.groupId) {
         props.groupId = this.groupId;
+        props.groupSection = this.route?.query?.groupSection || 'participants';
       }
-      
-      // Pass userId for badminton login
       if (this.page === 'badminton' && this.userId) {
         props.userId = this.userId;
       }
-      
       return props;
     }
   }

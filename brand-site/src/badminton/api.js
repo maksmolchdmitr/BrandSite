@@ -156,6 +156,22 @@ export async function getMyGamesStats({groupId} = {}) {
   return apiRequest(`/api/me/games-stats${query}`);
 }
 
+export async function getMySinglesMatches({ limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/me/matches/singles${query ? `?${query}` : ""}`);
+}
+
+export async function getMyDoublesMatches({ limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/me/matches/doubles${query ? `?${query}` : ""}`);
+}
+
 // Group endpoints
 export async function createGroup({name}) {
   return apiRequest("/api/groups", {
@@ -213,10 +229,11 @@ export async function linkUserToParticipant(groupId, participantId, {userId}) {
 }
 
 // Match endpoints
-export async function listMatches(groupId, { from, to, limit, pageToken } = {}) {
+export async function listMatches(groupId, { from, to, kind, limit, pageToken } = {}) {
   const params = new URLSearchParams();
   if (from) params.append("from", from);
   if (to) params.append("to", to);
+  if (kind) params.append("kind", kind);
   if (limit) params.append("limit", limit);
   if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
