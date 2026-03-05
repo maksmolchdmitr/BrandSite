@@ -376,8 +376,17 @@ paths:
     get:
       tags: [ Matches ]
       summary: List matches in group (member-only)
+      description: |
+        Returns matches sorted by startedAt descending.
+        Use `kind` to filter by match type (singles or doubles).
       parameters:
         - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: kind
+          description: Filter by match type
+          schema:
+            type: string
+            enum: [ singles, doubles ]
         - in: query
           name: from
           description: Filter by start time (inclusive)
@@ -513,6 +522,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserGamesStats"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/me/matches/singles:
+    get:
+      tags: [ Stats ]
+      summary: List current user's singles matches (paginated)
+      description: |
+        Returns singles matches where the current user participated (via linked participant),
+        sorted by startedAt descending. Use for "My games – Singles" page.
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated singles matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/me/matches/doubles:
+    get:
+      tags: [ Stats ]
+      summary: List current user's doubles matches (paginated)
+      description: |
+        Returns doubles matches where the current user participated (via linked participant),
+        sorted by startedAt descending. Use for "My games – Doubles" page.
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated doubles matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -1020,6 +1077,10 @@ components:
       type: object
       additionalProperties: false
       properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Place in the leaderboard (1-based)
         participantId: { type: string }
         participantName: { type: string }
         elo: { type: number, format: double }
@@ -1032,6 +1093,10 @@ components:
       description: |
         Elo for a pair. pairKey can be stable concatenation of sorted participant ids.
       properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Place in the leaderboard (1-based)
         pairKey: { type: string, example: "p1:p2" }
         participantIds:
           type: array
