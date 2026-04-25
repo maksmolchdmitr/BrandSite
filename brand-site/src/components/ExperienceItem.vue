@@ -31,8 +31,6 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .experienceItem {
   display: flex;
   flex-direction: column;
@@ -44,7 +42,7 @@ export default {
 }
 
 .experienceText {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 24px;
   color: black;
   white-space: pre-line;

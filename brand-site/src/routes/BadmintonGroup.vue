@@ -1,21 +1,21 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
       <div class="topRow">
         <div>
           <div class="crumbs">
-            <RouterLink class="crumb" to="/?page=badminton&section=groups">Groups</RouterLink>
+            <RouterLink class="crumb" to="/?page=badminton&section=groups">{{ $t('badminton.groups.groups') }}</RouterLink>
             <span class="sep">/</span>
             <span class="crumb current">{{ groupId }}</span>
           </div>
-          <h1 class="title">{{ group?.name || "Group" }}</h1>
+          <h1 class="title">{{ group?.name || $t('badminton.groups.groupName') }}</h1>
         </div>
 
         <div class="topActions">
-          <span v-if="group?.myRole" class="pill">{{ group.myRole }}</span>
-          <button class="btn secondary" :disabled="loading" @click="refresh">{{ loading ? "Loading..." : "Refresh" }}</button>
+          <span v-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
+          <button class="btn secondary" :disabled="loading" @click="refresh">{{ loading ? $t('common.actions.loading') : $t('common.actions.refresh') }}</button>
         </div>
       </div>
 
@@ -27,54 +27,54 @@
           :class="{ active: groupSection === 'participants' }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=participants`"
         >
-          Participants
+          {{ $t('badminton.group.participants') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
           :class="{ active: groupSection === 'matches' }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches`"
         >
-          Matches
+          {{ $t('badminton.group.matches') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
           :class="{ active: groupSection === 'leaderboards' }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards`"
         >
-          Leaderboards (Elo)
+          {{ $t('badminton.group.leaderboards') }}
         </RouterLink>
       </nav>
 
       <div v-if="groupSection === 'participants'" class="grid">
         <div class="card">
-          <div class="cardTitle">Participants</div>
+          <div class="cardTitle">{{ $t('badminton.group.participants') }}</div>
 
           <div v-if="isAdmin" class="row">
-            <input class="input" v-model="newParticipantName" placeholder="Participant name" />
+            <input class="input" v-model="newParticipantName" :placeholder="$t('badminton.group.participantName')" />
             <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
-              {{ loadingAddParticipant ? "Adding..." : "Add" }}
+              {{ loadingAddParticipant ? $t('badminton.group.adding') : $t('common.actions.add') }}
             </button>
           </div>
 
-          <div v-if="participants.length === 0" class="empty">No participants yet.</div>
+          <div v-if="participants.length === 0" class="empty">{{ $t('badminton.group.noParticipants') }}</div>
           <div v-else>
             <div class="tableWrapper">
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>User ID</th>
-                    <th v-if="isAdmin">Actions</th>
+                    <th>{{ $t('badminton.group.name') }}</th>
+                    <th>{{ $t('badminton.group.userId') }}</th>
+                    <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="p in participants" :key="p.id">
                     <td class="nameCell">{{ p.name }}</td>
-                    <td class="userIdCell">{{ p.userId || "—" }}</td>
+                    <td class="userIdCell">{{ p.userId || $t('common.misc.noData') }}</td>
                     <td v-if="isAdmin" class="actionsCell">
-                      <button class="btn secondary small" @click="startEditParticipant(p)">Edit</button>
-                      <button class="btn secondary small" @click="startLinkUser(p)">Link</button>
-                      <button class="btn danger small" @click="removeParticipant(p)">Delete</button>
+                      <button class="btn secondary small" @click="startEditParticipant(p)">{{ $t('common.actions.edit') }}</button>
+                      <button class="btn secondary small" @click="startLinkUser(p)">{{ $t('common.actions.link') }}</button>
+                      <button class="btn danger small" @click="removeParticipant(p)">{{ $t('common.actions.delete') }}</button>
                     </td>
                   </tr>
                 </tbody>
@@ -82,10 +82,10 @@
             </div>
             <div class="pagerRow">
               <button class="pagerButton" :disabled="!canGoPrevParticipants" @click="goPrevParticipants">←</button>
-              <span class="pagerPage">Page {{ participantsPageIndex + 1 }}</span>
+              <span class="pagerPage">{{ $t('common.pager.page', { page: participantsPageIndex + 1 }) }}</span>
               <button class="pagerButton" :disabled="!canGoNextParticipants" @click="goNextParticipants">→</button>
               <div class="pagerLimit">
-                <span class="pagerLimitLabel">Per page:</span>
+                <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
                 <div class="pagerLimitSelect" @click="toggleParticipantsLimitDropdown">
                   <span>{{ participantsLimit }}</span>
                   <span class="pagerLimitArrow">▾</span>
@@ -106,24 +106,24 @@
       </div>
 
       <div v-if="groupSection === 'matches'" class="card">
-        <div class="cardTitle">Matches</div>
+        <div class="cardTitle">{{ $t('badminton.group.matches') }}</div>
         <div v-if="isAdmin" class="row">
-          <button class="btn" @click="openCreateMatch('singles')">+ Singles match</button>
-          <button class="btn" @click="openCreateMatch('doubles')">+ Doubles match</button>
+          <button class="btn" @click="openCreateMatch('singles')">+ {{ $t('badminton.group.singlesMatch') }}</button>
+          <button class="btn" @click="openCreateMatch('doubles')">+ {{ $t('badminton.group.doublesMatch') }}</button>
         </div>
-        <div v-if="singlesMatches.length === 0 && doublesMatches.length === 0" class="empty">No matches yet.</div>
+        <div v-if="singlesMatches.length === 0 && doublesMatches.length === 0" class="empty">{{ $t('badminton.group.noMatches') }}</div>
         <div v-if="singlesMatches.length > 0" class="matchSection">
-          <div class="matchSectionTitle">Singles</div>
+          <div class="matchSectionTitle">{{ $t('badminton.group.singles') }}</div>
           <div class="tableWrapper">
             <table class="table">
               <thead>
                 <tr>
-                  <th>Player 1</th>
-                  <th>Score</th>
-                  <th>Player 2</th>
-                  <th>Score</th>
-                  <th>Date</th>
-                  <th v-if="isAdmin">Actions</th>
+                  <th>{{ $t('badminton.singles.player1') }}</th>
+                  <th>{{ $t('badminton.singles.score') }}</th>
+                  <th>{{ $t('badminton.singles.player2') }}</th>
+                  <th>{{ $t('badminton.singles.score') }}</th>
+                  <th>{{ $t('badminton.singles.date') }}</th>
+                  <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,8 +134,8 @@
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
-                    <button class="btn secondary small" @click="openEditMatch(m)">Edit</button>
-                    <button class="btn danger small" @click="removeMatch(m)">Delete</button>
+                    <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
+                    <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
               </tbody>
@@ -155,19 +155,19 @@
           />
         </div>
         <div v-if="doublesMatches.length > 0" class="matchSection">
-          <div class="matchSectionTitle">Doubles</div>
+          <div class="matchSectionTitle">{{ $t('badminton.group.doubles') }}</div>
           <div class="tableWrapper">
             <table class="table">
               <thead>
                 <tr>
-                  <th>Team 1 P1</th>
-                  <th>Team 1 P2</th>
-                  <th>Score</th>
-                  <th>Team 2 P1</th>
-                  <th>Team 2 P2</th>
-                  <th>Score</th>
-                  <th>Date</th>
-                  <th v-if="isAdmin">Actions</th>
+                  <th>{{ $t('badminton.doubles.team1p1') }}</th>
+                  <th>{{ $t('badminton.doubles.team1p2') }}</th>
+                  <th>{{ $t('badminton.doubles.score') }}</th>
+                  <th>{{ $t('badminton.doubles.team2p1') }}</th>
+                  <th>{{ $t('badminton.doubles.team2p2') }}</th>
+                  <th>{{ $t('badminton.doubles.score') }}</th>
+                  <th>{{ $t('badminton.doubles.date') }}</th>
+                  <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,8 +180,8 @@
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
-                    <button class="btn secondary small" @click="openEditMatch(m)">Edit</button>
-                    <button class="btn danger small" @click="removeMatch(m)">Delete</button>
+                    <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
+                    <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
               </tbody>
@@ -203,25 +203,25 @@
       </div>
 
       <div v-if="groupSection === 'leaderboards'" class="card">
-        <div class="cardTitle">Leaderboards (Elo)</div>
+        <div class="cardTitle">{{ $t('badminton.group.leaderboards') }}</div>
         <div class="row">
           <button class="btn secondary" :disabled="loadingLb" @click="loadLeaderboards">
-            {{ loadingLb ? "Loading..." : "Refresh leaderboards" }}
+            {{ loadingLb ? $t('common.actions.loading') : $t('badminton.group.refreshLeaderboards') }}
           </button>
         </div>
 
         <div class="lbGrid">
           <div class="lbCard">
-            <div class="lbTitle">Singles Leaderboard</div>
-            <div v-if="singlesLb.length === 0" class="empty">No singles games yet.</div>
+            <div class="lbTitle">{{ $t('badminton.group.singlesLeaderboard') }}</div>
+            <div v-if="singlesLb.length === 0" class="empty">{{ $t('badminton.singles.empty') }}</div>
             <div v-else>
               <div class="tableWrapper">
                 <table class="table">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Player</th>
-                      <th>Elo</th>
+                      <th>{{ $t('badminton.ratings.player') }}</th>
+                      <th>{{ $t('badminton.ratings.elo') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -235,10 +235,10 @@
               </div>
               <div class="pagerRow">
                 <button class="pagerButton" :disabled="!canGoPrevSinglesLb" @click="goPrevSinglesLb">←</button>
-                <span class="pagerPage">Page {{ singlesLbPageIndex + 1 }}</span>
+                <span class="pagerPage">{{ $t('common.pager.page', { page: singlesLbPageIndex + 1 }) }}</span>
                 <button class="pagerButton" :disabled="!canGoNextSinglesLb" @click="goNextSinglesLb">→</button>
                 <div class="pagerLimit">
-                  <span class="pagerLimitLabel">Per page:</span>
+                  <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
                   <div class="pagerLimitSelect" @click="toggleSinglesLbLimitDropdown">
                     <span>{{ lbLimit }}</span>
                     <span class="pagerLimitArrow">▾</span>
@@ -257,16 +257,16 @@
             </div>
           </div>
           <div class="lbCard">
-            <div class="lbTitle">Doubles Leaderboard</div>
-            <div v-if="doublesLb.length === 0" class="empty">No doubles games yet.</div>
+            <div class="lbTitle">{{ $t('badminton.group.doublesLeaderboard') }}</div>
+            <div v-if="doublesLb.length === 0" class="empty">{{ $t('badminton.doubles.empty') }}</div>
             <div v-else>
               <div class="tableWrapper">
                 <table class="table">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Team</th>
-                      <th>Elo</th>
+                      <th>{{ $t('badminton.group.team') }}</th>
+                      <th>{{ $t('badminton.ratings.elo') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -280,10 +280,10 @@
               </div>
               <div class="pagerRow">
                 <button class="pagerButton" :disabled="!canGoPrevDoublesLb" @click="goPrevDoublesLb">←</button>
-                <span class="pagerPage">Page {{ doublesLbPageIndex + 1 }}</span>
+                <span class="pagerPage">{{ $t('common.pager.page', { page: doublesLbPageIndex + 1 }) }}</span>
                 <button class="pagerButton" :disabled="!canGoNextDoublesLb" @click="goNextDoublesLb">→</button>
                 <div class="pagerLimit">
-                  <span class="pagerLimitLabel">Per page:</span>
+                  <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
                   <div class="pagerLimitSelect" @click="toggleDoublesLbLimitDropdown">
                     <span>{{ lbLimit }}</span>
                     <span class="pagerLimitArrow">▾</span>
@@ -311,19 +311,19 @@
 
           <!-- Edit participant -->
           <div v-if="modal.type === 'editParticipant'" class="modalBody">
-            <input class="input" v-model="modal.payload.name" placeholder="Name" />
+            <input class="input" v-model="modal.payload.name" :placeholder="$t('badminton.group.name')" />
             <div class="row">
-              <button class="btn" :disabled="modalLoading" @click="saveParticipantEdit">Save</button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">Cancel</button>
+              <button class="btn" :disabled="modalLoading" @click="saveParticipantEdit">{{ $t('common.actions.save') }}</button>
+              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
             </div>
           </div>
 
           <!-- Link user -->
           <div v-else-if="modal.type === 'linkUser'" class="modalBody">
-            <input class="input" v-model="modal.payload.userId" placeholder="User ID" />
+            <input class="input" v-model="modal.payload.userId" :placeholder="$t('badminton.group.userId')" />
             <div class="row">
-              <button class="btn" :disabled="modalLoading || !modal.payload.userId" @click="confirmLinkUser">Link</button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">Cancel</button>
+              <button class="btn" :disabled="modalLoading || !modal.payload.userId" @click="confirmLinkUser">{{ $t('common.actions.link') }}</button>
+              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
             </div>
           </div>
 
@@ -332,14 +332,14 @@
             <!-- Singles match form -->
             <div v-if="modal.payload.kind === 'singles'" class="matchForm">
               <div class="formSection">
-                <div class="sectionTitle">Team 1</div>
+                <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
                 <div v-if="!modal.payload.team1P1" class="participantSearch">
                   <input 
                     class="input" 
                     v-model="modal.payload.searchTeam1P1" 
                     @input="searchParticipantsField('team1P1')"
                     @focus="loadParticipantsPage('team1P1', 0)"
-                    placeholder="Search participant..."
+                    :placeholder="$t('common.placeholders.searchParticipant')"
                     autocomplete="off"
                   />
                   <div 
@@ -347,7 +347,7 @@
                     class="dropdown"
                     @scroll="handleScroll('team1P1', $event)"
                   >
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team1P1').items" 
                       :key="p.id"
@@ -356,7 +356,7 @@
                     >
                       {{ p.name }}
                     </div>
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">Loading more...</div>
+                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
@@ -365,14 +365,14 @@
                 </div>
                 
                 <div class="scoresRow">
-                  <div class="scoresLabel">Scores:</div>
+                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
                       <input 
                         type="number" 
                         class="scoreInput" 
                         v-model.number="modal.payload.team1Scores[idx]" 
-                        placeholder="21"
+                        :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
@@ -380,7 +380,7 @@
                         v-if="modal.payload.team1Scores.length > 1" 
                         class="btn small danger scoreRemoveBtn" 
                         @click="removeScore('team1', idx)"
-                        title="Remove score"
+                        :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
                     <button class="btn small secondary" @click="addScore('team1')">+</button>
@@ -389,14 +389,14 @@
               </div>
 
               <div class="formSection">
-                <div class="sectionTitle">Team 2</div>
+                <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
                 <div v-if="!modal.payload.team2P1" class="participantSearch">
                   <input 
                     class="input" 
                     v-model="modal.payload.searchTeam2P1" 
                     @input="searchParticipantsField('team2P1')"
                     @focus="loadParticipantsPage('team2P1', 0)"
-                    placeholder="Search participant..."
+                    :placeholder="$t('common.placeholders.searchParticipant')"
                     autocomplete="off"
                   />
                   <div 
@@ -404,7 +404,7 @@
                     class="dropdown"
                     @scroll="handleScroll('team2P1', $event)"
                   >
-                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page === 0" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team2P1').items" 
                       :key="p.id"
@@ -413,7 +413,7 @@
                     >
                       {{ p.name }}
                     </div>
-                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page > 0" class="dropdownItem">Loading more...</div>
+                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team2P1" class="selectedParticipant">
@@ -422,14 +422,14 @@
                 </div>
                 
                 <div class="scoresRow">
-                  <div class="scoresLabel">Scores:</div>
+                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
                       <input 
                         type="number" 
                         class="scoreInput" 
                         v-model.number="modal.payload.team2Scores[idx]" 
-                        placeholder="21"
+                        :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
@@ -437,7 +437,7 @@
                         v-if="modal.payload.team2Scores.length > 1" 
                         class="btn small danger scoreRemoveBtn" 
                         @click="removeScore('team2', idx)"
-                        title="Remove score"
+                        :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
                     <button class="btn small secondary" @click="addScore('team2')">+</button>
@@ -449,14 +449,14 @@
             <!-- Doubles match form -->
             <div v-else class="matchForm">
               <div class="formSection">
-                <div class="sectionTitle">Team 1</div>
+                <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
                 <div v-if="!modal.payload.team1P1" class="participantSearch">
                   <input 
                     class="input" 
                     v-model="modal.payload.searchTeam1P1" 
                     @input="searchParticipantsField('team1P1')"
                     @focus="loadParticipantsPage('team1P1', 0)"
-                    placeholder="Search participant 1..."
+                    :placeholder="$t('common.placeholders.searchParticipant1')"
                     autocomplete="off"
                   />
                   <div 
@@ -464,7 +464,7 @@
                     class="dropdown"
                     @scroll="handleScroll('team1P1', $event)"
                   >
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team1P1').items" 
                       :key="p.id"
@@ -473,7 +473,7 @@
                     >
                       {{ p.name }}
                     </div>
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">Loading more...</div>
+                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
@@ -487,11 +487,11 @@
                     v-model="modal.payload.searchTeam1P2" 
                     @input="searchParticipantsField('team1P2')"
                     @focus="loadParticipantsPage('team1P2', 0)"
-                    placeholder="Search participant 2..."
+                    :placeholder="$t('common.placeholders.searchParticipant2')"
                     autocomplete="off"
                   />
                   <div v-if="getParticipantsList('team1P2').items.length > 0 || getParticipantsList('team1P2').loading" class="dropdown">
-                    <div v-if="getParticipantsList('team1P2').loading" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team1P2').loading" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team1P2').items" 
                       :key="p.id"
@@ -508,14 +508,14 @@
                 </div>
                 
                 <div class="scoresRow">
-                  <div class="scoresLabel">Scores:</div>
+                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
                       <input 
                         type="number" 
                         class="scoreInput" 
                         v-model.number="modal.payload.team1Scores[idx]" 
-                        placeholder="21"
+                        :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
@@ -523,7 +523,7 @@
                         v-if="modal.payload.team1Scores.length > 1" 
                         class="btn small danger scoreRemoveBtn" 
                         @click="removeScore('team1', idx)"
-                        title="Remove score"
+                        :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
                     <button class="btn small secondary" @click="addScore('team1')">+</button>
@@ -532,18 +532,18 @@
               </div>
 
               <div class="formSection">
-                <div class="sectionTitle">Team 2</div>
+                <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
                 <div v-if="!modal.payload.team2P1" class="participantSearch">
                   <input 
                     class="input" 
                     v-model="modal.payload.searchTeam2P1" 
                     @input="searchParticipantsField('team2P1')"
                     @focus="loadParticipantsPage('team2P1', 0)"
-                    placeholder="Search participant 1..."
+                    :placeholder="$t('common.placeholders.searchParticipant1')"
                     autocomplete="off"
                   />
                   <div v-if="getParticipantsList('team2P1').items.length > 0 || getParticipantsList('team2P1').loading" class="dropdown">
-                    <div v-if="getParticipantsList('team2P1').loading" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team2P1').loading" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team2P1').items" 
                       :key="p.id"
@@ -565,7 +565,7 @@
                     v-model="modal.payload.searchTeam2P2" 
                     @input="searchParticipantsField('team2P2')"
                     @focus="loadParticipantsPage('team2P2', 0)"
-                    placeholder="Search participant 2..."
+                    :placeholder="$t('common.placeholders.searchParticipant2')"
                     autocomplete="off"
                   />
                   <div 
@@ -573,7 +573,7 @@
                     class="dropdown"
                     @scroll="handleScroll('team2P2', $event)"
                   >
-                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page === 0" class="dropdownItem">Loading...</div>
+                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
                     <div 
                       v-for="p in getParticipantsList('team2P2').items" 
                       :key="p.id"
@@ -582,7 +582,7 @@
                     >
                       {{ p.name }}
                     </div>
-                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page > 0" class="dropdownItem">Loading more...</div>
+                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team2P2" class="selectedParticipant">
@@ -591,14 +591,14 @@
                 </div>
                 
                 <div class="scoresRow">
-                  <div class="scoresLabel">Scores:</div>
+                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
                       <input 
                         type="number" 
                         class="scoreInput" 
                         v-model.number="modal.payload.team2Scores[idx]" 
-                        placeholder="21"
+                        :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
@@ -606,7 +606,7 @@
                         v-if="modal.payload.team2Scores.length > 1" 
                         class="btn small danger scoreRemoveBtn" 
                         @click="removeScore('team2', idx)"
-                        title="Remove score"
+                        :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
                     <button class="btn small secondary" @click="addScore('team2')">+</button>
@@ -617,9 +617,9 @@
 
             <div class="row">
               <button class="btn" :disabled="modalLoading || !canSaveMatch" @click="saveMatch">
-                {{ modal.payload.matchId ? "Save" : "Create" }}
+                {{ modal.payload.matchId ? $t('common.actions.save') : $t('common.actions.create') }}
               </button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">Cancel</button>
+              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
             </div>
           </div>
         </div>
@@ -643,11 +643,6 @@ export default defineComponent({
   },
   data() {
     return {
-      headItems: [
-        {text: "Main", ref: "/?page=main", isMainSwitch: false},
-        {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
-      ],
       loading: false,
       error: "",
       group: null,
@@ -694,15 +689,22 @@ export default defineComponent({
     };
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
+        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
+        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
+      ];
+    },
     isAdmin() {
       return this.group?.myRole === "admin";
     },
     modalTitle() {
-      if (this.modal.type === "editParticipant") return "Edit participant";
-      if (this.modal.type === "linkUser") return "Link user to participant";
+      if (this.modal.type === "editParticipant") return this.$t("badminton.group.editParticipant");
+      if (this.modal.type === "linkUser") return this.$t("badminton.group.linkUser");
       if (this.modal.type === "match") {
-        const kind = this.modal.payload.kind === "singles" ? "Singles" : "Doubles";
-        return this.modal.payload.matchId ? `Edit ${kind} match` : `Create ${kind} match`;
+        const kind = this.modal.payload.kind === "singles" ? this.$t("badminton.group.singles") : this.$t("badminton.group.doubles");
+        return this.modal.payload.matchId ? this.$t("badminton.group.editMatch", { kind }) : this.$t("badminton.group.createMatch", { kind });
       }
       return "";
     },
@@ -816,13 +818,18 @@ export default defineComponent({
       (items || []).forEach(p => { map[p.id] = p.name; });
       this.participantNameMap = map;
     },
+    formatRole(role) {
+      if (role === "admin") return this.$t("badminton.roles.admin");
+      if (role === "member") return this.$t("badminton.roles.member");
+      return role;
+    },
     async loadGroup() {
       this.loading = true;
       this.error = "";
       try {
         this.group = await badmintonClient.getGroup(this.groupId);
       } catch (e) {
-        this.error = e?.message || "Failed to load group";
+        this.error = e?.message || this.$t("badminton.group.errLoadGroup");
       } finally {
         this.loading = false;
       }
@@ -853,7 +860,7 @@ export default defineComponent({
           await this.loadLeaderboards();
         }
       } catch (e) {
-        this.error = e?.message || "Failed to load";
+        this.error = e?.message || this.$t("badminton.group.errLoad");
       } finally {
         this.loading = false;
       }
@@ -882,7 +889,7 @@ export default defineComponent({
         this.participantsPageIndex = this.participantsPages.length - 1;
         this.mergeParticipantNames(page.items);
       } catch (e) {
-        this.error = e?.message || "Failed to load next page";
+        this.error = e?.message || this.$t("badminton.group.errNextPage");
       } finally {
         this.loading = false;
       }
@@ -905,7 +912,7 @@ export default defineComponent({
         this.participantsPageIndex = 0;
         this.mergeParticipantNames(pItems);
       } catch (e) {
-        this.error = e?.message || "Failed to load";
+        this.error = e?.message || this.$t("badminton.group.errLoad");
       } finally {
         this.loading = false;
       }
@@ -932,7 +939,7 @@ export default defineComponent({
         this.singlesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.singlesPageIndex = this.singlesPages.length - 1;
       } catch (e) {
-        this.error = e?.message || "Failed to load next page";
+        this.error = e?.message || this.$t("badminton.group.errNextPage");
       } finally {
         this.loading = false;
       }
@@ -950,7 +957,7 @@ export default defineComponent({
         this.singlesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.singlesPageIndex = 0;
       } catch (e) {
-        this.error = e?.message || "Failed to load";
+        this.error = e?.message || this.$t("badminton.group.errLoad");
       } finally {
         this.loading = false;
       }
@@ -973,7 +980,7 @@ export default defineComponent({
         this.doublesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.doublesPageIndex = this.doublesPages.length - 1;
       } catch (e) {
-        this.error = e?.message || "Failed to load next page";
+        this.error = e?.message || this.$t("badminton.group.errNextPage");
       } finally {
         this.loading = false;
       }
@@ -991,7 +998,7 @@ export default defineComponent({
         this.doublesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.doublesPageIndex = 0;
       } catch (e) {
-        this.error = e?.message || "Failed to load";
+        this.error = e?.message || this.$t("badminton.group.errLoad");
       } finally {
         this.loading = false;
       }
@@ -1095,21 +1102,21 @@ export default defineComponent({
       return games.map(g => `${g.pointsA}-${g.pointsB}`).join(", ");
     },
     getParticipantName(participantId) {
-      if (!participantId) return "—";
+      if (!participantId) return this.$t("common.misc.noData");
       return this.participantNameMap[participantId] || participantId;
     },
     getFinalScore(match, side) {
       const games = match.score?.games || [];
-      if (games.length === 0) return "—";
+      if (games.length === 0) return this.$t("common.misc.noData");
       // Return points from the last game
       const lastGame = games[games.length - 1];
       return side === 'A' ? lastGame.pointsA : lastGame.pointsB;
     },
     formatDate(dateStr) {
-      if (!dateStr) return "—";
+      if (!dateStr) return this.$t("common.misc.noData");
       try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString(this.$i18n.locale === "ru" ? "ru-RU" : "en-US", { day: '2-digit', month: '2-digit', year: 'numeric' });
       } catch {
         return dateStr;
       }
@@ -1127,7 +1134,7 @@ export default defineComponent({
           this.participantsPages = [{ ...first, items: [p, ...(first.items || [])] }];
         }
       } catch (e) {
-        this.error = e?.message || "Failed to add participant";
+        this.error = e?.message || this.$t("badminton.group.errAddParticipant");
       } finally {
         this.loadingAddParticipant = false;
       }
@@ -1150,7 +1157,7 @@ export default defineComponent({
         }
         this.closeModal();
       } catch (e) {
-        this.error = e?.message || "Failed to update participant";
+        this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
       } finally {
         this.modalLoading = false;
       }
@@ -1173,14 +1180,14 @@ export default defineComponent({
         }
         this.closeModal();
       } catch (e) {
-        this.error = e?.message || "Failed to link user";
+        this.error = e?.message || this.$t("badminton.group.errLinkUser");
       } finally {
         this.modalLoading = false;
       }
     },
 
     async removeParticipant(p) {
-      if (!confirm(`Delete participant "${p.name}"?`)) return;
+      if (!confirm(this.$t("badminton.group.confirmDeleteParticipant", { name: p.name }))) return;
       this.error = "";
       try {
         await badmintonClient.deleteParticipant(this.groupId, p.id);
@@ -1193,7 +1200,7 @@ export default defineComponent({
           this.participantsPages[idx] = { ...this.participantsPages[idx], items };
         }
       } catch (e) {
-        this.error = e?.message || "Failed to delete participant";
+        this.error = e?.message || this.$t("badminton.group.errDeleteParticipant");
       }
     },
 
@@ -1454,13 +1461,13 @@ export default defineComponent({
         this.closeModal();
         if (this.groupSection === "leaderboards") this.loadLeaderboards();
       } catch (e) {
-        this.error = e?.message || "Failed to save match";
+        this.error = e?.message || this.$t("badminton.group.errSaveMatch");
       } finally {
         this.modalLoading = false;
       }
     },
     async removeMatch(m) {
-      if (!confirm(`Delete match ${m.id}?`)) return;
+      if (!confirm(this.$t("badminton.group.confirmDeleteMatch", { id: m.id }))) return;
       this.error = "";
       try {
         await badmintonClient.deleteMatch(this.groupId, m.id);
@@ -1475,7 +1482,7 @@ export default defineComponent({
         }
         if (this.groupSection === "leaderboards") this.loadLeaderboards();
       } catch (e) {
-        this.error = e?.message || "Failed to delete match";
+        this.error = e?.message || this.$t("badminton.group.errDeleteMatch");
       }
     },
 
@@ -1488,28 +1495,26 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .page { display: flex; flex-direction: column; gap: 64px; }
 .content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
 .topRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.crumbs { font-family: 'Mali','sans-serif'; display: flex; gap: 8px; align-items: center; }
+.crumbs { font-family: var(--font-display); display: flex; gap: 8px; align-items: center; }
 .crumb { text-decoration: none; color: #4F3DFF; font-weight: 700; }
 .crumb.current { color: black; font-weight: 700; }
 .sep { opacity: 0.6; }
-.title { margin: 4px 0 0 0; font-family: 'Mali','sans-serif'; font-size: 40px; font-weight: 700; }
+.title { margin: 4px 0 0 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 .topActions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 6px 12px; border-radius: 999px; font-family: 'Mali','sans-serif'; font-size: 14px; font-weight: 700; }
+.pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 6px 12px; border-radius: 999px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .pill.tiny { padding: 3px 8px; font-size: 12px; }
 
-.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali','sans-serif'; }
+.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 
 .groupNav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .groupNavLink {
   padding: 10px 18px;
   border-radius: 100px;
   text-decoration: none;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 16px;
   color: #4F3DFF;
@@ -1522,20 +1527,20 @@ export default defineComponent({
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.cardTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 20px; color: #4F3DFF; }
+.cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: 'Mali','sans-serif'; font-size: 16px; min-width: 240px; flex: 1; }
-.label { font-family: 'Mali','sans-serif'; font-weight: 700; width: 90px; }
-.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: 'Mali','sans-serif'; font-size: 14px; font-weight: 700; }
+.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; min-width: 240px; flex: 1; }
+.label { font-family: var(--font-display); font-weight: 700; width: 90px; }
+.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
 .btn.danger { background: #ff3d3d; color: white; }
 .btn.small { padding: 8px 10px; font-size: 13px; }
 .btn:disabled { opacity: 0.7; cursor: default; }
 
-.empty { font-family: 'Mali','sans-serif'; opacity: 0.7; padding: 20px; text-align: center; }
+.empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 
 .tableWrapper { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-family: 'Mali','sans-serif'; }
+.table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 12px; text-align: left; font-weight: 700; font-size: 15px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; white-space: nowrap; }
 .table td { padding: 12px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
@@ -1550,11 +1555,11 @@ export default defineComponent({
 
 .matchSection { margin-top: 20px; }
 .matchSection:first-child { margin-top: 0; }
-.matchSectionTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 12px; }
+.matchSectionTitle { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 12px; }
 
 .lbGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .lbCard { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.lbTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 18px; color: #4F3DFF; }
+.lbTitle { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: #4F3DFF; }
 .eloCell { font-weight: 700; color: #4F3DFF; font-size: 16px; }
 .rankCell { font-weight: 700; opacity: 0.85; font-size: 14px; }
 
@@ -1570,7 +1575,7 @@ export default defineComponent({
   background-color: white;
   border-radius: 999px;
   padding: 6px 14px;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
   color: #4F3DFF;
@@ -1581,7 +1586,7 @@ export default defineComponent({
   cursor: default;
 }
 .pagerPage {
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
 }
 .pagerLimit {
@@ -1592,7 +1597,7 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 .pagerLimitLabel {
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
 }
 .pagerLimitSelect {
@@ -1604,7 +1609,7 @@ export default defineComponent({
   border-radius: 100px;
   border: 2px solid #4F3DFF;
   background-color: white;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: #4F3DFF;
@@ -1624,7 +1629,7 @@ export default defineComponent({
 }
 .pagerLimitOption {
   padding: 8px 12px;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   cursor: pointer;
 }
@@ -1633,25 +1638,25 @@ export default defineComponent({
 
 .modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 1000; }
 .modal { width: min(600px, 100%); background: white; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-.modalTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 20px; margin-bottom: 16px; color: #4F3DFF; }
+.modalTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin-bottom: 16px; color: #4F3DFF; }
 .modalBody { display: flex; flex-direction: column; gap: 16px; }
 
 .matchForm { display: flex; flex-direction: column; gap: 24px; }
 .formSection { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #fafaff; border-radius: 12px; }
-.sectionTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 8px; }
+.sectionTitle { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 8px; }
 
 .participantSearch { position: relative; }
 .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; max-height: 300px; overflow-y: auto; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.dropdownItem { padding: 10px 14px; cursor: pointer; font-family: 'Mali','sans-serif'; font-size: 14px; }
+.dropdownItem { padding: 10px 14px; cursor: pointer; font-family: var(--font-display); font-size: 14px; }
 .dropdownItem:hover { background: #f6f6ff; }
 
-.selectedParticipant { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: white; border: 2px solid #4F3DFF; border-radius: 8px; font-family: 'Mali','sans-serif'; font-weight: 600; }
+.selectedParticipant { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: white; border: 2px solid #4F3DFF; border-radius: 8px; font-family: var(--font-display); font-weight: 600; }
 
 
 .scoresRow { display: flex; align-items: center; gap: 12px; }
-.scoresLabel { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 14px; min-width: 60px; }
+.scoresLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; min-width: 60px; }
 .scoresInputs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.scoreInput { width: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Mali','sans-serif'; font-size: 14px; text-align: center; }
+.scoreInput { width: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: var(--font-display); font-size: 14px; text-align: center; }
 
 @media (max-width: 980px) {
   .grid { grid-template-columns: 1fr; }

@@ -1,48 +1,48 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
       <div class="topRow">
-        <h1 class="title">My ratings</h1>
+        <h1 class="title">{{ $t('badminton.ratings.title') }}</h1>
       </div>
 
       <div class="ctaRow">
         <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
-          <span class="ctaText">My games</span>
+          <span class="ctaText">{{ $t('badminton.ratings.myGames') }}</span>
         </RouterLink>
         <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
-          <span class="ctaText">My groups</span>
+          <span class="ctaText">{{ $t('badminton.ratings.myGroups') }}</span>
         </RouterLink>
         <button class="cta secondary cta-logout" :disabled="loading" @click="handleLogout">
-          <span class="ctaText">Logout</span>
+          <span class="ctaText">{{ $t('common.actions.logout') }}</span>
         </button>
         <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">← Back to Products</span>
+          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
         </RouterLink>
       </div>
 
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="card">
-        <div class="cardTitle">Individual Elo Rating</div>
-        <p class="hint">Рейтинг рассчитывается по системе Эло после каждой игры.</p>
+        <div class="cardTitle">{{ $t('badminton.ratings.individual') }}</div>
+        <p class="hint">{{ $t('badminton.ratings.ratingHint') }}</p>
         <div class="tableWrapper">
           <table class="table">
             <thead>
               <tr>
-                <th>Player</th>
-                <th>Elo</th>
+                <th>{{ $t('badminton.ratings.player') }}</th>
+                <th>{{ $t('badminton.ratings.elo') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>
                   {{
-                    ([me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.username || me?.id || "—")
+                    ([me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.username || me?.id || $t('common.misc.noData'))
                   }}
                 </td>
-                <td class="eloCell">{{ ratings?.singlesElo ?? "—" }}</td>
+                <td class="eloCell">{{ ratings?.singlesElo ?? $t('common.misc.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -50,21 +50,21 @@
       </div>
 
       <div class="card">
-        <div class="cardTitle">Doubles Elo by Partner</div>
-        <p class="hint">Рейтинг рассчитывается по системе Эло после каждой игры.</p>
+        <div class="cardTitle">{{ $t('badminton.ratings.doublesByPartner') }}</div>
+        <p class="hint">{{ $t('badminton.ratings.ratingHint') }}</p>
         <div v-if="currentDoublesPage.items.length === 0" class="empty">
-          No doubles games yet.
+          {{ $t('badminton.ratings.noDoubles') }}
         </div>
         <div v-else>
           <div class="tableWrapper">
             <table class="table">
               <thead>
                 <tr>
-                  <th>Partner</th>
-                  <th>Games</th>
-                  <th>Wins</th>
-                  <th>Losses</th>
-                  <th>Elo</th>
+                  <th>{{ $t('badminton.ratings.partner') }}</th>
+                  <th>{{ $t('badminton.ratings.games') }}</th>
+                  <th>{{ $t('badminton.ratings.wins') }}</th>
+                  <th>{{ $t('badminton.ratings.losses') }}</th>
+                  <th>{{ $t('badminton.ratings.elo') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -86,7 +86,7 @@
             >
               ←
             </button>
-            <span class="pagerPage">Page {{ doublesCurrentPageIndex + 1 }}</span>
+            <span class="pagerPage">{{ $t('common.pager.page', { page: doublesCurrentPageIndex + 1 }) }}</span>
             <button
               class="pagerButton"
               :disabled="!canGoNextDoubles"
@@ -95,7 +95,7 @@
               →
             </button>
             <div class="pagerLimit">
-              <span class="pagerLimitLabel">Per page:</span>
+              <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
               <div class="pagerLimitSelect" @click="toggleDoublesLimitDropdown">
                 <span>{{ doublesLimit }}</span>
                 <span class="pagerLimitArrow">▾</span>
@@ -131,11 +131,6 @@ export default defineComponent({
   components: {HeadBar},
   data() {
     return {
-      headItems: [
-        {text: "Main", ref: "/?page=main", isMainSwitch: false},
-        {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
-      ],
       loading: false,
       error: "",
       me: null,
@@ -148,6 +143,13 @@ export default defineComponent({
     };
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
+        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
+        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
+      ];
+    },
     currentDoublesPage() {
       if (!this.doublesPages.length) {
         return { items: [], nextPageToken: null };
@@ -183,7 +185,7 @@ export default defineComponent({
         this.doublesPages = [first];
         this.doublesCurrentPageIndex = 0;
       } catch (e) {
-        this.error = e?.message || "Failed to load ratings";
+        this.error = e?.message || this.$t("badminton.ratings.errLoad");
       } finally {
         this.loading = false;
       }
@@ -224,7 +226,7 @@ export default defineComponent({
         this.doublesPages.push(page);
         this.doublesCurrentPageIndex = this.doublesPages.length - 1;
       } catch (e) {
-        this.error = e?.message || "Failed to load next page";
+        this.error = e?.message || this.$t("badminton.ratings.errNext");
       } finally {
         this.loading = false;
       }
@@ -248,7 +250,7 @@ export default defineComponent({
         await badmintonClient.logout();
         await this.$router.push("/?page=badminton&section=login");
       } catch (e) {
-        this.error = e?.message || "Logout failed";
+        this.error = e?.message || this.$t("badminton.login.errLogout");
         this.loading = false;
       }
     },
@@ -257,15 +259,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .page { display: flex; flex-direction: column; gap: 64px; }
 .content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .topActions { display: flex; gap: 12px; flex-wrap: wrap; }
-.title { margin: 0; font-family: 'Mali','sans-serif'; font-size: 40px; font-weight: 700; }
-.linkBtn { text-decoration: none; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
-.logoutBtn { background: none; border: none; cursor: pointer; padding: 0; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
+.title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
+.linkBtn { text-decoration: none; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
+.logoutBtn { background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
 
 .ctaRow {
   display: flex;
@@ -341,7 +341,7 @@ export default defineComponent({
 }
 
 .ctaText {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: white;
@@ -352,12 +352,12 @@ export default defineComponent({
 }
 
 .card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.cardTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 20px; color: #4F3DFF; }
-.hint { font-family: 'Mali','sans-serif'; font-size: 13px; opacity: 0.7; margin-top: 8px; }
-.empty { font-family: 'Mali','sans-serif'; opacity: 0.7; padding: 20px; text-align: center; }
+.cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
+.hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; margin-top: 8px; }
+.empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 
 .tableWrapper { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-family: 'Mali','sans-serif'; }
+.table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 16px; text-align: left; font-weight: 700; font-size: 16px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; }
 .table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
@@ -379,7 +379,7 @@ export default defineComponent({
   background-color: white;
   border-radius: 999px;
   padding: 6px 14px;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
   color: #4F3DFF;
@@ -392,7 +392,7 @@ export default defineComponent({
 }
 
 .pagerPage {
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
 }
 
@@ -405,7 +405,7 @@ export default defineComponent({
 }
 
 .pagerLimitLabel {
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
 }
 
@@ -418,7 +418,7 @@ export default defineComponent({
   border-radius: 100px;
   border: 2px solid #4F3DFF;
   background-color: white;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: #4F3DFF;
@@ -443,7 +443,7 @@ export default defineComponent({
 
 .pagerLimitOption {
   padding: 8px 12px;
-  font-family: 'Mali','sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   cursor: pointer;
 }
@@ -457,7 +457,7 @@ export default defineComponent({
   color: #4F3DFF;
 }
 
-.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali','sans-serif'; }
+.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 
 @media (max-width: 768px) {
   .page { gap: 12px; }

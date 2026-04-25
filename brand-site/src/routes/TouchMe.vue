@@ -1,13 +1,13 @@
 <template>
   <div className="mainContainer">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
     <div className="container" ref="linksContainer">
       <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref"
             :logo-text="currentLink.text"></Link>
     </div>
     <div class="startRouletteContainer" @click="startRoulette">
-      <img class="circle" alt="-" src="@/assets/CircleLinker.svg"/>
-      <span class="spin-text">Spin</span>
+      <img class="circle" :alt="$t('touchMe.spinAlt')" src="@/assets/CircleLinker.svg"/>
+      <span class="spin-text">{{ $t('touchMe.spin') }}</span>
     </div>
   </div>
 </template>
@@ -46,47 +46,30 @@ export default {
   components: {Link, HeadBar},
   data() {
     return {
-      headItems: [
-        {
-          text: 'Main',
-          ref: '/?page=main',
-          isMainSwitch: false
-        },
-        {
-          text: 'Touch me',
-          ref: '/?page=contact',
-          isMainSwitch: true
-        },
-        {
-          text: 'Products',
-          ref: '/?page=products',
-          isMainSwitch: false
-        }
-      ],
       links: [
         {
           img: tgImgSource,
-          text: "Telegram",
+          textKey: "touchMe.links.telegram",
           ref: "https://t.me/maksmolch",
         },
         {
           img: linkedInImgSource,
-          text: "LinkedIn",
+          textKey: "touchMe.links.linkedIn",
           ref: "https://www.linkedin.com/in/maksmolch/",
         },
         {
           img: figmaImgSource,
-          text: "Figma",
+          textKey: "touchMe.links.figma",
           ref: "https://www.figma.com/design/Ke4H9o65cODhhC2crnZmPy/MaksMolch-brend-site?node-id=0-1&t=1qM5NcQafVqDU1hM-0",
         },
         {
           img: gmailImgSource,
-          text: "Gmail",
+          textKey: "touchMe.links.gmail",
           ref: "mailto:maksmolchdmitr@gmail.com",
         },
         {
           img: githubImgSource,
-          text: "Github",
+          textKey: "touchMe.links.github",
           ref: "https://github.com/maksmolchdmitr",
         },
       ],
@@ -94,9 +77,22 @@ export default {
     }
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: false },
+        { text: this.$t('common.nav.touchMe'), ref: '/?page=contact', isMainSwitch: true },
+        { text: this.$t('common.nav.products'), ref: '/?page=products', isMainSwitch: false },
+      ];
+    },
+    localizedLinks() {
+      return this.links.map((item) => ({
+        ...item,
+        text: this.$t(item.textKey),
+      }));
+    },
     currentLink() {
-      this.currentIndex = Math.floor(Math.random() * this.links.length);
-      return this.links[this.currentIndex];
+      this.currentIndex = Math.floor(Math.random() * this.localizedLinks.length);
+      return this.localizedLinks[this.currentIndex];
     }
   }
 }
@@ -148,7 +144,7 @@ html {
   pointer-events: none; /* Чтобы текст не мешал кликать по изображению */
   font-size: 24px;
   color: black;
-  font-family: Mali, serif;
+  font-family: var(--font-display);
 }
 
 .circle:hover {

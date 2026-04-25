@@ -1,12 +1,12 @@
 <template>
-  <div className="dateSwitcher">
+  <div class="dateSwitcher">
     <div v-for="i in Array(dateData.count).fill().map((_, idx) => idx)" :key="i">
-      <div className="dateBlock" v-if="i === dateData.number">
-        <a className="dateText">{{ dateData.text }}</a>
+      <div class="dateBlock" v-if="i === dateData.number">
+        <span class="dateText">{{ dateData.text }}</span>
       </div>
       <div v-else>
         <a :href="'#date_' + i">
-          <img className="circleSwitcher" :src="iconSrc" alt="Another date link">
+          <img class="circleSwitcher" :src="iconSrc" :alt="$t('dateSwitch.alt')">
         </a>
       </div>
     </div>
@@ -58,8 +58,6 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .dateSwitcher {
   display: flex;
   flex-direction: row;
@@ -68,9 +66,20 @@ export default {
 }
 
 .dateText {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  transform: none;
   color: black;
+}
+
+:global(:root[data-locale="ru"]) .dateText {
+  transform: translateY(2px);
 }
 
 .dateBlock {
@@ -82,6 +91,7 @@ export default {
   background-color: #D9D9D9;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .circleSwitcher {
@@ -116,4 +126,5 @@ export default {
     background-color: #404040;
   }
 }
+
 </style>

@@ -28,6 +28,14 @@ npm run dev
 npm run build
 ```
 
+### Localization (EN/RU)
+
+- i18n setup lives in `src/i18n/index.js`.
+- Default locale: `en`.
+- Selected locale is persisted in `localStorage` key `brand-site.locale`.
+- To add new translations, extend both `messages.en` and `messages.ru` with the same keys.
+- In Vue templates use `$t('path.to.key')`.
+
 ### Переключение на реальный бекенд (Badminton API)
 
 По умолчанию фронт работает с **моками**. Чтобы ходить в реальный бекенд:

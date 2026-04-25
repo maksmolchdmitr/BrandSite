@@ -1,36 +1,36 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="widgetBox">
-        <div class="widgetTitle">Вход через Telegram</div>
+        <div class="widgetTitle">{{ $t('badminton.login.telegramTitle') }}</div>
         <button type="button" class="btn telegramBtn" :disabled="loading" @click="goToTelegramOAuth">
-          Войти через Telegram
+          {{ $t('badminton.login.telegramButton') }}
         </button>
         <div class="widgetHint">
-          Откроется окно авторизации Telegram. Разрешите всплывающие окна для этого сайта, если окно не открылось.
+          {{ $t('badminton.login.telegramHint') }}
         </div>
       </div>
 
       <div v-if="showMockUsers" class="usersBox">
-        <div class="widgetTitle">Mock users</div>
+        <div class="widgetTitle">{{ $t('badminton.login.mockUsers') }}</div>
         <div class="usersGrid">
           <button v-for="u in users" :key="u.id" class="userBtn" :disabled="loading" @click="loginAs(u.id)">
             <div class="userName">
               {{ [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username || u.id }}
             </div>
-            <div class="userMeta">id: {{ u.id }} · tg: {{ u.telegramId }}</div>
+            <div class="userMeta">{{ $t('badminton.login.userId') }}: {{ u.id }} · {{ $t('badminton.login.telegramShort') }}: {{ u.telegramId }}</div>
           </button>
         </div>
-        <div class="widgetHint">Для теста без Telegram — выберите пользователя из списка.</div>
+        <div class="widgetHint">{{ $t('badminton.login.mockHint') }}</div>
       </div>
 
       <div class="row">
         <button class="btn secondary" :disabled="loading" @click="logout">
-          Выйти (очистить сессию)
+          {{ $t('badminton.login.logoutClear') }}
         </button>
       </div>
     </div>
@@ -84,11 +84,6 @@ export default defineComponent({
   },
   data() {
     return {
-      headItems: [
-        {text: "Main", ref: "/?page=main", isMainSwitch: false},
-        {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
-      ],
       loading: false,
       error: "",
       users: [],
@@ -96,6 +91,13 @@ export default defineComponent({
     };
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
+        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
+        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
+      ];
+    },
     // Блок мок-юзеров: при USE_MOCKS=true список от badmintonClient; при реальном API — от mockClient, если SHOW_MOCK_USERS
     showMockUsers() {
       if (!SHOW_MOCK_USERS) return false;
@@ -108,7 +110,7 @@ export default defineComponent({
       const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
       tgLog("1. Opening OAuth popup", { origin, url });
       if (!origin) {
-        this.error = "Не удалось определить origin страницы";
+        this.error = this.$t("badminton.login.errOrigin");
         return;
       }
       const winName = "tg_oauth_" + Date.now();
@@ -204,9 +206,9 @@ export default defineComponent({
         tgLog("7. telegramLogin failed", e?.message);
         const msg = e?.message || "";
         if (msg === "Failed to fetch" || (msg && msg.includes("fetch"))) {
-          this.error = "Не удалось подключиться к серверу. Проверьте, что у бекенда (badminton-service.website) настроен валидный HTTPS-сертификат.";
+          this.error = this.$t("badminton.login.errNoServer");
         } else {
-          this.error = msg || "Ошибка авторизации через Telegram";
+          this.error = msg || this.$t("badminton.login.errTelegram");
         }
       } finally {
         this.loading = false;
@@ -236,7 +238,7 @@ export default defineComponent({
         }
       } catch (e) {
         console.error("Login error:", e);
-        this.error = e?.message || "Login failed";
+        this.error = e?.message || this.$t("badminton.login.errLogin");
       } finally {
         this.loading = false;
       }
@@ -248,7 +250,7 @@ export default defineComponent({
         await badmintonClient.logout();
         clearMockSession();
       } catch (e) {
-        this.error = e?.message || "Logout failed";
+        this.error = e?.message || this.$t("badminton.login.errLogout");
       } finally {
         this.loading = false;
       }
@@ -258,8 +260,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .page {
   display: flex;
   flex-direction: column;
@@ -275,14 +275,14 @@ export default defineComponent({
 
 .title {
   margin: 0;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 48px;
   font-weight: 700;
 }
 
 .subtitle {
   margin: 0;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 20px;
   max-width: 960px;
 }
@@ -300,7 +300,7 @@ export default defineComponent({
   color: white;
   border-radius: 100px;
   padding: 14px 18px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
 }
@@ -321,7 +321,7 @@ export default defineComponent({
   border: 1px solid #ffb3b3;
   padding: 12px 14px;
   border-radius: 12px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
 }
 
 .widgetBox {
@@ -351,7 +351,7 @@ export default defineComponent({
 }
 
 .widgetTitle {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-weight: 700;
   margin-bottom: 10px;
 }
@@ -377,13 +377,13 @@ export default defineComponent({
 }
 
 .userName {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-weight: 700;
 }
 
 .userMeta {
   margin-top: 6px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 13px;
   opacity: 0.8;
 }
@@ -394,7 +394,7 @@ export default defineComponent({
 
 .widgetHint {
   margin-top: 10px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   opacity: 0.85;
 }

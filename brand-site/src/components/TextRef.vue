@@ -1,5 +1,4 @@
 <template>
-<!--  <link href='https://fonts.googleapis.com/css?family=Mali' rel='stylesheet'>-->
   <RouterLink v-if="item.isMainSwitch" className="mainSwitch switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
   <RouterLink v-else className="switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
 </template>
@@ -20,10 +19,8 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .switchItem {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 36px;
   color: black;
 }

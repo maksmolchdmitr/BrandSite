@@ -45,7 +45,7 @@ export default defineComponent({
 .logoText {
   font-size: 36px;
   color: white;
-  font-family: Mali, serif;
+  font-family: var(--font-display);
 }
 
 .logoImage {

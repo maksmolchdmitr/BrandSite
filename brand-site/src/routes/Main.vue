@@ -1,6 +1,6 @@
 <template>
   <div className="contentDiv">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
     <Description></Description>
     <ExperienceBar :items="formattedExperienceItems"></ExperienceBar>
   </div>
@@ -33,90 +33,42 @@ export default {
     }
 
     return {
-      headItems: [
-        {
-          text: 'Main',
-          ref: '/?page=main',
-          isMainSwitch: true
-        },
-        {
-          text: 'Touch me',
-          ref: '/?page=contact',
-          isMainSwitch: false
-        },
-        {
-          text: 'Products',
-          ref: '/?page=products',
-          isMainSwitch: false
-        }
-      ],experienceItems: [
+      experienceItems: [
         {
           date: '05.03.25-' + getDateNow(),
-          text: `Joined *Yandex Market Ads* as a backend engineer.
-
-Own full-cycle development of product and infrastructure features — from requirements clarification and API design to rollout, monitoring and on-call support in a high-load distributed environment.
-
-Worked on CPM / CPA advertising systems, Game Center mechanics and bonus programs:
-- Built and supported admin APIs, analytics exports (YT + Temporal workflows), billing & targeting integrations
-- Migrated targeting logic from hardcoded rules to configuration-driven YT tables
-- Improved observability through logging and workflow instrumentation
-- Optimized latency and response time of critical endpoints
-- Removed large volumes of legacy code, simplifying architecture and reducing technical debt
-
-Key impact:
-- Led rollout of new game mechanics to 100% of audience → DAU +350%, revenue +78%
-- Built backend infrastructure for multi-creative campaigns, enabling bandit-based optimization (CTR +59.7%, CPC −37.4%)
-- Delivered multiple bonus mechanics improving advertiser engagement and conversion rates
-`
+          textKey: 'main.experiences.first'
         },
 
         {
           date: '06.08.24-27.02.25',
-          text: `Backend Engineer at *STM Labs* (B2G).
-
-Developed and optimized high-load reactive services (Spring WebFlux + custom RPC framework).
-
-- Integrated distributed tracing into internal RPC library, improving incident investigation
-- Refactored legacy components using clean architecture principles
-- Automated code quality validation and improved CI reliability
-- Contributed to MapReduce-style large-scale data processing pipelines
-- Participated in performance tuning and production incident analysis
-`
+          textKey: 'main.experiences.second'
         },
 
         {
           date: '02.04.24-05.07.24',
-          text: `Backend Engineering Intern at *Yandex*.
-
-- Implemented shard banning logic in monitoring balancers while preserving cache persistence in YDB
-- Designed and implemented new endpoints; modified legacy services with full pre-production validation
-- Worked extensively with asynchronous code, actor-based systems and distributed architecture
-- Analyzed traces and logs to identify and resolve production-level issues
-`
+          textKey: 'main.experiences.third'
         },
 
         {
           date: '09.2024-06.2025',
-          text: `Founder at *Random Walk*.
-
-Led a cross-functional team (mobile, QA, design, backend).
-
-- Designed and implemented a distributed WebSocket-based backend service
-- Developed a dynamic GraphQL-based web platform
-- Managed product lifecycle from ideation to production release
-
-GitHub – https://github.com/ru-random-walk
-`
+          textKey: 'main.experiences.fourth'
         }
       ]
     }
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: true },
+        { text: this.$t('common.nav.touchMe'), ref: '/?page=contact', isMainSwitch: false },
+        { text: this.$t('common.nav.products'), ref: '/?page=products', isMainSwitch: false },
+      ];
+    },
     formattedExperienceItems() {
       return this.experienceItems.map(item => {
         return {
           ...item,
-          text: this.formatText(item.text)
+          text: this.formatText(this.$t(item.textKey))
         };
       });
     }

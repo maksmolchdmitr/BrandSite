@@ -1,12 +1,12 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
       <RouterLink class="productCard" to="/?page=badminton">
         <div class="cardInner">
-          <div class="cardTitle">Badminton Service</div>
-          <div class="cardSubtitle">Groups • Matches • Elo • Telegram auth</div>
+          <div class="cardTitle">{{ $t('products.badmintonTitle') }}</div>
+          <div class="cardSubtitle">{{ $t('products.badmintonSubtitle') }}</div>
         </div>
       </RouterLink>
     </div>
@@ -26,26 +26,17 @@ import HeadBar from "@/components/HeadBar.vue";
 
 export default defineComponent({
   components: {HeadBar},
+  computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: false },
+        { text: this.$t('common.nav.touchMe'), ref: '/?page=contact', isMainSwitch: false },
+        { text: this.$t('common.nav.products'), ref: '/?page=products', isMainSwitch: true },
+      ];
+    },
+  },
   data() {
-    return {
-      headItems: [
-        {
-          text: 'Main',
-          ref: '/?page=main',
-          isMainSwitch: false
-        },
-        {
-          text: 'Touch me',
-          ref: '/?page=contact',
-          isMainSwitch: false
-        },
-        {
-          text: 'Products',
-          ref: '/?page=products',
-          isMainSwitch: true
-        }
-      ]
-    }
+    return {}
   }
 })
 </script>
@@ -83,14 +74,14 @@ export default defineComponent({
 }
 
 .cardTitle {
-  font-family: Mali, serif;
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 700;
   color: white;
 }
 
 .cardSubtitle {
-  font-family: Mali, serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);

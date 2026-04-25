@@ -5,13 +5,45 @@
 </template>
 
 <script>
+import { applyLocaleToDocument } from "@/i18n";
+
+export default {
+  computed: {
+    currentLocale() {
+      return this.$i18n.locale || "en";
+    },
+  },
+  watch: {
+    currentLocale: {
+      immediate: true,
+      handler(locale) {
+        applyLocaleToDocument(locale);
+      },
+    },
+  },
+  mounted() {
+    applyLocaleToDocument(this.currentLocale);
+  },
+}
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;700&family=Neucha&display=swap');
+
 @media (prefers-reduced-motion: no-preference) {
   :root {
     scroll-behavior: smooth;
   }
+}
+
+:root {
+  --font-latin: "Mali", sans-serif;
+  --font-cyrillic: "Neucha", sans-serif;
+  --font-display: var(--font-latin);
+}
+
+:root[data-locale="ru"] {
+  --font-display: var(--font-cyrillic);
 }
 
 body {

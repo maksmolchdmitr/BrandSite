@@ -1,5 +1,5 @@
 <template>
-  <p>Hi, I'm <a className="refText">Maks</a> <br> I work as Backend Software Engineer and have studied at HSE</p>
+  <p>{{ $t('main.intro', { name: $t('main.name') }) }} <br> {{ $t('main.introLine2') }}</p>
 </template>
 
 <script>
@@ -7,7 +7,7 @@
 
 <style scoped>
 p {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 36px;
   color: black;
   text-align: center;

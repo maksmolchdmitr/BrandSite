@@ -12,6 +12,7 @@
   "dependencies": {
     "vite-plugin-vue-setup-extend": "^0.4.0",
     "vue": "^3.4.29",
+    "vue-i18n": "^11.1.2",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {

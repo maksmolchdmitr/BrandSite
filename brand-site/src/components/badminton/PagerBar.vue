@@ -7,7 +7,7 @@
     >
       ←
     </button>
-    <span class="pagerPage">Page {{ currentPageIndex + 1 }}</span>
+    <span class="pagerPage">{{ $t('common.pager.page', { page: currentPageIndex + 1 }) }}</span>
     <button
       class="pagerButton"
       :disabled="!canGoNext"
@@ -16,7 +16,7 @@
       →
     </button>
     <div class="pagerLimit">
-      <span class="pagerLimitLabel">Per page:</span>
+      <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
       <div class="pagerLimitSelect" @click="$emit('toggleLimit')">
         <span>{{ limit }}</span>
         <span class="pagerLimitArrow">▾</span>
@@ -66,7 +66,7 @@ export default defineComponent({
   background-color: white;
   border-radius: 999px;
   padding: 6px 14px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
   color: #4F3DFF;
@@ -77,7 +77,7 @@ export default defineComponent({
   cursor: default;
 }
 .pagerPage {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 16px;
 }
 .pagerLimit {
@@ -88,7 +88,7 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 .pagerLimitLabel {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
 }
 .pagerLimitSelect {
@@ -100,7 +100,7 @@ export default defineComponent({
   border-radius: 100px;
   border: 2px solid #4F3DFF;
   background-color: white;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: #4F3DFF;
@@ -120,7 +120,7 @@ export default defineComponent({
 }
 .pagerLimitOption {
   padding: 8px 12px;
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 14px;
   cursor: pointer;
 }

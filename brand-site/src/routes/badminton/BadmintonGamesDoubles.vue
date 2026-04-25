@@ -1,41 +1,41 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems" />
+    <HeadBar :headItems="localizedHeadItems" />
     <div class="content">
       <div class="topRow">
-        <h1 class="title">Doubles Games</h1>
+        <h1 class="title">{{ $t('badminton.doubles.title') }}</h1>
       </div>
       <div class="ctaRow">
         <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
-          <span class="ctaText">← My games</span>
+          <span class="ctaText">{{ $t('badminton.doubles.backToGames') }}</span>
         </RouterLink>
         <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
-          <span class="ctaText">My ratings</span>
+          <span class="ctaText">{{ $t('badminton.doubles.myRatings') }}</span>
         </RouterLink>
         <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
-          <span class="ctaText">My groups</span>
+          <span class="ctaText">{{ $t('badminton.doubles.myGroups') }}</span>
         </RouterLink>
         <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">← Back to Products</span>
+          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
         </RouterLink>
       </div>
       <div v-if="error" class="errorBox">{{ error }}</div>
       <div class="card">
-        <div class="cardTitle">Doubles Games</div>
-        <div v-if="loading && pages.length === 0" class="empty">Loading...</div>
-        <div v-else-if="currentItems.length === 0" class="empty">No doubles games yet.</div>
+        <div class="cardTitle">{{ $t('badminton.doubles.cardTitle') }}</div>
+        <div v-if="loading && pages.length === 0" class="empty">{{ $t('common.actions.loading') }}</div>
+        <div v-else-if="currentItems.length === 0" class="empty">{{ $t('badminton.doubles.empty') }}</div>
         <div v-else>
           <div class="tableWrapper">
             <table class="table">
               <thead>
                 <tr>
-                  <th>Team 1 P1</th>
-                  <th>Team 1 P2</th>
-                  <th>Score</th>
-                  <th>Team 2 P1</th>
-                  <th>Team 2 P2</th>
-                  <th>Score</th>
-                  <th>Date</th>
+                  <th>{{ $t('badminton.doubles.team1p1') }}</th>
+                  <th>{{ $t('badminton.doubles.team1p2') }}</th>
+                  <th>{{ $t('badminton.doubles.score') }}</th>
+                  <th>{{ $t('badminton.doubles.team2p1') }}</th>
+                  <th>{{ $t('badminton.doubles.team2p2') }}</th>
+                  <th>{{ $t('badminton.doubles.score') }}</th>
+                  <th>{{ $t('badminton.doubles.date') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -65,10 +65,10 @@
           />
         </div>
         <div v-if="stats" class="statsRow">
-          <span class="stat">Played: <b>{{ stats.doubles?.matchesPlayed ?? 0 }}</b></span>
-          <span class="stat">Won: <b>{{ stats.doubles?.matchesWon ?? 0 }}</b></span>
-          <span class="stat">Lost: <b>{{ stats.doubles?.matchesLost ?? 0 }}</b></span>
-          <span class="stat">Win rate: <b>{{ formatPct(stats.doubles?.winRate) }}</b></span>
+          <span class="stat">{{ $t('badminton.doubles.played') }}: <b>{{ stats.doubles?.matchesPlayed ?? 0 }}</b></span>
+          <span class="stat">{{ $t('badminton.doubles.won') }}: <b>{{ stats.doubles?.matchesWon ?? 0 }}</b></span>
+          <span class="stat">{{ $t('badminton.doubles.lost') }}: <b>{{ stats.doubles?.matchesLost ?? 0 }}</b></span>
+          <span class="stat">{{ $t('badminton.doubles.winRate') }}: <b>{{ formatPct(stats.doubles?.winRate) }}</b></span>
         </div>
       </div>
     </div>
@@ -88,11 +88,6 @@ export default defineComponent({
   mixins: [matchFormatMixin],
   data() {
     return {
-      headItems: [
-        { text: "Main", ref: "/?page=main", isMainSwitch: false },
-        { text: "Products", ref: "/?page=products", isMainSwitch: false },
-        { text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true },
-      ],
       loading: false,
       error: "",
       stats: null,
@@ -104,6 +99,13 @@ export default defineComponent({
     };
   },
   computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
+        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
+        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
+      ];
+    },
     currentPage() {
       if (!this.pages.length) return { items: [], pageToken: null };
       return this.pages[this.pageIndex] || { items: [], pageToken: null };
@@ -143,7 +145,7 @@ export default defineComponent({
         this.pages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.pageIndex = 0;
       } catch (e) {
-        this.error = e?.message || "Failed to load doubles games";
+        this.error = e?.message || this.$t("badminton.doubles.errLoad");
       } finally {
         this.loading = false;
       }
@@ -170,7 +172,7 @@ export default defineComponent({
         });
         this.pageIndex = this.pages.length - 1;
       } catch (e) {
-        this.error = e?.message || "Failed to load next page";
+        this.error = e?.message || this.$t("badminton.doubles.errNext");
       } finally {
         this.loading = false;
       }
@@ -189,12 +191,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .page { display: flex; flex-direction: column; gap: 64px; }
 .content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
 .topRow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-.title { margin: 0; font-family: 'Mali', 'sans-serif'; font-size: 40px; font-weight: 700; }
+.title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 .ctaRow { display: flex; gap: 16px; flex-wrap: wrap; }
 .cta { text-decoration: none; background-color: #4F3DFF; border-radius: 100px; padding: 16px 22px; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
 .cta.secondary { background-color: white; border: 2px solid #4F3DFF; }
@@ -207,16 +207,16 @@ export default defineComponent({
 .cta-back.secondary { background-color: #F5F5F5; border-color: #888888; }
 .cta-back.secondary .ctaText { color: #888888; }
 .cta:disabled { cursor: default; opacity: 0.7; }
-.ctaText { font-family: 'Mali', 'sans-serif'; font-size: 24px; font-weight: 700; color: white; }
+.ctaText { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: white; }
 .cta.secondary .ctaText { color: #4F3DFF; }
 .card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.cardTitle { font-family: 'Mali', 'sans-serif'; font-weight: 700; font-size: 20px; color: #4F3DFF; }
-.empty { font-family: 'Mali', 'sans-serif'; opacity: 0.7; padding: 20px; text-align: center; }
+.cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
+.empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 .statsRow { display: flex; gap: 20px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #f0f0f0; }
-.stat { font-family: 'Mali', 'sans-serif'; font-size: 14px; }
+.stat { font-family: var(--font-display); font-size: 14px; }
 .stat b { color: #4F3DFF; font-weight: 700; }
 .tableWrapper { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-family: 'Mali', 'sans-serif'; }
+.table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 12px; text-align: left; font-weight: 700; font-size: 15px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; white-space: nowrap; }
 .table td { padding: 12px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
@@ -226,6 +226,6 @@ export default defineComponent({
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
 .scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }
 .dateCell { font-size: 13px; opacity: 0.8; white-space: nowrap; }
-.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali', 'sans-serif'; }
+.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 @media (max-width: 768px) { .content { padding: 0 20px 20px 20px; } .title { font-size: 28px; } .ctaText { font-size: 18px; } }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div className="user">
-    <button @click="deleteUserFunc(index)">Delete</button>
+    <button @click="deleteUserFunc(index)">{{ $t('common.actions.delete') }}</button>
     <h3>{{ user.name }}</h3>
     <p>{{ user.email }}</p>
   </div>

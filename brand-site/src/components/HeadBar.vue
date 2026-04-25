@@ -1,32 +1,56 @@
 <template>
   <div @keydown.left="handleLeftArrow" @keydown.right="handleRightArrow" className="headBar" autofocus>
     <TextRef :item="mainLogoItem"></TextRef>
-    <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
+    <div class="rightControls">
+      <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
+      <div class="langSwitcher" aria-label="Language switcher">
+        <button class="langBtn" :class="{ active: currentLocale === 'en' }" type="button" @click="setLocale('en')">
+          {{ $t('languageSwitcher.en') }}
+        </button>
+        <span class="langSeparator">/</span>
+        <button class="langBtn" :class="{ active: currentLocale === 'ru' }" type="button" @click="setLocale('ru')">
+          {{ $t('languageSwitcher.ru') }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import TextRef from "@/components/TextRef.vue";
 import SwitchBar from "@/components/SwitchBar.vue";
+import { applyLocaleToDocument, setStoredLocale } from "@/i18n";
 
 export default {
   props: {
     headItems: {
-      type: Object,
+      type: Array,
       required: true
     }
   },
   components: {SwitchBar, TextRef},
-  data() {
-    return {
-      mainLogoItem: {
-        text: 'MaksMolch',
+  computed: {
+    currentLocale() {
+      return this.$i18n.locale;
+    },
+    mainLogoItem() {
+      return {
+        text: this.$i18n.locale === "ru" ? "МаксМолч" : "MaksMolch",
         ref: '/?page=main',
         isMainSwitch: true
-      }
-    }
+      };
+    },
+  },
+  data() {
+    return {}
   },
   methods: {
+    setLocale(locale) {
+      if (!["en", "ru"].includes(locale)) return;
+      this.$i18n.locale = locale;
+      setStoredLocale(locale);
+      applyLocaleToDocument(locale);
+    },
     handleLeftArrow() {
       const index = this.headItems.findIndex(item => item.isMainSwitch);
       if (index > 0) {
@@ -53,8 +77,49 @@ export default {
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: space-between;
+  align-items: center;
   padding: 50px;
   background-color: white;
+}
+
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.langSwitcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 100px;
+  border: 2px solid #4f3dff;
+  background-color: #ffffff;
+}
+
+.langBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #222;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  text-transform: lowercase;
+}
+
+.langBtn.active {
+  color: #4f3dff;
+  font-weight: 700;
+}
+
+.langSeparator {
+  color: #7a7a7a;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
 }
 
 @media (max-width: 768px) {
@@ -62,14 +127,40 @@ export default {
     padding: 20px;
   }
 
-  .switchItem {
-    font-size: 16px;
+  .rightControls {
+    gap: 10px;
+  }
+
+  .langSwitcher {
+    padding: 5px 8px;
+  }
+
+  .langBtn,
+  .langSeparator {
+    font-size: 14px;
   }
 }
 
 @media (prefers-color-scheme: dark) {
   .headBar {
     background-color: #2d2d2d;
+  }
+
+  .langSwitcher {
+    background-color: #2d2d2d;
+    border-color: #b8a8ff;
+  }
+
+  .langBtn {
+    color: #d8d8d8;
+  }
+
+  .langBtn.active {
+    color: #b8a8ff;
+  }
+
+  .langSeparator {
+    color: #ababab;
   }
 }
 </style>

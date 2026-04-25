@@ -1,52 +1,52 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="headItems"></HeadBar>
+    <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
       <div class="topRow">
-        <h1 class="title">My groups</h1>
+        <h1 class="title">{{ $t('badminton.groups.title') }}</h1>
       </div>
 
       <div class="ctaRow">
         <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
-          <span class="ctaText">My ratings</span>
+          <span class="ctaText">{{ $t('badminton.groups.myRatings') }}</span>
         </RouterLink>
         <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
-          <span class="ctaText">My games</span>
+          <span class="ctaText">{{ $t('badminton.groups.myGames') }}</span>
         </RouterLink>
         <button class="cta secondary cta-logout" :disabled="loading" @click="logout">
-          <span class="ctaText">Logout</span>
+          <span class="ctaText">{{ $t('common.actions.logout') }}</span>
         </button>
         <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">← Back to Products</span>
+          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
         </RouterLink>
       </div>
 
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="card">
-        <div class="cardTitle">Create group</div>
+        <div class="cardTitle">{{ $t('badminton.groups.createGroup') }}</div>
         <div class="row">
-          <input class="input" v-model="newGroupName" placeholder="Group name" />
+          <input class="input" v-model="newGroupName" :placeholder="$t('badminton.groups.groupName')" />
           <button class="btn" :disabled="loadingCreate || !newGroupName" @click="create">
-            {{ loadingCreate ? "Creating..." : "Create" }}
+            {{ loadingCreate ? $t('badminton.groups.creating') : $t('common.actions.create') }}
           </button>
         </div>
       </div>
 
       <div class="card">
-        <div class="cardTitle">Groups</div>
+        <div class="cardTitle">{{ $t('badminton.groups.groups') }}</div>
         <button class="btn secondary" :disabled="loading" @click="load">
-          {{ loading ? "Loading..." : "Refresh" }}
+          {{ loading ? $t('common.actions.loading') : $t('common.actions.refresh') }}
         </button>
 
-        <div v-if="groups.length === 0 && !loading" class="empty">No groups yet.</div>
+        <div v-if="groups.length === 0 && !loading" class="empty">{{ $t('badminton.groups.noGroups') }}</div>
 
         <div class="list">
           <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="`/?page=badminton&section=groups&groupId=${g.id}`">
             <div class="groupName">{{ g.name }}</div>
             <div class="groupMeta">
-              <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ g.myRole }}</span>
+              <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
               <span class="arrow">→</span>
             </div>
           </RouterLink>
@@ -65,11 +65,6 @@ export default defineComponent({
   components: {HeadBar},
   data() {
     return {
-      headItems: [
-        {text: "Main", ref: "/?page=main", isMainSwitch: false},
-        {text: "Products", ref: "/?page=products", isMainSwitch: false},
-        {text: "Badminton", ref: "/?page=badminton&section=ratings", isMainSwitch: true},
-      ],
       loading: false,
       loadingCreate: false,
       error: "",
@@ -80,7 +75,21 @@ export default defineComponent({
   mounted() {
     this.load();
   },
+  computed: {
+    localizedHeadItems() {
+      return [
+        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
+        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
+        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
+      ];
+    },
+  },
   methods: {
+    formatRole(role) {
+      if (role === "admin") return this.$t("badminton.roles.admin");
+      if (role === "member") return this.$t("badminton.roles.member");
+      return role;
+    },
     async load() {
       this.loading = true;
       this.error = "";
@@ -88,7 +97,7 @@ export default defineComponent({
         const res = await badmintonClient.getMyGroups();
         this.groups = Array.isArray(res) ? res : res.items || [];
       } catch (e) {
-        this.error = e?.message || "Failed to load groups";
+        this.error = e?.message || this.$t("badminton.groups.errLoad");
       } finally {
         this.loading = false;
       }
@@ -102,7 +111,7 @@ export default defineComponent({
         this.groups = [g, ...this.groups];
         this.$router.push(`/?page=badminton&section=groups&groupId=${g.id}`);
       } catch (e) {
-        this.error = e?.message || "Failed to create group";
+        this.error = e?.message || this.$t("badminton.groups.errCreate");
       } finally {
         this.loadingCreate = false;
       }
@@ -114,7 +123,7 @@ export default defineComponent({
         await badmintonClient.logout();
         await this.$router.push("/?page=badminton&section=login");
       } catch (e) {
-        this.error = e?.message || "Logout failed";
+        this.error = e?.message || this.$t("badminton.login.errLogout");
         this.loading = false;
       }
     },
@@ -123,25 +132,23 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mali&display=swap');
-
 .page { display: flex; flex-direction: column; gap: 64px; }
 .content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .topActions { display: flex; gap: 12px; flex-wrap: wrap; }
-.title { margin: 0; font-family: 'Mali','sans-serif'; font-size: 40px; font-weight: 700; }
+.title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.cardTitle { font-family: 'Mali','sans-serif'; font-weight: 700; font-size: 18px; }
+.cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
-.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: 'Mali','sans-serif'; font-size: 16px; min-width: min(520px, calc(100vw - 140px)); }
+.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; min-width: min(520px, calc(100vw - 140px)); }
 
-.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: 'Mali','sans-serif'; font-size: 16px; font-weight: 700; }
+.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 .btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
 .btn:disabled { opacity: 0.7; cursor: default; }
 
-.linkBtn { text-decoration: none; font-family: 'Mali','sans-serif'; font-weight: 700; color: #4F3DFF; }
+.linkBtn { text-decoration: none; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
 
 .ctaRow {
   display: flex;
@@ -208,7 +215,7 @@ export default defineComponent({
 }
 
 .ctaText {
-  font-family: 'Mali', 'sans-serif';
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: white;
@@ -218,14 +225,14 @@ export default defineComponent({
   color: #4F3DFF;
 }
 
-.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: 'Mali','sans-serif'; }
-.empty { font-family: 'Mali','sans-serif'; opacity: 0.7; margin-top: 8px; }
+.errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
+.empty { font-family: var(--font-display); opacity: 0.7; margin-top: 8px; }
 
 .list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .groupRow { text-decoration: none; color: inherit; background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.groupName { font-family: 'Mali','sans-serif'; font-weight: 700; }
+.groupName { font-family: var(--font-display); font-weight: 700; }
 .groupMeta { display: flex; align-items: center; gap: 10px; }
-.pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 4px 10px; border-radius: 999px; font-family: 'Mali','sans-serif'; font-size: 14px; font-weight: 700; }
+.pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 4px 10px; border-radius: 999px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .pill.admin { background: #4F3DFF; color: white; border-color: #4F3DFF; }
 .arrow { font-weight: 700; color: #4F3DFF; }
 
