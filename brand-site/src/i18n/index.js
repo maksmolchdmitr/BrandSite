@@ -43,6 +43,9 @@ const messages = {
       en: "en",
       ru: "ру",
     },
+    brand: {
+      name: "MaksMolch",
+    },
     main: {
       name: "Maks",
       intro: "Hi, I'm {name}",
@@ -254,6 +257,9 @@ const messages = {
     languageSwitcher: {
       en: "en",
       ru: "ру",
+    },
+    brand: {
+      name: "Максим Молчанов",
     },
     main: {
       name: "Макс",

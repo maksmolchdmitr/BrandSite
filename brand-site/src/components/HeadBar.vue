@@ -35,7 +35,7 @@ export default {
     },
     mainLogoItem() {
       return {
-        text: this.$i18n.locale === "ru" ? "МаксМолч" : "MaksMolch",
+        text: this.$t("brand.name"),
         ref: '/?page=main',
         isMainSwitch: true
       };
