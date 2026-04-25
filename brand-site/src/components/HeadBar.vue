@@ -66,4 +66,10 @@ export default {
     font-size: 16px;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .headBar {
+    background-color: #2d2d2d;
+  }
+}
 </style>

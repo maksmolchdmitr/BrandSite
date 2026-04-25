@@ -140,13 +140,6 @@ GitHub – https://github.com/ru-random-walk
 }
 </script>
 
-<style>
-body {
-  background-color: #D9D9D9;
-  margin: 0;
-}
-</style>
-
 <style scoped>
 .contentDiv {
   display: flex;

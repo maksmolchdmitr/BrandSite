@@ -18,4 +18,14 @@ p {
   font-weight: bold;
   color: #4F3DFF;
 }
+
+@media (prefers-color-scheme: dark) {
+  p {
+    color: #e8e8e8;
+  }
+
+  .refText {
+    color: #b8a8ff;
+  }
+}
 </style>

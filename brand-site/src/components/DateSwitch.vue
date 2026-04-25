@@ -29,18 +29,29 @@ export default {
       isDarkMode: false
     }
   },
-  mounted() {
-    // Проверяем текущее состояние темного режима
-    this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Слушаем изменения системной темы
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      this.isDarkMode = e.matches;
-    });
-  },
   computed: {
     iconSrc() {
-      return this.isDarkMode ? DateFromButtonWhite : DateFromButtonDefault;
+      return this.isDarkMode ? DateFromButtonWhite : DateFromButtonDefault
+    }
+  },
+  mounted() {
+    this.mql = window.matchMedia('(prefers-color-scheme: dark)')
+    this.isDarkMode = this.mql.matches
+    this._onColorScheme = (e) => {
+      this.isDarkMode = e.matches
+    }
+    if (this.mql.addEventListener) {
+      this.mql.addEventListener('change', this._onColorScheme)
+    } else {
+      this.mql.addListener(this._onColorScheme)
+    }
+  },
+  beforeUnmount() {
+    if (!this.mql || !this._onColorScheme) return
+    if (this.mql.removeEventListener) {
+      this.mql.removeEventListener('change', this._onColorScheme)
+    } else {
+      this.mql.removeListener(this._onColorScheme)
     }
   }
 }
@@ -93,6 +104,16 @@ export default {
   .circleSwitcher {
     height: 24px;
     width: 24px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dateText {
+    color: #e8e8e8;
+  }
+
+  .dateBlock {
+    background-color: #404040;
   }
 }
 </style>

@@ -169,4 +169,10 @@ html {
     gap: 50px;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .spin-text {
+    color: #e8e8e8;
+  }
+}
 </style>

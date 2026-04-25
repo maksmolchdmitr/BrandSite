@@ -36,4 +36,14 @@ a {
   font-weight: bold;
   color: #4F3DFF;
 }
+
+@media (prefers-color-scheme: dark) {
+  .switchItem {
+    color: #e8e8e8;
+  }
+
+  .mainSwitch {
+    color: #b8a8ff;
+  }
+}
 </style>

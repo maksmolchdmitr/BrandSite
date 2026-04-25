@@ -59,4 +59,18 @@ export default {
     width: auto;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .experienceItem {
+    background-color: #2d2d2d;
+  }
+
+  .experienceText {
+    color: #e8e8e8;
+  }
+
+  .experienceText :deep(a) {
+    color: #b8a8ff;
+  }
+}
 </style>
