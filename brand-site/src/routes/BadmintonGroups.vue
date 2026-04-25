@@ -132,19 +132,19 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .topActions { display: flex; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
-.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
-.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; min-width: 0; box-sizing: border-box; }
 
-.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; min-width: min(520px, calc(100vw - 140px)); }
+.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
 
-.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 .btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
 .btn:disabled { opacity: 0.7; cursor: default; }
 
@@ -154,6 +154,8 @@ export default defineComponent({
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .cta {
@@ -229,9 +231,9 @@ export default defineComponent({
 .empty { font-family: var(--font-display); opacity: 0.7; margin-top: 8px; }
 
 .list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-.groupRow { text-decoration: none; color: inherit; background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.groupName { font-family: var(--font-display); font-weight: 700; }
-.groupMeta { display: flex; align-items: center; gap: 10px; }
+.groupRow { text-decoration: none; color: inherit; background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.groupName { font-family: var(--font-display); font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.groupMeta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 4px 10px; border-radius: 999px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .pill.admin { background: #4F3DFF; color: white; border-color: #4F3DFF; }
 .arrow { font-weight: 700; color: #4F3DFF; }
@@ -240,7 +242,6 @@ export default defineComponent({
   .page { gap: 12px; }
   .content { padding: 0 20px 20px 20px; }
   .title { font-size: 28px; }
-  .input { min-width: calc(100vw - 40px); }
   .ctaText { font-size: 18px; }
 }
 

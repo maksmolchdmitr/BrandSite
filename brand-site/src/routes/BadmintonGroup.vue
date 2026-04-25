@@ -1495,8 +1495,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .crumbs { font-family: var(--font-display); display: flex; gap: 8px; align-items: center; }
 .crumb { text-decoration: none; color: #4F3DFF; font-weight: 700; }
@@ -1525,13 +1525,13 @@ export default defineComponent({
 .groupNavLink:hover { background: #fafaff; border-color: #4F3DFF; }
 .groupNavLink.active { background: #4F3DFF; color: white; border-color: #4F3DFF; }
 
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: 0; max-width: 100%; }
+.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
-.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; min-width: 240px; flex: 1; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; min-width: 0; box-sizing: border-box; }
+.input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
 .label { font-family: var(--font-display); font-weight: 700; width: 90px; }
-.btn { border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
+.btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
 .btn.danger { background: #ff3d3d; color: white; }
 .btn.small { padding: 8px 10px; font-size: 13px; }
@@ -1539,7 +1539,7 @@ export default defineComponent({
 
 .empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 
-.tableWrapper { overflow-x: auto; }
+.tableWrapper { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 12px; text-align: left; font-weight: 700; font-size: 15px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; white-space: nowrap; }
@@ -1557,8 +1557,8 @@ export default defineComponent({
 .matchSection:first-child { margin-top: 0; }
 .matchSectionTitle { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 12px; }
 
-.lbGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.lbCard { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.lbGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: 0; max-width: 100%; }
+.lbCard { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .lbTitle { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: #4F3DFF; }
 .eloCell { font-weight: 700; color: #4F3DFF; font-size: 16px; }
 .rankCell { font-weight: 700; opacity: 0.85; font-size: 14px; }
@@ -1569,6 +1569,8 @@ export default defineComponent({
   gap: 12px;
   margin-top: 12px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 .pagerButton {
   border: 2px solid #4F3DFF;
@@ -1595,6 +1597,7 @@ export default defineComponent({
   gap: 8px;
   margin-left: auto;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .pagerLimitLabel {
   font-family: var(--font-display);
@@ -1637,7 +1640,7 @@ export default defineComponent({
 .pagerLimitOption.active { font-weight: 700; color: #4F3DFF; }
 
 .modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 1000; }
-.modal { width: min(600px, 100%); background: white; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+.modal { width: min(600px, 100%); max-width: 100%; box-sizing: border-box; background: white; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; }
 .modalTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin-bottom: 16px; color: #4F3DFF; }
 .modalBody { display: flex; flex-direction: column; gap: 16px; }
 

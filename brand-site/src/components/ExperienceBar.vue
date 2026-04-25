@@ -29,6 +29,8 @@ export default {
   flex-wrap: nowrap;
   gap: 36px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   justify-content: center;
   align-items: center;
   padding: 36px;
@@ -37,7 +39,8 @@ export default {
 @media (max-width: 768px) {
   .bar {
     gap: 12px;
-    width: auto;
+    width: 100%;
+    max-width: 100%;
     justify-content: center;
     align-items: center;
     padding: 12px;

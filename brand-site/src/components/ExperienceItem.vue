@@ -38,7 +38,9 @@ export default {
   padding: 16px;
   background-color: white;
   border-radius: 32px;
-  width: 600px;
+  width: 100%;
+  max-width: min(600px, 100%);
+  box-sizing: border-box;
 }
 
 .experienceText {
@@ -46,6 +48,8 @@ export default {
   font-size: 24px;
   color: black;
   white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (max-width: 768px) {
@@ -54,7 +58,7 @@ export default {
   }
 
   .experienceItem {
-    width: auto;
+    max-width: 100%;
   }
 }
 

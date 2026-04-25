@@ -75,12 +75,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
-.ctaRow { display: flex; gap: 16px; flex-wrap: wrap; }
+.ctaRow { display: flex; gap: 16px; flex-wrap: wrap; max-width: 100%; min-width: 0; }
 .cta {
   text-decoration: none;
   background-color: #4F3DFF;
@@ -105,7 +105,7 @@ export default defineComponent({
 .ctaText { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: white; }
 .cta.secondary .ctaText { color: #4F3DFF; }
 
-.card { background: white; border-radius: 18px; padding: 20px; }
+.card { background: white; border-radius: 18px; padding: 20px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .linksCard { display: flex; flex-direction: column; gap: 12px; }
 .gameLink {
   display: flex;

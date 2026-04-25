@@ -40,12 +40,19 @@ export default defineComponent({
   justify-content: center;
   align-items: center;
   height: 60px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .logoText {
   font-size: 36px;
   color: white;
   font-family: var(--font-display);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .logoImage {

@@ -46,9 +46,21 @@ export default {
   --font-display: var(--font-cyrillic);
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   background-color: #d9d9d9;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+main {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 @media (prefers-color-scheme: dark) {

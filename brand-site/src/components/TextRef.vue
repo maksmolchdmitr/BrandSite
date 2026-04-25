@@ -1,6 +1,6 @@
 <template>
-  <RouterLink v-if="item.isMainSwitch" className="mainSwitch switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
-  <RouterLink v-else className="switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
+  <RouterLink v-if="item.isMainSwitch" class="mainSwitch switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
+  <RouterLink v-else class="switchItem" v-bind:to="item.ref">{{ item.text }}</RouterLink>
 </template>
 
 <script>
@@ -23,6 +23,7 @@ export default {
   font-family: var(--font-display);
   font-size: 36px;
   color: black;
+  white-space: nowrap;
 }
 
 a {
@@ -32,6 +33,21 @@ a {
 .mainSwitch {
   font-weight: bold;
   color: #4F3DFF;
+}
+
+@media (max-width: 768px) {
+  .switchItem {
+    font-size: 15px;
+  }
+
+  .mainSwitch {
+    font-size: 17px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: bottom;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

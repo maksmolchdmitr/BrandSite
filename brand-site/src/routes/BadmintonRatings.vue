@@ -259,8 +259,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .topActions { display: flex; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
@@ -271,6 +271,8 @@ export default defineComponent({
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .cta {
@@ -351,12 +353,12 @@ export default defineComponent({
   color: #4F3DFF;
 }
 
-.card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; margin-top: 8px; }
 .empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 
-.tableWrapper { overflow-x: auto; }
+.tableWrapper { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 16px; text-align: left; font-weight: 700; font-size: 16px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; }
@@ -372,6 +374,8 @@ export default defineComponent({
   gap: 12px;
   margin-top: 12px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .pagerButton {
@@ -402,6 +406,7 @@ export default defineComponent({
   gap: 8px;
   margin-left: auto;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .pagerLimitLabel {

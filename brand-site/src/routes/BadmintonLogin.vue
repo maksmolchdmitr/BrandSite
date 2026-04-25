@@ -264,6 +264,8 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 64px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .content {
@@ -271,6 +273,9 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .title {
@@ -291,6 +296,8 @@ export default defineComponent({
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .btn {
@@ -329,7 +336,8 @@ export default defineComponent({
   background: white;
   border-radius: 18px;
   padding: 16px;
-  max-width: 420px;
+  max-width: min(420px, 100%);
+  box-sizing: border-box;
 }
 
 #telegram-login-widget {

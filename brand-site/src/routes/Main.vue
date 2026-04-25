@@ -98,6 +98,9 @@ export default {
   flex-direction: column;
   flex-wrap: nowrap;
   gap: 64px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

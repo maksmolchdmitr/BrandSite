@@ -46,22 +46,31 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 64px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .content {
   padding: 0 50px 50px 50px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .productCard {
   text-decoration: none;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .cardInner {
   background-color: #4F3DFF;
   border-radius: 28px;
   padding: 24px 28px;
-  min-width: min(720px, calc(100vw - 100px));
+  width: 100%;
+  max-width: min(720px, 100%);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -115,7 +124,7 @@ export default defineComponent({
   }
 
   .cardInner {
-    min-width: calc(100vw - 40px);
+    max-width: 100%;
     padding: 16px 18px;
     border-radius: 20px;
   }

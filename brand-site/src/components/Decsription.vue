@@ -12,6 +12,10 @@ p {
   color: black;
   text-align: center;
   margin: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 16px;
+  overflow-wrap: anywhere;
 }
 
 .refText {

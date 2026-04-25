@@ -109,12 +109,18 @@ html {
   align-items: center;
   height: 200px; /* Adjusted height to fit one link */
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .mainContainer {
   display: flex;
   flex-direction: column;
   gap: 100px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .circle {

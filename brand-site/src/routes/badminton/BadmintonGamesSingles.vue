@@ -187,11 +187,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
-.ctaRow { display: flex; gap: 16px; flex-wrap: wrap; }
+.ctaRow { display: flex; gap: 16px; flex-wrap: wrap; max-width: 100%; min-width: 0; }
 .cta { text-decoration: none; background-color: #4F3DFF; border-radius: 100px; padding: 16px 22px; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
 .cta.secondary { background-color: white; border: 2px solid #4F3DFF; }
 .cta-games.secondary { background-color: #E3F2FD; border-color: #2196F3; }
@@ -205,13 +205,13 @@ export default defineComponent({
 .cta:disabled { cursor: default; opacity: 0.7; }
 .ctaText { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: white; }
 .cta.secondary .ctaText { color: #4F3DFF; }
-.card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
 .statsRow { display: flex; gap: 20px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #f0f0f0; }
 .stat { font-family: var(--font-display); font-size: 14px; }
 .stat b { color: #4F3DFF; font-weight: 700; }
-.tableWrapper { overflow-x: auto; }
+.tableWrapper { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
 .table thead { background: #f6f6ff; }
 .table th { padding: 14px 12px; text-align: left; font-weight: 700; font-size: 15px; color: #4F3DFF; border-bottom: 2px solid #e0e0ff; white-space: nowrap; }

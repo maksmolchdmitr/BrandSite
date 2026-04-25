@@ -60,6 +60,8 @@ export default defineComponent({
   gap: 12px;
   margin-top: 12px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 .pagerButton {
   border: 2px solid #4F3DFF;
@@ -86,6 +88,7 @@ export default defineComponent({
   gap: 8px;
   margin-left: auto;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .pagerLimitLabel {
   font-family: var(--font-display);

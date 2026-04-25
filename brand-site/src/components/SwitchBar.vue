@@ -1,5 +1,5 @@
 <template>
-  <div className="switchBar">
+  <div class="switchBar">
     <div v-for="(item, i) in items" :key="i">
       <TextRef :item="item"></TextRef>
     </div>
@@ -26,17 +26,24 @@ export default {
 .switchBar {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 36px;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .switchBar {
+    flex-wrap: nowrap;
+  }
 }
 
 @media (max-width: 768px) {
-  .switchItem {
-    font-size: 16px;
-  }
-
   .switchBar {
-    gap: 12px;
+    gap: 10px 14px;
+    justify-content: center;
+    width: 100%;
   }
 }
 </style>

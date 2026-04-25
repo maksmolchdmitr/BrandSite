@@ -1,17 +1,22 @@
 <template>
-  <div @keydown.left="handleLeftArrow" @keydown.right="handleRightArrow" className="headBar" autofocus>
-    <TextRef :item="mainLogoItem"></TextRef>
-    <div class="rightControls">
-      <SwitchBar className="switchBar" :items="headItems"></SwitchBar>
-      <div class="langSwitcher" aria-label="Language switcher">
-        <button class="langBtn" :class="{ active: currentLocale === 'en' }" type="button" @click="setLocale('en')">
-          {{ $t('languageSwitcher.en') }}
-        </button>
-        <span class="langSeparator">/</span>
-        <button class="langBtn" :class="{ active: currentLocale === 'ru' }" type="button" @click="setLocale('ru')">
-          {{ $t('languageSwitcher.ru') }}
-        </button>
-      </div>
+  <div
+    class="headBar"
+    autofocus
+    @keydown.left="handleLeftArrow"
+    @keydown.right="handleRightArrow"
+  >
+    <div class="headLogo">
+      <TextRef :item="mainLogoItem" />
+    </div>
+    <SwitchBar class="navBar" :items="headItems" />
+    <div class="langSwitcher" aria-label="Language switcher">
+      <button class="langBtn" :class="{ active: currentLocale === 'en' }" type="button" @click="setLocale('en')">
+        {{ $t('languageSwitcher.en') }}
+      </button>
+      <span class="langSeparator">/</span>
+      <button class="langBtn" :class="{ active: currentLocale === 'ru' }" type="button" @click="setLocale('ru')">
+        {{ $t('languageSwitcher.ru') }}
+      </button>
     </div>
   </div>
 </template>
@@ -73,19 +78,24 @@ export default {
 
 <style scoped>
 .headBar {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 16px 20px;
   padding: 50px;
   background-color: white;
 }
 
-.rightControls {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.headLogo {
+  min-width: 0;
+}
+
+.navBar {
+  min-width: 0;
+  justify-self: end;
 }
 
 .langSwitcher {
@@ -124,15 +134,27 @@ export default {
 
 @media (max-width: 768px) {
   .headBar {
-    padding: 20px;
+    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
   }
 
-  .rightControls {
-    gap: 10px;
+  .headLogo {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .langSwitcher {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
     padding: 5px 8px;
+  }
+
+  .navBar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
   }
 
   .langBtn,
