@@ -67,15 +67,9 @@ export default {
 
 .dateText {
   font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  margin: 0;
-  transform: none;
-  color: black;
+  text-align: center;
+  line-height: 32px; /* равен высоте контейнера */
+  display: block;
 }
 
 :global(:root[data-locale="ru"]) .dateText {
