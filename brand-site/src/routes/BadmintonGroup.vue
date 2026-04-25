@@ -1667,6 +1667,80 @@ export default defineComponent({
   .content { padding: 0 20px 20px 20px; }
   .title { font-size: 28px; }
 }
+
+@media (prefers-color-scheme: dark) {
+  .crumb.current,
+  .title {
+    color: #e8e8e8;
+  }
+
+  .pill {
+    background: #2d2d2d;
+    border-color: #6f62c6;
+    color: #c7bcff;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+
+  .groupNavLink,
+  .card,
+  .lbCard,
+  .modal {
+    background: #2d2d2d;
+    border-color: #4a4a4a;
+  }
+
+  .groupNavLink:hover {
+    background: #363636;
+  }
+
+  .input,
+  .scoreInput {
+    background: #242424;
+    border-color: #4a4a4a;
+    color: #e8e8e8;
+  }
+
+  .table thead {
+    background: #343434;
+  }
+
+  .table th {
+    border-bottom-color: #4a4a4a;
+  }
+
+  .table td {
+    border-bottom-color: #3b3b3b;
+    color: #e8e8e8;
+  }
+
+  .table tbody tr:hover {
+    background: #363636;
+  }
+
+  .btn.secondary,
+  .pagerButton,
+  .pagerLimitSelect {
+    background-color: #2d2d2d;
+  }
+
+  .selectedParticipant,
+  .formSection,
+  .dropdown,
+  .pagerLimitDropdown {
+    background: #2d2d2d;
+    border-color: #4a4a4a;
+  }
+
+  .dropdownItem:hover,
+  .pagerLimitOption:hover {
+    background-color: #3a3a3a;
+  }
+}
 </style>
 
 

@@ -129,4 +129,34 @@ export default defineComponent({
   .title { font-size: 28px; }
   .ctaText { font-size: 18px; }
 }
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .gameLink {
+    border-color: #4a4a4a;
+    background: #242424;
+  }
+
+  .gameLink:hover {
+    background: #343434;
+  }
+
+  .gameLinkDesc {
+    color: #d0d0d0;
+  }
+
+  .cta.secondary {
+    background-color: #2d2d2d;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+}
 </style>

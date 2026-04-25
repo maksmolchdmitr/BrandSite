@@ -467,6 +467,52 @@ export default defineComponent({
   .table th, .table td { padding: 10px 12px; font-size: 14px; }
   .ctaText { font-size: 18px; }
 }
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .table thead {
+    background: #343434;
+  }
+
+  .table th {
+    border-bottom-color: #4a4a4a;
+  }
+
+  .table td {
+    border-bottom-color: #3b3b3b;
+    color: #e8e8e8;
+  }
+
+  .table tbody tr:hover {
+    background: #363636;
+  }
+
+  .btn.secondary,
+  .cta.secondary,
+  .pagerButton,
+  .pagerLimitSelect {
+    background-color: #2d2d2d;
+  }
+
+  .pagerLimitDropdown {
+    background: #2d2d2d;
+    border-color: #4a4a4a;
+  }
+
+  .pagerLimitOption:hover {
+    background-color: #3a3a3a;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+}
 </style>
 
 

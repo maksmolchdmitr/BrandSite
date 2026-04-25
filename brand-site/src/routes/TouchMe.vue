@@ -168,7 +168,7 @@ html {
 
 @media (prefers-color-scheme: dark) {
   .spin-text {
-    color: #e8e8e8;
+    color: #1f1f1f;
   }
 }
 </style>

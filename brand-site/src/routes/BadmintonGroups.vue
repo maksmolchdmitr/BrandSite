@@ -243,6 +243,48 @@ export default defineComponent({
   .input { min-width: calc(100vw - 40px); }
   .ctaText { font-size: 18px; }
 }
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .input {
+    background: #242424;
+    border-color: #4a4a4a;
+    color: #e8e8e8;
+  }
+
+  .btn.secondary,
+  .cta.secondary {
+    background-color: #2d2d2d;
+  }
+
+  .groupRow {
+    background: #242424;
+  }
+
+  .groupName {
+    color: #e8e8e8;
+  }
+
+  .pill {
+    background: #2d2d2d;
+    border-color: #6f62c6;
+    color: #c7bcff;
+  }
+
+  .arrow {
+    color: #c7bcff;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+}
 </style>
 
 

@@ -224,4 +224,38 @@ export default defineComponent({
 .dateCell { font-size: 13px; opacity: 0.8; white-space: nowrap; }
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 @media (max-width: 768px) { .content { padding: 0 20px 20px 20px; } .title { font-size: 28px; } .ctaText { font-size: 18px; } }
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .table thead {
+    background: #343434;
+  }
+
+  .table th {
+    border-bottom-color: #4a4a4a;
+  }
+
+  .table td {
+    border-bottom-color: #3b3b3b;
+    color: #e8e8e8;
+  }
+
+  .table tbody tr:hover {
+    background: #363636;
+  }
+
+  .cta.secondary {
+    background-color: #2d2d2d;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+}
 </style>

@@ -126,4 +126,20 @@ export default defineComponent({
 }
 .pagerLimitOption:hover { background-color: #f6f6ff; }
 .pagerLimitOption.active { font-weight: 700; color: #4F3DFF; }
+
+@media (prefers-color-scheme: dark) {
+  .pagerButton,
+  .pagerLimitSelect {
+    background-color: #2d2d2d;
+  }
+
+  .pagerLimitDropdown {
+    background: #2d2d2d;
+    border-color: #4a4a4a;
+  }
+
+  .pagerLimitOption:hover {
+    background-color: #3a3a3a;
+  }
+}
 </style>

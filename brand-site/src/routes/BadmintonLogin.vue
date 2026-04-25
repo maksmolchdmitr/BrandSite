@@ -413,6 +413,32 @@ export default defineComponent({
     grid-template-columns: 1fr;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .widgetBox,
+  .usersBox {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .btn.secondary {
+    background-color: #2d2d2d;
+    color: #b8a8ff;
+    border-color: #b8a8ff;
+  }
+
+  .userBtn {
+    border-color: #4a4a4a;
+    background: #242424;
+    color: #e8e8e8;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
+}
 </style>
 
 
