@@ -1,19 +1,19 @@
-# GroupPage
+# ParticipantPage
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Array&lt;Group&gt;**](Group.md) |  | [default to undefined]
+**items** | [**Array&lt;Participant&gt;**](Participant.md) |  | [default to undefined]
 **pageToken** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { GroupPage } from './api';
+import { ParticipantPage } from './api';
 
-const instance: GroupPage = {
+const instance: ParticipantPage = {
     items,
     pageToken,
 };

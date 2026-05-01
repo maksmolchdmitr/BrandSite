@@ -6,15 +6,11 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
-**groupId** | **string** |  | [default to undefined]
 **kind** | [**MatchKind**](MatchKind.md) |  | [default to undefined]
 **startedAt** | **string** |  | [default to undefined]
-**notes** | **string** |  | [optional] [default to undefined]
 **teamA** | **Array&lt;string&gt;** |  | [default to undefined]
 **teamB** | **Array&lt;string&gt;** |  | [default to undefined]
 **score** | [**MatchScore**](MatchScore.md) |  | [default to undefined]
-**createdAt** | **string** |  | [default to undefined]
-**createdByUserId** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -23,15 +19,11 @@ import { Match } from './api';
 
 const instance: Match = {
     id,
-    groupId,
     kind,
     startedAt,
-    notes,
     teamA,
     teamB,
     score,
-    createdAt,
-    createdByUserId,
 };
 ```
 

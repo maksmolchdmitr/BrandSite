@@ -108,7 +108,7 @@ const { status, data } = await apiInstance.refreshToken(
 # **telegramLogin**
 > TokenResponse telegramLogin(telegramUser)
 
-Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+Returns access and refresh tokens for the user. 
 
 ### Example
 

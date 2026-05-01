@@ -260,7 +260,7 @@ paths:
       summary: Search participants in group with pagination (member-only)
       description: |
         Search participants by name with pagination. Results are sorted alphabetically.
-        Returns paginated list of participants matching the query.
+        Response contains the current page of `items` and `hasMore` for infinite scroll / "load more".
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
@@ -388,14 +388,6 @@ paths:
             type: string
             enum: [ singles, doubles ]
         - in: query
-          name: from
-          description: Filter by start time (inclusive)
-          schema: { type: string, format: date-time }
-        - in: query
-          name: to
-          description: Filter by start time (exclusive)
-          schema: { type: string, format: date-time }
-        - in: query
           name: limit
           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
         - in: query
@@ -491,15 +483,11 @@ paths:
   /api/me/games-stats:
     get:
       tags: [ Stats ]
-      summary: Current user game statistics with recent matches
-      description: Returns detailed stats including recent matches list
-      parameters:
-        - in: query
-          name: groupId
-          schema: { type: string }
+      summary: Current user aggregate game statistics
+      description: Returns win/loss totals for singles and doubles (across all groups the user participates in).
       responses:
         "200":
-          description: Game stats with recent matches
+          description: Aggregate game stats
           content:
             application/json:
               schema:
@@ -560,9 +548,6 @@ paths:
       tags: [ Ratings ]
       summary: Current user ratings (singles + doubles)
       parameters:
-        - in: query
-          name: groupId
-          schema: { type: string }
         - in: query
           name: limit
           description: Page size for doubles-by-partner ratings
@@ -747,13 +732,10 @@ components:
       additionalProperties: false
       properties:
         id: { type: string }
-        telegramId: { type: integer, format: int64 }
-        createdAt: { type: string, format: date-time }
         username: { type: string }
         firstName: { type: string }
         lastName: { type: string }
-        photoUrl: { type: string }
-      required: [ id, telegramId, createdAt ]
+      required: [ id ]
 
     Group:
       type: object
@@ -761,13 +743,11 @@ components:
       properties:
         id: { type: string }
         name: { type: string, example: Friday Badminton }
-        createdAt: { type: string, format: date-time }
-        createdByUserId: { type: string }
         myRole:
           type: string
           description: Role of current user in this group
           enum: [ member, admin ]
-      required: [ id, name, createdAt ]
+      required: [ id, name ]
 
     GroupCreateRequest:
       type: object
@@ -793,13 +773,11 @@ components:
       additionalProperties: false
       properties:
         id: { type: string }
-        groupId: { type: string }
         name: { type: string, example: Maks }
         userId:
           type: string
           description: Linked registered user id (if any)
-        createdAt: { type: string, format: date-time }
-      required: [ id, groupId, name, createdAt ]
+      required: [ id, name ]
 
     ParticipantCreateRequest:
       type: object
@@ -823,19 +801,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Participant"
-        page:
-          type: integer
-          description: Current page number (0-based)
-        pageSize:
-          type: integer
-          description: Number of items per page
-        total:
-          type: integer
-          description: Total number of matching participants
         hasMore:
           type: boolean
           description: Whether there are more pages available
-      required: [ items, page, pageSize, total, hasMore ]
+      required: [ items, hasMore ]
 
     LinkUserRequest:
       type: object
@@ -853,10 +822,8 @@ components:
       additionalProperties: false
       properties:
         id: { type: string }
-        groupId: { type: string }
         kind: { $ref: "#/components/schemas/MatchKind" }
         startedAt: { type: string, format: date-time }
-        notes: { type: string }
         # Singles: teamA = [p1], teamB = [p2]
         # Doubles: teamA = [p1,p2], teamB = [p3,p4]
         teamA:
@@ -871,9 +838,7 @@ components:
           maxItems: 2
         score:
           $ref: "#/components/schemas/MatchScore"
-        createdAt: { type: string, format: date-time }
-        createdByUserId: { type: string }
-      required: [ id, groupId, kind, startedAt, teamA, teamB, score, createdAt ]
+      required: [ id, kind, startedAt, teamA, teamB, score ]
 
     MatchScore:
       type: object
@@ -902,11 +867,6 @@ components:
       additionalProperties: false
       properties:
         kind: { $ref: "#/components/schemas/MatchKind" }
-        startedAt:
-          type: string
-          format: date-time
-          description: Match start time. If not provided, backend sets current time.
-        notes: { type: string }
         teamA:
           type: array
           items: { type: string }
@@ -925,8 +885,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        startedAt: { type: string, format: date-time }
-        notes: { type: string }
         teamA:
           type: array
           items: { type: string }
@@ -954,19 +912,13 @@ components:
     UserGamesStats:
       type: object
       additionalProperties: false
-      description: Extended user stats with recent matches
+      description: Aggregate singles/doubles statistics for the current user
       properties:
-        userId: { type: string }
         singles:
           $ref: "#/components/schemas/StatsBlock"
         doubles:
           $ref: "#/components/schemas/StatsBlock"
-        recentMatches:
-          type: array
-          description: Recent matches involving the user
-          items:
-            $ref: "#/components/schemas/Match"
-      required: [ userId, singles, doubles, recentMatches ]
+      required: [ singles, doubles ]
 
     StatsBlock:
       type: object
@@ -986,11 +938,10 @@ components:
       type: object
       additionalProperties: false
       properties:
-        userId: { type: string }
         singlesElo:
           type: number
           format: double
-          description: Current singles Elo (in selected group or global aggregation)
+          description: Current singles Elo (aggregated across groups where the user is linked)
         doublesByPartner:
           type: array
           description: Doubles Elo ratings grouped by partner
@@ -1008,7 +959,7 @@ components:
         doublesByPartnerPageToken:
           type: string
           description: Opaque page token for fetching next page of doubles-by-partner ratings
-      required: [ userId, singlesElo, doublesByPartner ]
+      required: [ singlesElo, doublesByPartner ]
 
     RatingRowSingles:
       type: object
@@ -1021,8 +972,7 @@ components:
         participantId: { type: string }
         participantName: { type: string }
         elo: { type: number, format: double }
-        games: { type: integer, minimum: 0 }
-      required: [ participantId, participantName, elo, games ]
+      required: [ rank, participantId, participantName, elo ]
 
     RatingRowDoubles:
       type: object
@@ -1035,19 +985,13 @@ components:
           minimum: 1
           description: Place in the leaderboard (1-based)
         pairKey: { type: string, example: "p1:p2" }
-        participantIds:
-          type: array
-          items: { type: string }
-          minItems: 2
-          maxItems: 2
         participantNames:
           type: array
           items: { type: string }
           minItems: 2
           maxItems: 2
         elo: { type: number, format: double }
-        games: { type: integer, minimum: 0 }
-      required: [ pairKey, participantIds, participantNames, elo, games ]
+      required: [ rank, pairKey, participantNames, elo ]
 
     ParticipantPage:
       type: object

@@ -5,8 +5,6 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**startedAt** | **string** |  | [optional] [default to undefined]
-**notes** | **string** |  | [optional] [default to undefined]
 **teamA** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **teamB** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **score** | [**MatchScore**](MatchScore.md) |  | [optional] [default to undefined]
@@ -17,8 +15,6 @@ Name | Type | Description | Notes
 import { MatchUpdateRequest } from './api';
 
 const instance: MatchUpdateRequest = {
-    startedAt,
-    notes,
     teamA,
     teamB,
     score,

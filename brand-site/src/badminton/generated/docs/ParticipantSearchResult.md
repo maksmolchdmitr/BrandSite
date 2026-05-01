@@ -7,9 +7,6 @@ Paginated search result for participants
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **items** | [**Array&lt;Participant&gt;**](Participant.md) |  | [default to undefined]
-**page** | **number** | Current page number (0-based) | [default to undefined]
-**pageSize** | **number** | Number of items per page | [default to undefined]
-**total** | **number** | Total number of matching participants | [default to undefined]
 **hasMore** | **boolean** | Whether there are more pages available | [default to undefined]
 
 ## Example
@@ -19,9 +16,6 @@ import { ParticipantSearchResult } from './api';
 
 const instance: ParticipantSearchResult = {
     items,
-    page,
-    pageSize,
-    total,
     hasMore,
 };
 ```

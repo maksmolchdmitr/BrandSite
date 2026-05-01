@@ -1,6 +1,5 @@
 .gitignore
 .npmignore
-.openapi-generator-ignore
 api.ts
 base.ts
 common.ts
@@ -10,7 +9,6 @@ docs/GameScore.md
 docs/Group.md
 docs/GroupCreateRequest.md
 docs/GroupPage.md
-docs/GroupStats.md
 docs/GroupsApi.md
 docs/LinkUserRequest.md
 docs/Match.md
@@ -22,11 +20,14 @@ docs/MatchUpdateRequest.md
 docs/MatchesApi.md
 docs/Participant.md
 docs/ParticipantCreateRequest.md
+docs/ParticipantPage.md
 docs/ParticipantSearchResult.md
 docs/ParticipantUpdateRequest.md
 docs/ParticipantsApi.md
 docs/RatingRowDoubles.md
+docs/RatingRowDoublesPage.md
 docs/RatingRowSingles.md
+docs/RatingRowSinglesPage.md
 docs/RatingsApi.md
 docs/RefreshRequest.md
 docs/StatsApi.md
@@ -38,7 +39,6 @@ docs/User.md
 docs/UserGamesStats.md
 docs/UserRatings.md
 docs/UserRatingsDoublesByPartnerInner.md
-docs/UserStats.md
 docs/UsersApi.md
 git_push.sh
 index.ts

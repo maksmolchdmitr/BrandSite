@@ -7,8 +7,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
 **name** | **string** |  | [default to undefined]
-**createdAt** | **string** |  | [default to undefined]
-**createdByUserId** | **string** |  | [optional] [default to undefined]
 **myRole** | **string** | Role of current user in this group | [optional] [default to undefined]
 
 ## Example
@@ -19,8 +17,6 @@ import { Group } from './api';
 const instance: Group = {
     id,
     name,
-    createdAt,
-    createdByUserId,
     myRole,
 };
 ```

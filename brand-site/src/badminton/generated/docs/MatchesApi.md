@@ -12,6 +12,7 @@ All URIs are relative to *https://api.example.com*
 # **apiGroupsGroupIdMatchesGet**
 > MatchPage apiGroupsGroupIdMatchesGet()
 
+Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
 
 ### Example
 
@@ -25,17 +26,15 @@ const configuration = new Configuration();
 const apiInstance = new MatchesApi(configuration);
 
 let groupId: string; // (default to undefined)
-let from: string; //Filter by start time (inclusive) (optional) (default to undefined)
-let to: string; //Filter by start time (exclusive) (optional) (default to undefined)
+let kind: 'singles' | 'doubles'; //Filter by match type (optional) (default to undefined)
 let limit: number; // (optional) (default to 50)
-let cursor: string; // (optional) (default to undefined)
+let pageToken: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiGroupsGroupIdMatchesGet(
     groupId,
-    from,
-    to,
+    kind,
     limit,
-    cursor
+    pageToken
 );
 ```
 
@@ -44,10 +43,9 @@ const { status, data } = await apiInstance.apiGroupsGroupIdMatchesGet(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **groupId** | [**string**] |  | defaults to undefined|
-| **from** | [**string**] | Filter by start time (inclusive) | (optional) defaults to undefined|
-| **to** | [**string**] | Filter by start time (exclusive) | (optional) defaults to undefined|
+| **kind** | [**&#39;singles&#39; | &#39;doubles&#39;**]**Array<&#39;singles&#39; &#124; &#39;doubles&#39;>** | Filter by match type | (optional) defaults to undefined|
 | **limit** | [**number**] |  | (optional) defaults to 50|
-| **cursor** | [**string**] |  | (optional) defaults to undefined|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type

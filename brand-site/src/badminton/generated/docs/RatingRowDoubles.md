@@ -6,11 +6,10 @@ Elo for a pair. pairKey can be stable concatenation of sorted participant ids.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**rank** | **number** | Place in the leaderboard (1-based) | [default to undefined]
 **pairKey** | **string** |  | [default to undefined]
-**participantIds** | **Array&lt;string&gt;** |  | [default to undefined]
 **participantNames** | **Array&lt;string&gt;** |  | [default to undefined]
 **elo** | **number** |  | [default to undefined]
-**games** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -18,11 +17,10 @@ Name | Type | Description | Notes
 import { RatingRowDoubles } from './api';
 
 const instance: RatingRowDoubles = {
+    rank,
     pairKey,
-    participantIds,
     participantNames,
     elo,
-    games,
 };
 ```
 

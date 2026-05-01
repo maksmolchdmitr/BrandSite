@@ -39,6 +39,27 @@ function participantNameMap(db, groupId) {
   return map;
 }
 
+function participantToClientDto(p) {
+  if (!p) return p;
+  return { id: p.id, name: p.name, userId: p.userId };
+}
+
+function groupToClientDto(g, myRole) {
+  return { id: g.id, name: g.name, myRole };
+}
+
+function matchToClientDto(m) {
+  if (!m) return m;
+  return {
+    id: m.id,
+    kind: m.kind,
+    startedAt: m.startedAt,
+    teamA: m.teamA,
+    teamB: m.teamB,
+    score: m.score,
+  };
+}
+
 function didTeamWin(match, side /* 'A'|'B' */) {
   const games = match.score?.games || [];
   let wA = 0;
@@ -199,12 +220,9 @@ export const mockClient = {
       }
       return {
         id: u.id,
-        telegramId: u.telegramId,
         username: u.username,
         firstName: firstName || "",
         lastName: lastName || "",
-        photoUrl: u.photoUrl || "",
-        createdAt: u.createdAt,
       };
     };
 
@@ -214,12 +232,9 @@ export const mockClient = {
       raw =
         db.users[0] || {
           id: "u_alex",
-          telegramId: 20001,
           username: "alex_shuttle",
           firstName: "Alex",
           lastName: "Chen",
-          photoUrl: "",
-          createdAt: new Date().toISOString(),
         };
     }
 
@@ -248,7 +263,7 @@ export const mockClient = {
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit);
+    const pageItems = all.slice(start, start + limit).map((g) => groupToClientDto(g, g.myRole));
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", "/api/groups", result);
@@ -264,7 +279,7 @@ export const mockClient = {
     db.groups.unshift(g);
     db.memberships.push({groupId: g.id, userId: u.id, role: "admin"});
     saveDb(db);
-    const result = {...g, myRole: "admin"};
+    const result = groupToClientDto(g, "admin");
     logResponse("POST", "/api/groups", result, 201);
     return result;
   },
@@ -288,9 +303,9 @@ export const mockClient = {
       // Auto-add as member for default user
       db.memberships.push({groupId, userId: u.id, role: "member"});
       saveDb(db);
-      result = {...g, myRole: "member"};
+      result = groupToClientDto(g, "member");
     } else {
-      result = {...g, myRole: role};
+      result = groupToClientDto(g, role);
     }
     logResponse("GET", `/api/groups/${groupId}`, result);
     return result;
@@ -308,7 +323,7 @@ export const mockClient = {
       const start = pageToken && pageToken.startsWith("offset_")
         ? parseInt(pageToken.slice("offset_".length), 10) || 0
         : 0;
-      const pageItems = all.slice(start, start + limit);
+      const pageItems = all.slice(start, start + limit).map(participantToClientDto);
       const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
       const res = { items: pageItems, pageToken: nextToken };
       logResponse("GET", `/api/groups/${groupId}/participants`, res);
@@ -324,7 +339,7 @@ export const mockClient = {
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit);
+    const pageItems = all.slice(start, start + limit).map(participantToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", `/api/groups/${groupId}/participants`, result);
@@ -361,13 +376,10 @@ export const mockClient = {
     // Paginate
     const start = page * pageSize;
     const end = start + pageSize;
-    const items = all.slice(start, end);
+    const items = all.slice(start, end).map(participantToClientDto);
     const hasMore = end < all.length;
     const result = {
       items,
-      page,
-      pageSize,
-      total: all.length,
       hasMore,
     };
     logResponse("GET", `/api/groups/${groupId}/participants/search`, result);
@@ -383,8 +395,8 @@ export const mockClient = {
     const p = {id: uuid("p"), groupId, name, userId: null, createdAt: nowIso()};
     db.participants.unshift(p);
     saveDb(db);
-    logResponse("POST", `/api/groups/${groupId}/participants`, p, 201);
-    return p;
+    logResponse("POST", `/api/groups/${groupId}/participants`, participantToClientDto(p), 201);
+    return participantToClientDto(p);
   },
 
   async updateParticipant(groupId, participantId, {name}) {
@@ -397,8 +409,9 @@ export const mockClient = {
     if (idx < 0) throw new Error("Not found");
     db.participants[idx] = {...db.participants[idx], name};
     saveDb(db);
-    logResponse("PUT", `/api/groups/${groupId}/participants/${participantId}`, db.participants[idx]);
-    return db.participants[idx];
+    const dto = participantToClientDto(db.participants[idx]);
+    logResponse("PUT", `/api/groups/${groupId}/participants/${participantId}`, dto);
+    return dto;
   },
 
   async deleteParticipant(groupId, participantId) {
@@ -429,12 +442,13 @@ export const mockClient = {
     const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
     if (!exists) db.memberships.push({groupId, userId: u.id, role: "member"});
     saveDb(db);
-    logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, db.participants[idx]);
-    return db.participants[idx];
+    const dto = participantToClientDto(db.participants[idx]);
+    logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, dto);
+    return dto;
   },
 
-  async listMatches(groupId, { from, to, kind, limit = 50, pageToken = null } = {}) {
-    logRequest("GET", `/api/groups/${groupId}/matches`, { from, to, kind, limit, pageToken });
+  async listMatches(groupId, { kind, limit = 50, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/matches`, { kind, limit, pageToken });
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
@@ -450,18 +464,10 @@ export const mockClient = {
     if (kind === "singles" || kind === "doubles") {
       all = all.filter(m => m.kind === kind);
     }
-    if (from) {
-      const fromDate = new Date(from).toISOString();
-      all = all.filter(m => m.startedAt >= fromDate);
-    }
-    if (to) {
-      const toDate = new Date(to).toISOString();
-      all = all.filter(m => m.startedAt < toDate);
-    }
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit);
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", `/api/groups/${groupId}/matches`, result);
@@ -489,8 +495,9 @@ export const mockClient = {
     };
     db.matches.unshift(m);
     saveDb(db);
-    logResponse("POST", `/api/groups/${groupId}/matches`, m, 201);
-    return m;
+    const dto = matchToClientDto(m);
+    logResponse("POST", `/api/groups/${groupId}/matches`, dto, 201);
+    return dto;
   },
 
   async updateMatch(groupId, matchId, patch) {
@@ -503,8 +510,9 @@ export const mockClient = {
     if (idx < 0) throw new Error("Not found");
     db.matches[idx] = {...db.matches[idx], ...patch};
     saveDb(db);
-    logResponse("PUT", `/api/groups/${groupId}/matches/${matchId}`, db.matches[idx]);
-    return db.matches[idx];
+    const dto = matchToClientDto(db.matches[idx]);
+    logResponse("PUT", `/api/groups/${groupId}/matches/${matchId}`, dto);
+    return dto;
   },
 
   async deleteMatch(groupId, matchId) {
@@ -527,7 +535,7 @@ export const mockClient = {
     const u = db.users.find(x => x.id === userId) || db.users[0];
     let result;
     if (!u) {
-      result = {userId: "u_alex", singlesElo: 1200, doublesByPartner: [], doublesByPartnerPageToken: null};
+      result = { singlesElo: 1200, doublesByPartner: [], doublesByPartnerPageToken: null };
     } else {
       const singlesElo = calcSinglesElo(db, u.id);
       const allDoublesByPartner = calcDoublesPerPartner(db, u.id);
@@ -537,7 +545,6 @@ export const mockClient = {
       const pageItems = allDoublesByPartner.slice(start, start + limit);
       const nextToken = start + limit < allDoublesByPartner.length ? `offset_${start + limit}` : null;
       result = {
-        userId: u.id,
         singlesElo,
         doublesByPartner: pageItems,
         doublesByPartnerPageToken: nextToken,
@@ -557,10 +564,8 @@ export const mockClient = {
     let result;
     if (!u) {
       result = {
-        userId: "u_alex",
-        singles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
-        doubles: {matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0},
-        recentMatches: [],
+        singles: { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0 },
+        doubles: { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0 },
       };
     } else {
       const myPIds = new Set(db.participants.filter(p => p.userId === u.id).map(p => p.id));
@@ -568,16 +573,7 @@ export const mockClient = {
       const doublesMatches = db.matches.filter(m => m.kind === "doubles");
       const singles = calcTotals(singlesMatches, myPIds);
       const doubles = calcTotals(doublesMatches, myPIds);
-      // return also detailed lists for UI
-      result = {
-        userId: u.id,
-        singles,
-        doubles,
-        recentMatches: db.matches
-          .filter(m => (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id)))
-          .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
-          .slice(0, 50),
-      };
+      result = { singles, doubles };
     }
     logResponse("GET", "/api/me/games-stats", result);
     return result;
@@ -594,7 +590,7 @@ export const mockClient = {
       .filter(m => m.kind === "singles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
       .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
-    const pageItems = all.slice(start, start + limit);
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", "/api/me/matches/singles", result);
@@ -612,7 +608,7 @@ export const mockClient = {
       .filter(m => m.kind === "doubles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
       .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
-    const pageItems = all.slice(start, start + limit);
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", "/api/me/matches/doubles", result);
@@ -644,7 +640,7 @@ export const mockClient = {
         if (win === false) l++;
       }
       const p = db.participants.find(p => p.id === pid);
-      return {participantId: pid, participantName: p?.name || pid, elo: Math.round(1200 + w * 7 - l * 5), games: singles.length};
+      return { participantId: pid, participantName: p?.name || pid, elo: Math.round(1200 + w * 7 - l * 5) };
     });
     rows.sort((a, b) => b.elo - a.elo);
     const start = pageToken && pageToken.startsWith("offset_")
@@ -690,9 +686,7 @@ export const mockClient = {
     }
     const rows = Array.from(pairMap.values()).map(r => ({
       pairKey: r.pairKey,
-      participantIds: r.participantIds,
       participantNames: r.participantIds.map(id => nameMap.get(id) || id),
-      games: r.games,
       elo: Math.round(1100 + r.wins * 10 - r.losses * 7),
     }));
     rows.sort((a, b) => b.elo - a.elo);

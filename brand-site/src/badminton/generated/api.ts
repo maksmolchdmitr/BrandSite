@@ -35,8 +35,6 @@ export interface GameScore {
 export interface Group {
     'id': string;
     'name': string;
-    'createdAt': string;
-    'createdByUserId'?: string;
     /**
      * Role of current user in this group
      */
@@ -55,37 +53,23 @@ export interface GroupCreateRequest {
 }
 export interface GroupPage {
     'items': Array<Group>;
-    'nextCursor'?: string | null;
-}
-export interface GroupStats {
-    'groupId': string;
-    'totalMatches': number;
-    'lastMatchAt'?: string | null;
+    'pageToken'?: string;
 }
 export interface LinkUserRequest {
     'userId': string;
 }
 export interface Match {
     'id': string;
-    'groupId': string;
     'kind': MatchKind;
     'startedAt': string;
-    'notes'?: string;
     'teamA': Array<string>;
     'teamB': Array<string>;
     'score': MatchScore;
-    'createdAt': string;
-    'createdByUserId'?: string;
 }
 
 
 export interface MatchCreateRequest {
     'kind': MatchKind;
-    /**
-     * Match start time. If not provided, backend sets current time.
-     */
-    'startedAt'?: string | null;
-    'notes'?: string;
     'teamA': Array<string>;
     'teamB': Array<string>;
     'score': MatchScore;
@@ -103,7 +87,7 @@ export type MatchKind = typeof MatchKind[keyof typeof MatchKind];
 
 export interface MatchPage {
     'items': Array<Match>;
-    'nextCursor'?: string | null;
+    'pageToken'?: string;
 }
 /**
  * Match score as list of games. Each game has pointsA and pointsB. 
@@ -112,42 +96,30 @@ export interface MatchScore {
     'games': Array<GameScore>;
 }
 export interface MatchUpdateRequest {
-    'startedAt'?: string;
-    'notes'?: string;
     'teamA'?: Array<string>;
     'teamB'?: Array<string>;
     'score'?: MatchScore;
 }
 export interface Participant {
     'id': string;
-    'groupId': string;
     'name': string;
     /**
      * Linked registered user id (if any)
      */
-    'userId'?: string | null;
-    'createdAt': string;
+    'userId'?: string;
 }
 export interface ParticipantCreateRequest {
     'name': string;
+}
+export interface ParticipantPage {
+    'items': Array<Participant>;
+    'pageToken'?: string;
 }
 /**
  * Paginated search result for participants
  */
 export interface ParticipantSearchResult {
     'items': Array<Participant>;
-    /**
-     * Current page number (0-based)
-     */
-    'page': number;
-    /**
-     * Number of items per page
-     */
-    'pageSize': number;
-    /**
-     * Total number of matching participants
-     */
-    'total': number;
     /**
      * Whether there are more pages available
      */
@@ -160,17 +132,30 @@ export interface ParticipantUpdateRequest {
  * Elo for a pair. pairKey can be stable concatenation of sorted participant ids. 
  */
 export interface RatingRowDoubles {
+    /**
+     * Place in the leaderboard (1-based)
+     */
+    'rank': number;
     'pairKey': string;
-    'participantIds': Array<string>;
     'participantNames': Array<string>;
     'elo': number;
-    'games': number;
+}
+export interface RatingRowDoublesPage {
+    'items': Array<RatingRowDoubles>;
+    'pageToken'?: string;
 }
 export interface RatingRowSingles {
+    /**
+     * Place in the leaderboard (1-based)
+     */
+    'rank': number;
     'participantId': string;
     'participantName': string;
     'elo': number;
-    'games': number;
+}
+export interface RatingRowSinglesPage {
+    'items': Array<RatingRowSingles>;
+    'pageToken'?: string;
 }
 export interface RefreshRequest {
     'refreshToken': string;
@@ -196,33 +181,30 @@ export interface TokenResponse {
 }
 export interface User {
     'id': string;
-    'telegramId': number;
     'username'?: string;
-    'displayName'?: string;
-    'createdAt': string;
+    'firstName'?: string;
+    'lastName'?: string;
 }
 /**
- * Extended user stats with recent matches
+ * Aggregate singles/doubles statistics for the current user
  */
 export interface UserGamesStats {
-    'userId': string;
     'singles': StatsBlock;
     'doubles': StatsBlock;
-    /**
-     * Recent matches involving the user
-     */
-    'recentMatches': Array<Match>;
 }
 export interface UserRatings {
-    'userId': string;
     /**
-     * Current singles Elo (in selected group or global aggregation)
+     * Current singles Elo (aggregated across groups where the user is linked)
      */
     'singlesElo': number;
     /**
      * Doubles Elo ratings grouped by partner
      */
     'doublesByPartner': Array<UserRatingsDoublesByPartnerInner>;
+    /**
+     * Opaque page token for fetching next page of doubles-by-partner ratings
+     */
+    'doublesByPartnerPageToken'?: string;
 }
 export interface UserRatingsDoublesByPartnerInner {
     'partnerUserId': string;
@@ -231,11 +213,6 @@ export interface UserRatingsDoublesByPartnerInner {
     'wins': number;
     'losses': number;
     'elo': number;
-}
-export interface UserStats {
-    'userId': string;
-    'singles': StatsBlock;
-    'doubles': StatsBlock;
 }
 
 /**
@@ -255,40 +232,6 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
             assertParamExists('apiGroupsGroupIdGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Same as /groups (alias for convenience)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        apiMeGroupsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/me/groups`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -358,11 +301,11 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
          * 
          * @summary List groups where current user is a member (via linked participant)
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listGroups: async (limit?: number, cursor?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listGroups: async (limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/groups`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -383,8 +326,8 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['limit'] = limit;
             }
 
-            if (cursor !== undefined) {
-                localVarQueryParameter['cursor'] = cursor;
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -422,18 +365,6 @@ export const GroupsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Same as /groups (alias for convenience)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async apiMeGroupsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GroupPage>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeGroupsGet(options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['GroupsApi.apiMeGroupsGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @summary Create new group
          * @param {GroupCreateRequest} groupCreateRequest 
          * @param {*} [options] Override http request option.
@@ -449,12 +380,12 @@ export const GroupsApiFp = function(configuration?: Configuration) {
          * 
          * @summary List groups where current user is a member (via linked participant)
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listGroups(limit?: number, cursor?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GroupPage>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listGroups(limit, cursor, options);
+        async listGroups(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GroupPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listGroups(limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GroupsApi.listGroups']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -480,15 +411,6 @@ export const GroupsApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          * 
-         * @summary Same as /groups (alias for convenience)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        apiMeGroupsGet(options?: RawAxiosRequestConfig): AxiosPromise<GroupPage> {
-            return localVarFp.apiMeGroupsGet(options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @summary Create new group
          * @param {GroupCreateRequest} groupCreateRequest 
          * @param {*} [options] Override http request option.
@@ -501,12 +423,12 @@ export const GroupsApiFactory = function (configuration?: Configuration, basePat
          * 
          * @summary List groups where current user is a member (via linked participant)
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listGroups(limit?: number, cursor?: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupPage> {
-            return localVarFp.listGroups(limit, cursor, options).then((request) => request(axios, basePath));
+        listGroups(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupPage> {
+            return localVarFp.listGroups(limit, pageToken, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -526,14 +448,6 @@ export interface GroupsApiInterface {
 
     /**
      * 
-     * @summary Same as /groups (alias for convenience)
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    apiMeGroupsGet(options?: RawAxiosRequestConfig): AxiosPromise<GroupPage>;
-
-    /**
-     * 
      * @summary Create new group
      * @param {GroupCreateRequest} groupCreateRequest 
      * @param {*} [options] Override http request option.
@@ -545,11 +459,11 @@ export interface GroupsApiInterface {
      * 
      * @summary List groups where current user is a member (via linked participant)
      * @param {number} [limit] 
-     * @param {string} [cursor] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    listGroups(limit?: number, cursor?: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupPage>;
+    listGroups(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupPage>;
 
 }
 
@@ -570,16 +484,6 @@ export class GroupsApi extends BaseAPI implements GroupsApiInterface {
 
     /**
      * 
-     * @summary Same as /groups (alias for convenience)
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public apiMeGroupsGet(options?: RawAxiosRequestConfig) {
-        return GroupsApiFp(this.configuration).apiMeGroupsGet(options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
      * @summary Create new group
      * @param {GroupCreateRequest} groupCreateRequest 
      * @param {*} [options] Override http request option.
@@ -593,12 +497,12 @@ export class GroupsApi extends BaseAPI implements GroupsApiInterface {
      * 
      * @summary List groups where current user is a member (via linked participant)
      * @param {number} [limit] 
-     * @param {string} [cursor] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public listGroups(limit?: number, cursor?: string, options?: RawAxiosRequestConfig) {
-        return GroupsApiFp(this.configuration).listGroups(limit, cursor, options).then((request) => request(this.axios, this.basePath));
+    public listGroups(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return GroupsApiFp(this.configuration).listGroups(limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -610,17 +514,16 @@ export class GroupsApi extends BaseAPI implements GroupsApiInterface {
 export const MatchesApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         * Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
          * @summary List matches in group (member-only)
          * @param {string} groupId 
-         * @param {string} [from] Filter by start time (inclusive)
-         * @param {string} [to] Filter by start time (exclusive)
+         * @param {ApiGroupsGroupIdMatchesGetKindEnum} [kind] Filter by match type
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdMatchesGet: async (groupId: string, from?: string, to?: string, limit?: number, cursor?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiGroupsGroupIdMatchesGet: async (groupId: string, kind?: ApiGroupsGroupIdMatchesGetKindEnum, limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'groupId' is not null or undefined
             assertParamExists('apiGroupsGroupIdMatchesGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}/matches`
@@ -640,24 +543,16 @@ export const MatchesApiAxiosParamCreator = function (configuration?: Configurati
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-            if (from !== undefined) {
-                localVarQueryParameter['from'] = (from as any instanceof Date) ?
-                    (from as any).toISOString() :
-                    from;
-            }
-
-            if (to !== undefined) {
-                localVarQueryParameter['to'] = (to as any instanceof Date) ?
-                    (to as any).toISOString() :
-                    to;
+            if (kind !== undefined) {
+                localVarQueryParameter['kind'] = kind;
             }
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
             }
 
-            if (cursor !== undefined) {
-                localVarQueryParameter['cursor'] = cursor;
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -813,18 +708,17 @@ export const MatchesApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = MatchesApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         * Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
          * @summary List matches in group (member-only)
          * @param {string} groupId 
-         * @param {string} [from] Filter by start time (inclusive)
-         * @param {string} [to] Filter by start time (exclusive)
+         * @param {ApiGroupsGroupIdMatchesGetKindEnum} [kind] Filter by match type
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdMatchesGet(groupId: string, from?: string, to?: string, limit?: number, cursor?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MatchPage>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdMatchesGet(groupId, from, to, limit, cursor, options);
+        async apiGroupsGroupIdMatchesGet(groupId: string, kind?: ApiGroupsGroupIdMatchesGetKindEnum, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MatchPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdMatchesGet(groupId, kind, limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MatchesApi.apiGroupsGroupIdMatchesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -882,18 +776,17 @@ export const MatchesApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = MatchesApiFp(configuration)
     return {
         /**
-         * 
+         * Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
          * @summary List matches in group (member-only)
          * @param {string} groupId 
-         * @param {string} [from] Filter by start time (inclusive)
-         * @param {string} [to] Filter by start time (exclusive)
+         * @param {ApiGroupsGroupIdMatchesGetKindEnum} [kind] Filter by match type
          * @param {number} [limit] 
-         * @param {string} [cursor] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdMatchesGet(groupId: string, from?: string, to?: string, limit?: number, cursor?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage> {
-            return localVarFp.apiGroupsGroupIdMatchesGet(groupId, from, to, limit, cursor, options).then((request) => request(axios, basePath));
+        apiGroupsGroupIdMatchesGet(groupId: string, kind?: ApiGroupsGroupIdMatchesGetKindEnum, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage> {
+            return localVarFp.apiGroupsGroupIdMatchesGet(groupId, kind, limit, pageToken, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -937,17 +830,16 @@ export const MatchesApiFactory = function (configuration?: Configuration, basePa
  */
 export interface MatchesApiInterface {
     /**
-     * 
+     * Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
      * @summary List matches in group (member-only)
      * @param {string} groupId 
-     * @param {string} [from] Filter by start time (inclusive)
-     * @param {string} [to] Filter by start time (exclusive)
+     * @param {ApiGroupsGroupIdMatchesGetKindEnum} [kind] Filter by match type
      * @param {number} [limit] 
-     * @param {string} [cursor] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdMatchesGet(groupId: string, from?: string, to?: string, limit?: number, cursor?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage>;
+    apiGroupsGroupIdMatchesGet(groupId: string, kind?: ApiGroupsGroupIdMatchesGetKindEnum, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage>;
 
     /**
      * 
@@ -987,18 +879,17 @@ export interface MatchesApiInterface {
  */
 export class MatchesApi extends BaseAPI implements MatchesApiInterface {
     /**
-     * 
+     * Returns matches sorted by startedAt descending. Use `kind` to filter by match type (singles or doubles). 
      * @summary List matches in group (member-only)
      * @param {string} groupId 
-     * @param {string} [from] Filter by start time (inclusive)
-     * @param {string} [to] Filter by start time (exclusive)
+     * @param {ApiGroupsGroupIdMatchesGetKindEnum} [kind] Filter by match type
      * @param {number} [limit] 
-     * @param {string} [cursor] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdMatchesGet(groupId: string, from?: string, to?: string, limit?: number, cursor?: string, options?: RawAxiosRequestConfig) {
-        return MatchesApiFp(this.configuration).apiGroupsGroupIdMatchesGet(groupId, from, to, limit, cursor, options).then((request) => request(this.axios, this.basePath));
+    public apiGroupsGroupIdMatchesGet(groupId: string, kind?: ApiGroupsGroupIdMatchesGetKindEnum, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return MatchesApiFp(this.configuration).apiGroupsGroupIdMatchesGet(groupId, kind, limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1039,6 +930,11 @@ export class MatchesApi extends BaseAPI implements MatchesApiInterface {
     }
 }
 
+export const ApiGroupsGroupIdMatchesGetKindEnum = {
+    Singles: 'singles',
+    Doubles: 'doubles'
+} as const;
+export type ApiGroupsGroupIdMatchesGetKindEnum = typeof ApiGroupsGroupIdMatchesGetKindEnum[keyof typeof ApiGroupsGroupIdMatchesGetKindEnum];
 
 
 /**
@@ -1050,10 +946,12 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
          * 
          * @summary List participants in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdParticipantsGet: async (groupId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiGroupsGroupIdParticipantsGet: async (groupId: string, limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'groupId' is not null or undefined
             assertParamExists('apiGroupsGroupIdParticipantsGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}/participants`
@@ -1072,6 +970,14 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
             // authentication bearerAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
+            }
 
             localVarHeaderParameter['Accept'] = 'application/json';
 
@@ -1221,7 +1127,50 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
             };
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Returns paginated list of participants matching the query. 
+         * 
+         * @summary Create participant (admin-only)
+         * @param {string} groupId 
+         * @param {ParticipantCreateRequest} participantCreateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiGroupsGroupIdParticipantsPost: async (groupId: string, participantCreateRequest: ParticipantCreateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'groupId' is not null or undefined
+            assertParamExists('apiGroupsGroupIdParticipantsPost', 'groupId', groupId)
+            // verify required parameter 'participantCreateRequest' is not null or undefined
+            assertParamExists('apiGroupsGroupIdParticipantsPost', 'participantCreateRequest', participantCreateRequest)
+            const localVarPath = `/api/groups/{groupId}/participants`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(participantCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
@@ -1273,49 +1222,6 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * 
-         * @summary Create participant (admin-only)
-         * @param {string} groupId 
-         * @param {ParticipantCreateRequest} participantCreateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        apiGroupsGroupIdParticipantsSearchPost: async (groupId: string, participantCreateRequest: ParticipantCreateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'groupId' is not null or undefined
-            assertParamExists('apiGroupsGroupIdParticipantsSearchPost', 'groupId', groupId)
-            // verify required parameter 'participantCreateRequest' is not null or undefined
-            assertParamExists('apiGroupsGroupIdParticipantsSearchPost', 'participantCreateRequest', participantCreateRequest)
-            const localVarPath = `/api/groups/{groupId}/participants/search`
-                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(participantCreateRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -1329,11 +1235,13 @@ export const ParticipantsApiFp = function(configuration?: Configuration) {
          * 
          * @summary List participants in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdParticipantsGet(groupId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Participant>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsGet(groupId, options);
+        async apiGroupsGroupIdParticipantsGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ParticipantPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsGet(groupId, limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ParticipantsApi.apiGroupsGroupIdParticipantsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1383,7 +1291,21 @@ export const ParticipantsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Returns paginated list of participants matching the query. 
+         * 
+         * @summary Create participant (admin-only)
+         * @param {string} groupId 
+         * @param {ParticipantCreateRequest} participantCreateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiGroupsGroupIdParticipantsPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Participant>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsPost(groupId, participantCreateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ParticipantsApi.apiGroupsGroupIdParticipantsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
@@ -1396,20 +1318,6 @@ export const ParticipantsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ParticipantsApi.apiGroupsGroupIdParticipantsSearchGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Create participant (admin-only)
-         * @param {string} groupId 
-         * @param {ParticipantCreateRequest} participantCreateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async apiGroupsGroupIdParticipantsSearchPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Participant>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsSearchPost(groupId, participantCreateRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ParticipantsApi.apiGroupsGroupIdParticipantsSearchPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -1425,11 +1333,13 @@ export const ParticipantsApiFactory = function (configuration?: Configuration, b
          * 
          * @summary List participants in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdParticipantsGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<Participant>> {
-            return localVarFp.apiGroupsGroupIdParticipantsGet(groupId, options).then((request) => request(axios, basePath));
+        apiGroupsGroupIdParticipantsGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantPage> {
+            return localVarFp.apiGroupsGroupIdParticipantsGet(groupId, limit, pageToken, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1467,7 +1377,18 @@ export const ParticipantsApiFactory = function (configuration?: Configuration, b
             return localVarFp.apiGroupsGroupIdParticipantsParticipantIdPatch(groupId, participantId, participantUpdateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Returns paginated list of participants matching the query. 
+         * 
+         * @summary Create participant (admin-only)
+         * @param {string} groupId 
+         * @param {ParticipantCreateRequest} participantCreateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiGroupsGroupIdParticipantsPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant> {
+            return localVarFp.apiGroupsGroupIdParticipantsPost(groupId, participantCreateRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
@@ -1478,17 +1399,6 @@ export const ParticipantsApiFactory = function (configuration?: Configuration, b
          */
         apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantSearchResult> {
             return localVarFp.apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Create participant (admin-only)
-         * @param {string} groupId 
-         * @param {ParticipantCreateRequest} participantCreateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        apiGroupsGroupIdParticipantsSearchPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant> {
-            return localVarFp.apiGroupsGroupIdParticipantsSearchPost(groupId, participantCreateRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1501,10 +1411,12 @@ export interface ParticipantsApiInterface {
      * 
      * @summary List participants in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdParticipantsGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<Participant>>;
+    apiGroupsGroupIdParticipantsGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantPage>;
 
     /**
      * 
@@ -1539,7 +1451,17 @@ export interface ParticipantsApiInterface {
     apiGroupsGroupIdParticipantsParticipantIdPatch(groupId: string, participantId: string, participantUpdateRequest: ParticipantUpdateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant>;
 
     /**
-     * Search participants by name with pagination. Results are sorted alphabetically. Returns paginated list of participants matching the query. 
+     * 
+     * @summary Create participant (admin-only)
+     * @param {string} groupId 
+     * @param {ParticipantCreateRequest} participantCreateRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    apiGroupsGroupIdParticipantsPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant>;
+
+    /**
+     * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
      * @summary Search participants in group with pagination (member-only)
      * @param {string} groupId 
      * @param {string} [query] Search query (filters by name, case-insensitive)
@@ -1549,16 +1471,6 @@ export interface ParticipantsApiInterface {
      * @throws {RequiredError}
      */
     apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantSearchResult>;
-
-    /**
-     * 
-     * @summary Create participant (admin-only)
-     * @param {string} groupId 
-     * @param {ParticipantCreateRequest} participantCreateRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    apiGroupsGroupIdParticipantsSearchPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant>;
 
 }
 
@@ -1570,11 +1482,13 @@ export class ParticipantsApi extends BaseAPI implements ParticipantsApiInterface
      * 
      * @summary List participants in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdParticipantsGet(groupId: string, options?: RawAxiosRequestConfig) {
-        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiGroupsGroupIdParticipantsGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsGet(groupId, limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1616,7 +1530,19 @@ export class ParticipantsApi extends BaseAPI implements ParticipantsApiInterface
     }
 
     /**
-     * Search participants by name with pagination. Results are sorted alphabetically. Returns paginated list of participants matching the query. 
+     * 
+     * @summary Create participant (admin-only)
+     * @param {string} groupId 
+     * @param {ParticipantCreateRequest} participantCreateRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiGroupsGroupIdParticipantsPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig) {
+        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsPost(groupId, participantCreateRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
      * @summary Search participants in group with pagination (member-only)
      * @param {string} groupId 
      * @param {string} [query] Search query (filters by name, case-insensitive)
@@ -1627,18 +1553,6 @@ export class ParticipantsApi extends BaseAPI implements ParticipantsApiInterface
      */
     public apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
         return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Create participant (admin-only)
-     * @param {string} groupId 
-     * @param {ParticipantCreateRequest} participantCreateRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public apiGroupsGroupIdParticipantsSearchPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig) {
-        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsSearchPost(groupId, participantCreateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -1653,10 +1567,12 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
          * 
          * @summary Doubles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdRatingsDoublesGet: async (groupId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiGroupsGroupIdRatingsDoublesGet: async (groupId: string, limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'groupId' is not null or undefined
             assertParamExists('apiGroupsGroupIdRatingsDoublesGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}/ratings/doubles`
@@ -1676,6 +1592,14 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
+            }
+
             localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -1691,10 +1615,12 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
          * 
          * @summary Singles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdRatingsSinglesGet: async (groupId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiGroupsGroupIdRatingsSinglesGet: async (groupId: string, limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'groupId' is not null or undefined
             assertParamExists('apiGroupsGroupIdRatingsSinglesGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}/ratings/singles`
@@ -1714,6 +1640,14 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
+            }
+
             localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -1728,11 +1662,12 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Current user ratings (singles + doubles)
-         * @param {string} [groupId] 
+         * @param {number} [limit] Page size for doubles-by-partner ratings
+         * @param {string} [pageToken] Opaque page token for doubles-by-partner ratings (null for first page)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiMeRatingsGet: async (groupId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiMeRatingsGet: async (limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/me/ratings`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1749,8 +1684,12 @@ export const RatingsApiAxiosParamCreator = function (configuration?: Configurati
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-            if (groupId !== undefined) {
-                localVarQueryParameter['groupId'] = groupId;
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1777,11 +1716,13 @@ export const RatingsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Doubles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdRatingsDoublesGet(groupId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RatingRowDoubles>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdRatingsDoublesGet(groupId, options);
+        async apiGroupsGroupIdRatingsDoublesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RatingRowDoublesPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdRatingsDoublesGet(groupId, limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RatingsApi.apiGroupsGroupIdRatingsDoublesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1790,11 +1731,13 @@ export const RatingsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Singles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdRatingsSinglesGet(groupId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RatingRowSingles>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdRatingsSinglesGet(groupId, options);
+        async apiGroupsGroupIdRatingsSinglesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RatingRowSinglesPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdRatingsSinglesGet(groupId, limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RatingsApi.apiGroupsGroupIdRatingsSinglesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1802,12 +1745,13 @@ export const RatingsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Current user ratings (singles + doubles)
-         * @param {string} [groupId] 
+         * @param {number} [limit] Page size for doubles-by-partner ratings
+         * @param {string} [pageToken] Opaque page token for doubles-by-partner ratings (null for first page)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiMeRatingsGet(groupId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserRatings>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeRatingsGet(groupId, options);
+        async apiMeRatingsGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserRatings>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeRatingsGet(limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RatingsApi.apiMeRatingsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1825,31 +1769,36 @@ export const RatingsApiFactory = function (configuration?: Configuration, basePa
          * 
          * @summary Doubles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdRatingsDoublesGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<RatingRowDoubles>> {
-            return localVarFp.apiGroupsGroupIdRatingsDoublesGet(groupId, options).then((request) => request(axios, basePath));
+        apiGroupsGroupIdRatingsDoublesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<RatingRowDoublesPage> {
+            return localVarFp.apiGroupsGroupIdRatingsDoublesGet(groupId, limit, pageToken, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Singles Elo leaderboard in group (member-only)
          * @param {string} groupId 
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdRatingsSinglesGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<RatingRowSingles>> {
-            return localVarFp.apiGroupsGroupIdRatingsSinglesGet(groupId, options).then((request) => request(axios, basePath));
+        apiGroupsGroupIdRatingsSinglesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<RatingRowSinglesPage> {
+            return localVarFp.apiGroupsGroupIdRatingsSinglesGet(groupId, limit, pageToken, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Current user ratings (singles + doubles)
-         * @param {string} [groupId] 
+         * @param {number} [limit] Page size for doubles-by-partner ratings
+         * @param {string} [pageToken] Opaque page token for doubles-by-partner ratings (null for first page)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiMeRatingsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserRatings> {
-            return localVarFp.apiMeRatingsGet(groupId, options).then((request) => request(axios, basePath));
+        apiMeRatingsGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserRatings> {
+            return localVarFp.apiMeRatingsGet(limit, pageToken, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1862,28 +1811,33 @@ export interface RatingsApiInterface {
      * 
      * @summary Doubles Elo leaderboard in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdRatingsDoublesGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<RatingRowDoubles>>;
+    apiGroupsGroupIdRatingsDoublesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<RatingRowDoublesPage>;
 
     /**
      * 
      * @summary Singles Elo leaderboard in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdRatingsSinglesGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<RatingRowSingles>>;
+    apiGroupsGroupIdRatingsSinglesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<RatingRowSinglesPage>;
 
     /**
      * 
      * @summary Current user ratings (singles + doubles)
-     * @param {string} [groupId] 
+     * @param {number} [limit] Page size for doubles-by-partner ratings
+     * @param {string} [pageToken] Opaque page token for doubles-by-partner ratings (null for first page)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiMeRatingsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserRatings>;
+    apiMeRatingsGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserRatings>;
 
 }
 
@@ -1895,33 +1849,38 @@ export class RatingsApi extends BaseAPI implements RatingsApiInterface {
      * 
      * @summary Doubles Elo leaderboard in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdRatingsDoublesGet(groupId: string, options?: RawAxiosRequestConfig) {
-        return RatingsApiFp(this.configuration).apiGroupsGroupIdRatingsDoublesGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiGroupsGroupIdRatingsDoublesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return RatingsApiFp(this.configuration).apiGroupsGroupIdRatingsDoublesGet(groupId, limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
      * @summary Singles Elo leaderboard in group (member-only)
      * @param {string} groupId 
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdRatingsSinglesGet(groupId: string, options?: RawAxiosRequestConfig) {
-        return RatingsApiFp(this.configuration).apiGroupsGroupIdRatingsSinglesGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiGroupsGroupIdRatingsSinglesGet(groupId: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return RatingsApiFp(this.configuration).apiGroupsGroupIdRatingsSinglesGet(groupId, limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
      * @summary Current user ratings (singles + doubles)
-     * @param {string} [groupId] 
+     * @param {number} [limit] Page size for doubles-by-partner ratings
+     * @param {string} [pageToken] Opaque page token for doubles-by-partner ratings (null for first page)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiMeRatingsGet(groupId?: string, options?: RawAxiosRequestConfig) {
-        return RatingsApiFp(this.configuration).apiMeRatingsGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiMeRatingsGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return RatingsApiFp(this.configuration).apiMeRatingsGet(limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -1933,51 +1892,12 @@ export class RatingsApi extends BaseAPI implements RatingsApiInterface {
 export const StatsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
-         * @summary Group stats (member-only)
-         * @param {string} groupId 
+         * Returns win/loss totals for singles and doubles (across all groups the user participates in).
+         * @summary Current user aggregate game statistics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdStatsGet: async (groupId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'groupId' is not null or undefined
-            assertParamExists('apiGroupsGroupIdStatsGet', 'groupId', groupId)
-            const localVarPath = `/api/groups/{groupId}/stats`
-                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * Returns detailed stats including recent matches list
-         * @summary Current user game statistics with recent matches
-         * @param {string} [groupId] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        apiMeGamesStatsGet: async (groupId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiMeGamesStatsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/me/games-stats`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1994,10 +1914,6 @@ export const StatsApiAxiosParamCreator = function (configuration?: Configuration
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-            if (groupId !== undefined) {
-                localVarQueryParameter['groupId'] = groupId;
-            }
-
             localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -2010,14 +1926,15 @@ export const StatsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
-         * @summary Current user stats across all groups (or filter by group)
-         * @param {string} [groupId] 
+         * Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
+         * @summary List current user\'s doubles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiMeStatsGet: async (groupId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/me/stats`;
+        apiMeMatchesDoublesGet: async (limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/me/matches/doubles`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -2033,8 +1950,56 @@ export const StatsApiAxiosParamCreator = function (configuration?: Configuration
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-            if (groupId !== undefined) {
-                localVarQueryParameter['groupId'] = groupId;
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
+            }
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+         * @summary List current user\'s singles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMeMatchesSinglesGet: async (limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/me/matches/singles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -2058,42 +2023,43 @@ export const StatsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = StatsApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
-         * @summary Group stats (member-only)
-         * @param {string} groupId 
+         * Returns win/loss totals for singles and doubles (across all groups the user participates in).
+         * @summary Current user aggregate game statistics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdStatsGet(groupId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GroupStats>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdStatsGet(groupId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['StatsApi.apiGroupsGroupIdStatsGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * Returns detailed stats including recent matches list
-         * @summary Current user game statistics with recent matches
-         * @param {string} [groupId] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async apiMeGamesStatsGet(groupId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserGamesStats>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeGamesStatsGet(groupId, options);
+        async apiMeGamesStatsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserGamesStats>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeGamesStatsGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['StatsApi.apiMeGamesStatsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Current user stats across all groups (or filter by group)
-         * @param {string} [groupId] 
+         * Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
+         * @summary List current user\'s doubles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiMeStatsGet(groupId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserStats>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeStatsGet(groupId, options);
+        async apiMeMatchesDoublesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MatchPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeMatchesDoublesGet(limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['StatsApi.apiMeStatsGet']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['StatsApi.apiMeMatchesDoublesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+         * @summary List current user\'s singles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiMeMatchesSinglesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MatchPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMeMatchesSinglesGet(limit, pageToken, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['StatsApi.apiMeMatchesSinglesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -2106,34 +2072,35 @@ export const StatsApiFactory = function (configuration?: Configuration, basePath
     const localVarFp = StatsApiFp(configuration)
     return {
         /**
-         * 
-         * @summary Group stats (member-only)
-         * @param {string} groupId 
+         * Returns win/loss totals for singles and doubles (across all groups the user participates in).
+         * @summary Current user aggregate game statistics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdStatsGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupStats> {
-            return localVarFp.apiGroupsGroupIdStatsGet(groupId, options).then((request) => request(axios, basePath));
+        apiMeGamesStatsGet(options?: RawAxiosRequestConfig): AxiosPromise<UserGamesStats> {
+            return localVarFp.apiMeGamesStatsGet(options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns detailed stats including recent matches list
-         * @summary Current user game statistics with recent matches
-         * @param {string} [groupId] 
+         * Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
+         * @summary List current user\'s doubles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiMeGamesStatsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserGamesStats> {
-            return localVarFp.apiMeGamesStatsGet(groupId, options).then((request) => request(axios, basePath));
+        apiMeMatchesDoublesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage> {
+            return localVarFp.apiMeMatchesDoublesGet(limit, pageToken, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Current user stats across all groups (or filter by group)
-         * @param {string} [groupId] 
+         * Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+         * @summary List current user\'s singles matches (paginated)
+         * @param {number} [limit] 
+         * @param {string} [pageToken] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiMeStatsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserStats> {
-            return localVarFp.apiMeStatsGet(groupId, options).then((request) => request(axios, basePath));
+        apiMeMatchesSinglesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage> {
+            return localVarFp.apiMeMatchesSinglesGet(limit, pageToken, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2143,31 +2110,32 @@ export const StatsApiFactory = function (configuration?: Configuration, basePath
  */
 export interface StatsApiInterface {
     /**
-     * 
-     * @summary Group stats (member-only)
-     * @param {string} groupId 
+     * Returns win/loss totals for singles and doubles (across all groups the user participates in).
+     * @summary Current user aggregate game statistics
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdStatsGet(groupId: string, options?: RawAxiosRequestConfig): AxiosPromise<GroupStats>;
+    apiMeGamesStatsGet(options?: RawAxiosRequestConfig): AxiosPromise<UserGamesStats>;
 
     /**
-     * Returns detailed stats including recent matches list
-     * @summary Current user game statistics with recent matches
-     * @param {string} [groupId] 
+     * Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
+     * @summary List current user\'s doubles matches (paginated)
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiMeGamesStatsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserGamesStats>;
+    apiMeMatchesDoublesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage>;
 
     /**
-     * 
-     * @summary Current user stats across all groups (or filter by group)
-     * @param {string} [groupId] 
+     * Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+     * @summary List current user\'s singles matches (paginated)
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiMeStatsGet(groupId?: string, options?: RawAxiosRequestConfig): AxiosPromise<UserStats>;
+    apiMeMatchesSinglesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<MatchPage>;
 
 }
 
@@ -2176,36 +2144,37 @@ export interface StatsApiInterface {
  */
 export class StatsApi extends BaseAPI implements StatsApiInterface {
     /**
-     * 
-     * @summary Group stats (member-only)
-     * @param {string} groupId 
+     * Returns win/loss totals for singles and doubles (across all groups the user participates in).
+     * @summary Current user aggregate game statistics
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdStatsGet(groupId: string, options?: RawAxiosRequestConfig) {
-        return StatsApiFp(this.configuration).apiGroupsGroupIdStatsGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiMeGamesStatsGet(options?: RawAxiosRequestConfig) {
+        return StatsApiFp(this.configuration).apiMeGamesStatsGet(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * Returns detailed stats including recent matches list
-     * @summary Current user game statistics with recent matches
-     * @param {string} [groupId] 
+     * Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
+     * @summary List current user\'s doubles matches (paginated)
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiMeGamesStatsGet(groupId?: string, options?: RawAxiosRequestConfig) {
-        return StatsApiFp(this.configuration).apiMeGamesStatsGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiMeMatchesDoublesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return StatsApiFp(this.configuration).apiMeMatchesDoublesGet(limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Current user stats across all groups (or filter by group)
-     * @param {string} [groupId] 
+     * Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+     * @summary List current user\'s singles matches (paginated)
+     * @param {number} [limit] 
+     * @param {string} [pageToken] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiMeStatsGet(groupId?: string, options?: RawAxiosRequestConfig) {
-        return StatsApiFp(this.configuration).apiMeStatsGet(groupId, options).then((request) => request(this.axios, this.basePath));
+    public apiMeMatchesSinglesGet(limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return StatsApiFp(this.configuration).apiMeMatchesSinglesGet(limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -2290,7 +2259,7 @@ export const TelegramAuthApiAxiosParamCreator = function (configuration?: Config
             };
         },
         /**
-         * Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+         * Returns access and refresh tokens for the user. 
          * @summary Login via Telegram authorization data
          * @param {TelegramUser} telegramUser 
          * @param {*} [options] Override http request option.
@@ -2359,7 +2328,7 @@ export const TelegramAuthApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+         * Returns access and refresh tokens for the user. 
          * @summary Login via Telegram authorization data
          * @param {TelegramUser} telegramUser 
          * @param {*} [options] Override http request option.
@@ -2400,7 +2369,7 @@ export const TelegramAuthApiFactory = function (configuration?: Configuration, b
             return localVarFp.refreshToken(refreshRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+         * Returns access and refresh tokens for the user. 
          * @summary Login via Telegram authorization data
          * @param {TelegramUser} telegramUser 
          * @param {*} [options] Override http request option.
@@ -2434,7 +2403,7 @@ export interface TelegramAuthApiInterface {
     refreshToken(refreshRequest: RefreshRequest, options?: RawAxiosRequestConfig): AxiosPromise<TokenResponse>;
 
     /**
-     * Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+     * Returns access and refresh tokens for the user. 
      * @summary Login via Telegram authorization data
      * @param {TelegramUser} telegramUser 
      * @param {*} [options] Override http request option.
@@ -2470,7 +2439,7 @@ export class TelegramAuthApi extends BaseAPI implements TelegramAuthApiInterface
     }
 
     /**
-     * Returns parameters for Telegram Login Widget and a nonce/state identifier. Client then completes Telegram login and submits payload to `/auth/telegram/complete`. 
+     * Returns access and refresh tokens for the user. 
      * @summary Login via Telegram authorization data
      * @param {TelegramUser} telegramUser 
      * @param {*} [options] Override http request option.

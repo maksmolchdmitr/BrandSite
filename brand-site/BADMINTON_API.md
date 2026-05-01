@@ -41,7 +41,7 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 ### User
 - `GET /api/me` - Get current user profile
 - `GET /me/ratings` - Get user Elo ratings
-- `GET /me/games-stats` - Get user game statistics with recent matches
+- `GET /me/games-stats` - Get aggregate singles/doubles statistics for the current user
 
 ### Groups
 - `GET /groups` - List groups
@@ -50,14 +50,14 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 
 ### Participants
 - `GET /groups/{groupId}/participants` - List participants (query: `limit`, `pageToken`; response: `{ items, pageToken }`)
-- `GET /groups/{groupId}/participants/search` - Search participants with pagination
+- `GET /groups/{groupId}/participants/search` - Search participants with pagination (response: `{ items, hasMore }`)
 - `POST /groups/{groupId}/participants` - Create participant (admin)
 - `PATCH /groups/{groupId}/participants/{participantId}` - Update participant (admin)
 - `DELETE /groups/{groupId}/participants/{participantId}` - Delete participant (admin)
 - `POST /groups/{groupId}/participants/{participantId}/link-user` - Link user to participant (admin)
 
 ### Matches
-- `GET /groups/{groupId}/matches` - List matches (query: `limit`, `pageToken`; response: `{ items, pageToken }`)
+- `GET /groups/{groupId}/matches` - List matches (query: `kind`, `limit`, `pageToken`; response: `{ items, pageToken }`)
 - `POST /groups/{groupId}/matches` - Create match (admin)
 - `PATCH /groups/{groupId}/matches/{matchId}` - Update match (admin)
 - `DELETE /groups/{groupId}/matches/{matchId}` - Delete match (admin)

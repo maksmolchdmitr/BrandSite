@@ -1,19 +1,19 @@
-# GroupPage
+# RatingRowDoublesPage
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Array&lt;Group&gt;**](Group.md) |  | [default to undefined]
+**items** | [**Array&lt;RatingRowDoubles&gt;**](RatingRowDoubles.md) |  | [default to undefined]
 **pageToken** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { GroupPage } from './api';
+import { RatingRowDoublesPage } from './api';
 
-const instance: GroupPage = {
+const instance: RatingRowDoublesPage = {
     items,
     pageToken,
 };

@@ -9,7 +9,7 @@ All URIs are relative to *https://api.example.com*
 |[**apiMeRatingsGet**](#apimeratingsget) | **GET** /api/me/ratings | Current user ratings (singles + doubles)|
 
 # **apiGroupsGroupIdRatingsDoublesGet**
-> Array<RatingRowDoubles> apiGroupsGroupIdRatingsDoublesGet()
+> RatingRowDoublesPage apiGroupsGroupIdRatingsDoublesGet()
 
 
 ### Example
@@ -24,9 +24,13 @@ const configuration = new Configuration();
 const apiInstance = new RatingsApi(configuration);
 
 let groupId: string; // (default to undefined)
+let limit: number; // (optional) (default to 50)
+let pageToken: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiGroupsGroupIdRatingsDoublesGet(
-    groupId
+    groupId,
+    limit,
+    pageToken
 );
 ```
 
@@ -35,11 +39,13 @@ const { status, data } = await apiInstance.apiGroupsGroupIdRatingsDoublesGet(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **groupId** | [**string**] |  | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to 50|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**Array<RatingRowDoubles>**
+**RatingRowDoublesPage**
 
 ### Authorization
 
@@ -62,7 +68,7 @@ const { status, data } = await apiInstance.apiGroupsGroupIdRatingsDoublesGet(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **apiGroupsGroupIdRatingsSinglesGet**
-> Array<RatingRowSingles> apiGroupsGroupIdRatingsSinglesGet()
+> RatingRowSinglesPage apiGroupsGroupIdRatingsSinglesGet()
 
 
 ### Example
@@ -77,9 +83,13 @@ const configuration = new Configuration();
 const apiInstance = new RatingsApi(configuration);
 
 let groupId: string; // (default to undefined)
+let limit: number; // (optional) (default to 50)
+let pageToken: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiGroupsGroupIdRatingsSinglesGet(
-    groupId
+    groupId,
+    limit,
+    pageToken
 );
 ```
 
@@ -88,11 +98,13 @@ const { status, data } = await apiInstance.apiGroupsGroupIdRatingsSinglesGet(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **groupId** | [**string**] |  | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to 50|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**Array<RatingRowSingles>**
+**RatingRowSinglesPage**
 
 ### Authorization
 
@@ -129,10 +141,12 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RatingsApi(configuration);
 
-let groupId: string; // (optional) (default to undefined)
+let limit: number; //Page size for doubles-by-partner ratings (optional) (default to 50)
+let pageToken: string; //Opaque page token for doubles-by-partner ratings (null for first page) (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiMeRatingsGet(
-    groupId
+    limit,
+    pageToken
 );
 ```
 
@@ -140,7 +154,8 @@ const { status, data } = await apiInstance.apiMeRatingsGet(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **groupId** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] | Page size for doubles-by-partner ratings | (optional) defaults to 50|
+| **pageToken** | [**string**] | Opaque page token for doubles-by-partner ratings (null for first page) | (optional) defaults to undefined|
 
 
 ### Return type

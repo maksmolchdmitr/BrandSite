@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**rank** | **number** | Place in the leaderboard (1-based) | [default to undefined]
 **participantId** | **string** |  | [default to undefined]
 **participantName** | **string** |  | [default to undefined]
 **elo** | **number** |  | [default to undefined]
-**games** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { RatingRowSingles } from './api';
 
 const instance: RatingRowSingles = {
+    rank,
     participantId,
     participantName,
     elo,
-    games,
 };
 ```
 

@@ -1,15 +1,13 @@
 # UserGamesStats
 
-Extended user stats with recent matches
+Aggregate singles/doubles statistics for the current user
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**userId** | **string** |  | [default to undefined]
 **singles** | [**StatsBlock**](StatsBlock.md) |  | [default to undefined]
 **doubles** | [**StatsBlock**](StatsBlock.md) |  | [default to undefined]
-**recentMatches** | [**Array&lt;Match&gt;**](Match.md) | Recent matches involving the user | [default to undefined]
 
 ## Example
 
@@ -17,10 +15,8 @@ Name | Type | Description | Notes
 import { UserGamesStats } from './api';
 
 const instance: UserGamesStats = {
-    userId,
     singles,
     doubles,
-    recentMatches,
 };
 ```
 

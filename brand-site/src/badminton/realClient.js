@@ -25,12 +25,12 @@ export const realClient = {
     return api.getMyGroups({ limit, pageToken });
   },
 
-  async getMyRatings({groupId, limit, pageToken} = {}) {
-    return api.getMyRatings({groupId, limit, pageToken});
+  async getMyRatings({limit, pageToken} = {}) {
+    return api.getMyRatings({limit, pageToken});
   },
 
-  async getMyGamesStats({groupId} = {}) {
-    return api.getMyGamesStats({groupId});
+  async getMyGamesStats() {
+    return api.getMyGamesStats();
   },
 
   async getMySinglesMatches({ limit, pageToken } = {}) {
@@ -76,8 +76,8 @@ export const realClient = {
   },
 
   // Match endpoints
-  async listMatches(groupId, { from, to, kind, limit, pageToken } = {}) {
-    return api.listMatches(groupId, { from, to, kind, limit, pageToken });
+  async listMatches(groupId, { kind, limit, pageToken } = {}) {
+    return api.listMatches(groupId, { kind, limit, pageToken });
   },
 
   async createMatch(groupId, match) {

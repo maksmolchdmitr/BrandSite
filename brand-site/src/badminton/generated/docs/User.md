@@ -6,10 +6,9 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
-**telegramId** | **number** |  | [default to undefined]
 **username** | **string** |  | [optional] [default to undefined]
-**displayName** | **string** |  | [optional] [default to undefined]
-**createdAt** | **string** |  | [default to undefined]
+**firstName** | **string** |  | [optional] [default to undefined]
+**lastName** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -18,10 +17,9 @@ import { User } from './api';
 
 const instance: User = {
     id,
-    telegramId,
     username,
-    displayName,
-    createdAt,
+    firstName,
+    lastName,
 };
 ```
 

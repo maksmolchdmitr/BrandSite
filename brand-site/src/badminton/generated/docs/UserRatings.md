@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**userId** | **string** |  | [default to undefined]
-**singlesElo** | **number** | Current singles Elo (in selected group or global aggregation) | [default to undefined]
+**singlesElo** | **number** | Current singles Elo (aggregated across groups where the user is linked) | [default to undefined]
 **doublesByPartner** | [**Array&lt;UserRatingsDoublesByPartnerInner&gt;**](UserRatingsDoublesByPartnerInner.md) | Doubles Elo ratings grouped by partner | [default to undefined]
+**doublesByPartnerPageToken** | **string** | Opaque page token for fetching next page of doubles-by-partner ratings | [optional] [default to undefined]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { UserRatings } from './api';
 
 const instance: UserRatings = {
-    userId,
     singlesElo,
     doublesByPartner,
+    doublesByPartnerPageToken,
 };
 ```
 

@@ -5,7 +5,6 @@ All URIs are relative to *https://api.example.com*
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**apiGroupsGroupIdGet**](#apigroupsgroupidget) | **GET** /api/groups/{groupId} | Get group by id (member-only)|
-|[**apiMeGroupsGet**](#apimegroupsget) | **GET** /api/me/groups | Same as /groups (alias for convenience)|
 |[**createGroup**](#creategroup) | **POST** /api/groups | Create new group|
 |[**listGroups**](#listgroups) | **GET** /api/groups | List groups where current user is a member (via linked participant)|
 
@@ -59,50 +58,6 @@ const { status, data } = await apiInstance.apiGroupsGroupIdGet(
 |**401** | Unauthorized |  -  |
 |**403** | Forbidden |  -  |
 |**404** | Not found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **apiMeGroupsGet**
-> GroupPage apiMeGroupsGet()
-
-
-### Example
-
-```typescript
-import {
-    GroupsApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new GroupsApi(configuration);
-
-const { status, data } = await apiInstance.apiMeGroupsGet();
-```
-
-### Parameters
-This endpoint does not have any parameters.
-
-
-### Return type
-
-**GroupPage**
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Groups page |  -  |
-|**401** | Unauthorized |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -175,11 +130,11 @@ const configuration = new Configuration();
 const apiInstance = new GroupsApi(configuration);
 
 let limit: number; // (optional) (default to 50)
-let cursor: string; // (optional) (default to undefined)
+let pageToken: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.listGroups(
     limit,
-    cursor
+    pageToken
 );
 ```
 
@@ -188,7 +143,7 @@ const { status, data } = await apiInstance.listGroups(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **limit** | [**number**] |  | (optional) defaults to 50|
-| **cursor** | [**string**] |  | (optional) defaults to undefined|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type

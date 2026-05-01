@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **items** | [**Array&lt;Match&gt;**](Match.md) |  | [default to undefined]
-**nextCursor** | **string** |  | [optional] [default to undefined]
+**pageToken** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -15,7 +15,7 @@ import { MatchPage } from './api';
 
 const instance: MatchPage = {
     items,
-    nextCursor,
+    pageToken,
 };
 ```
 

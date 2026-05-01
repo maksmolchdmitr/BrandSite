@@ -4,67 +4,14 @@ All URIs are relative to *https://api.example.com*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**apiGroupsGroupIdStatsGet**](#apigroupsgroupidstatsget) | **GET** /api/groups/{groupId}/stats | Group stats (member-only)|
-|[**apiMeGamesStatsGet**](#apimegamesstatsget) | **GET** /api/me/games-stats | Current user game statistics with recent matches|
-|[**apiMeStatsGet**](#apimestatsget) | **GET** /api/me/stats | Current user stats across all groups (or filter by group)|
-
-# **apiGroupsGroupIdStatsGet**
-> GroupStats apiGroupsGroupIdStatsGet()
-
-
-### Example
-
-```typescript
-import {
-    StatsApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new StatsApi(configuration);
-
-let groupId: string; // (default to undefined)
-
-const { status, data } = await apiInstance.apiGroupsGroupIdStatsGet(
-    groupId
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **groupId** | [**string**] |  | defaults to undefined|
-
-
-### Return type
-
-**GroupStats**
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Group stats |  -  |
-|**401** | Unauthorized |  -  |
-|**403** | Forbidden |  -  |
-|**404** | Not found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+|[**apiMeGamesStatsGet**](#apimegamesstatsget) | **GET** /api/me/games-stats | Current user aggregate game statistics|
+|[**apiMeMatchesDoublesGet**](#apimematchesdoublesget) | **GET** /api/me/matches/doubles | List current user\&#39;s doubles matches (paginated)|
+|[**apiMeMatchesSinglesGet**](#apimematchessinglesget) | **GET** /api/me/matches/singles | List current user\&#39;s singles matches (paginated)|
 
 # **apiMeGamesStatsGet**
 > UserGamesStats apiMeGamesStatsGet()
 
-Returns detailed stats including recent matches list
+Returns win/loss totals for singles and doubles (across all groups the user participates in).
 
 ### Example
 
@@ -77,18 +24,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new StatsApi(configuration);
 
-let groupId: string; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.apiMeGamesStatsGet(
-    groupId
-);
+const { status, data } = await apiInstance.apiMeGamesStatsGet();
 ```
 
 ### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **groupId** | [**string**] |  | (optional) defaults to undefined|
+This endpoint does not have any parameters.
 
 
 ### Return type
@@ -108,14 +48,15 @@ const { status, data } = await apiInstance.apiMeGamesStatsGet(
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-|**200** | Game stats with recent matches |  -  |
+|**200** | Aggregate game stats |  -  |
 |**401** | Unauthorized |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **apiMeStatsGet**
-> UserStats apiMeStatsGet()
+# **apiMeMatchesDoublesGet**
+> MatchPage apiMeMatchesDoublesGet()
 
+Returns doubles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Doubles\" page. 
 
 ### Example
 
@@ -128,10 +69,12 @@ import {
 const configuration = new Configuration();
 const apiInstance = new StatsApi(configuration);
 
-let groupId: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to 20)
+let pageToken: string; // (optional) (default to undefined)
 
-const { status, data } = await apiInstance.apiMeStatsGet(
-    groupId
+const { status, data } = await apiInstance.apiMeMatchesDoublesGet(
+    limit,
+    pageToken
 );
 ```
 
@@ -139,12 +82,13 @@ const { status, data } = await apiInstance.apiMeStatsGet(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **groupId** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to 20|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**UserStats**
+**MatchPage**
 
 ### Authorization
 
@@ -159,7 +103,62 @@ const { status, data } = await apiInstance.apiMeStatsGet(
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-|**200** | Stats |  -  |
+|**200** | Paginated doubles matches |  -  |
+|**401** | Unauthorized |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **apiMeMatchesSinglesGet**
+> MatchPage apiMeMatchesSinglesGet()
+
+Returns singles matches where the current user participated (via linked participant), sorted by startedAt descending. Use for \"My games – Singles\" page. 
+
+### Example
+
+```typescript
+import {
+    StatsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new StatsApi(configuration);
+
+let limit: number; // (optional) (default to 20)
+let pageToken: string; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.apiMeMatchesSinglesGet(
+    limit,
+    pageToken
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to 20|
+| **pageToken** | [**string**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**MatchPage**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Paginated singles matches |  -  |
 |**401** | Unauthorized |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
