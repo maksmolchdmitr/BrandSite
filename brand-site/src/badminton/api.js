@@ -137,11 +137,6 @@ export async function getMyGroups({ limit, pageToken } = {}) {
   return apiRequest(`/api/groups${query ? `?${query}` : ""}`);
 }
 
-export async function getMyStats({groupId} = {}) {
-  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
-  return apiRequest(`/api/me/stats${query}`);
-}
-
 export async function getMyRatings({groupId, limit, pageToken} = {}) {
   const params = new URLSearchParams();
   if (groupId) params.append("groupId", groupId);
@@ -277,6 +272,3 @@ export async function getDoublesLeaderboard(groupId, { limit, pageToken } = {}) 
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/ratings/doubles${query ? `?${query}` : ""}`);
 }
 
-export async function getGroupStats(groupId) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/stats`);
-}

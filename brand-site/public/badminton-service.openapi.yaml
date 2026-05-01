@@ -221,6 +221,39 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+    post:
+      tags: [ Participants ]
+      summary: Create participant (admin-only)
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipantCreateRequest"
+      responses:
+        "201":
+          description: Participant created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participant"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflict (e.g. participant with such name already exists in group)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/groups/{groupId}/participants/search:
     get:
       tags: [ Participants ]
@@ -255,39 +288,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-
-    post:
-      tags: [ Participants ]
-      summary: Create participant (admin-only)
-      parameters:
-        - $ref: "#/components/parameters/GroupId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ParticipantCreateRequest"
-      responses:
-        "201":
-          description: Participant created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Participant"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Conflict (e.g. participant with such name already exists in group)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /api/groups/{groupId}/participants/{participantId}:
     patch:
@@ -488,24 +488,6 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /api/me/stats:
-    get:
-      tags: [ Stats ]
-      summary: Current user stats across all groups (or filter by group)
-      parameters:
-        - in: query
-          name: groupId
-          schema: { type: string }
-      responses:
-        "200":
-          description: Stats
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserStats"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
   /api/me/games-stats:
     get:
       tags: [ Stats ]
@@ -644,26 +626,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RatingRowDoublesPage"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /api/groups/{groupId}/stats:
-    get:
-      tags: [ Stats ]
-      summary: Group stats (member-only)
-      parameters:
-        - $ref: "#/components/parameters/GroupId"
-      responses:
-        "200":
-          description: Group stats
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GroupStats"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -993,17 +955,6 @@ components:
           nullable: true
       required: [ items ]
 
-    UserStats:
-      type: object
-      additionalProperties: false
-      properties:
-        userId: { type: string }
-        singles:
-          $ref: "#/components/schemas/StatsBlock"
-        doubles:
-          $ref: "#/components/schemas/StatsBlock"
-      required: [ userId, singles, doubles ]
-
     UserGamesStats:
       type: object
       additionalProperties: false
@@ -1020,15 +971,6 @@ components:
           items:
             $ref: "#/components/schemas/Match"
       required: [ userId, singles, doubles, recentMatches ]
-
-    GroupStats:
-      type: object
-      additionalProperties: false
-      properties:
-        groupId: { type: string }
-        totalMatches: { type: integer, minimum: 0 }
-        lastMatchAt: { type: string, format: date-time, nullable: true }
-      required: [ groupId, totalMatches ]
 
     StatsBlock:
       type: object

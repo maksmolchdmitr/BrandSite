@@ -40,7 +40,6 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 
 ### User
 - `GET /api/me` - Get current user profile
-- `GET /me/stats` - Get user statistics
 - `GET /me/ratings` - Get user Elo ratings
 - `GET /me/games-stats` - Get user game statistics with recent matches
 
@@ -68,5 +67,4 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 - `GET /groups/{groupId}/ratings/doubles` - Doubles leaderboard (query: `limit`, `pageToken`; response: `{ items, pageToken }`; each item includes `rank`)
 
 ### Stats
-- `GET /groups/{groupId}/stats` - Group statistics
 

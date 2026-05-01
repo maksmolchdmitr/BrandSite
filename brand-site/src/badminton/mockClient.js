@@ -706,18 +706,6 @@ export const mockClient = {
     return result;
   },
 
-  async getGroupStats(groupId) {
-    logRequest("GET", `/api/groups/${groupId}/stats`);
-    await delay();
-    const db = loadDb();
-    requireAuth(db);
-    requireMember(db, groupId);
-    const ms = db.matches.filter(m => m.groupId === groupId);
-    const last = ms.slice().sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))[0];
-    const result = {groupId, totalMatches: ms.length, lastMatchAt: last?.startedAt || null};
-    logResponse("GET", `/api/groups/${groupId}/stats`, result);
-    return result;
-  },
 };
 
 

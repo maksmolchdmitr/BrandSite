@@ -25,10 +25,6 @@ export const realClient = {
     return api.getMyGroups({ limit, pageToken });
   },
 
-  async getMyStats({groupId} = {}) {
-    return api.getMyStats({groupId});
-  },
-
   async getMyRatings({groupId, limit, pageToken} = {}) {
     return api.getMyRatings({groupId, limit, pageToken});
   },
@@ -105,9 +101,5 @@ export const realClient = {
     return api.getDoublesLeaderboard(groupId, { limit, pageToken });
   },
 
-  // Stats endpoints
-  async getGroupStats(groupId) {
-    return api.getGroupStats(groupId);
-  },
 };
 
