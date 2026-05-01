@@ -786,7 +786,6 @@ components:
             $ref: "#/components/schemas/Group"
         pageToken:
           type: string
-          nullable: true
       required: [ items ]
 
     Participant:
@@ -798,7 +797,6 @@ components:
         name: { type: string, example: Maks }
         userId:
           type: string
-          nullable: true
           description: Linked registered user id (if any)
         createdAt: { type: string, format: date-time }
       required: [ id, groupId, name, createdAt ]
@@ -907,7 +905,6 @@ components:
         startedAt:
           type: string
           format: date-time
-          nullable: true
           description: Match start time. If not provided, backend sets current time.
         notes: { type: string }
         teamA:
@@ -952,7 +949,6 @@ components:
           items: { $ref: "#/components/schemas/Match" }
         pageToken:
           type: string
-          nullable: true
       required: [ items ]
 
     UserGamesStats:
@@ -1011,7 +1007,6 @@ components:
             required: [ partnerUserId, partnerName, games, wins, losses, elo ]
         doublesByPartnerPageToken:
           type: string
-          nullable: true
           description: Opaque page token for fetching next page of doubles-by-partner ratings
       required: [ userId, singlesElo, doublesByPartner ]
 
@@ -1064,7 +1059,6 @@ components:
             $ref: "#/components/schemas/Participant"
         pageToken:
           type: string
-          nullable: true
       required: [ items ]
 
     RatingRowSinglesPage:
@@ -1077,7 +1071,6 @@ components:
             $ref: "#/components/schemas/RatingRowSingles"
         pageToken:
           type: string
-          nullable: true
       required: [ items ]
 
     RatingRowDoublesPage:
@@ -1090,5 +1083,4 @@ components:
             $ref: "#/components/schemas/RatingRowDoubles"
         pageToken:
           type: string
-          nullable: true
       required: [ items ]
