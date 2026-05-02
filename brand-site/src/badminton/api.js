@@ -186,11 +186,11 @@ export async function listParticipants(groupId, { limit, pageToken } = {}) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants${query ? `?${query}` : ""}`);
 }
 
-export async function searchParticipants(groupId, {query = "", page = 0, pageSize = 10} = {}) {
+export async function searchParticipants(groupId, { query = "", limit = 10, pageToken } = {}) {
   const params = new URLSearchParams();
   if (query) params.append("query", query);
-  params.append("page", page);
-  params.append("pageSize", pageSize);
+  params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/search?${params.toString()}`);
 }
 

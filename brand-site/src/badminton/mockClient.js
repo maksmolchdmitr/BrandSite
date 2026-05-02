@@ -346,8 +346,8 @@ export const mockClient = {
     return result;
   },
 
-  async searchParticipants(groupId, {query = "", page = 0, pageSize = 10}) {
-    logRequest("GET", `/api/groups/${groupId}/participants/search`, {query, page, pageSize});
+  async searchParticipants(groupId, { query = "", limit = 10, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/participants/search`, { query, limit, pageToken });
     await delay();
     const db = loadDb();
     // Use default user if not logged in
@@ -361,27 +361,24 @@ export const mockClient = {
         saveDb(db);
       }
     }
-    
+
     // Get all participants for this group, sorted alphabetically
     let all = db.participants
       .filter(p => p.groupId === groupId)
       .sort((a, b) => a.name.localeCompare(b.name));
-    
+
     // Filter by query if provided
     if (query && query.trim()) {
       const lower = query.toLowerCase();
       all = all.filter(p => p.name.toLowerCase().includes(lower));
     }
-    
-    // Paginate
-    const start = page * pageSize;
-    const end = start + pageSize;
-    const items = all.slice(start, end).map(participantToClientDto);
-    const hasMore = end < all.length;
-    const result = {
-      items,
-      hasMore,
-    };
+
+    const start = pageToken && pageToken.startsWith("offset_")
+      ? parseInt(pageToken.slice("offset_".length), 10) || 0
+      : 0;
+    const pageItems = all.slice(start, start + limit).map(participantToClientDto);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", `/api/groups/${groupId}/participants/search`, result);
     return result;
   },

@@ -115,16 +115,6 @@ export interface ParticipantPage {
     'items': Array<Participant>;
     'pageToken'?: string;
 }
-/**
- * Paginated search result for participants
- */
-export interface ParticipantSearchResult {
-    'items': Array<Participant>;
-    /**
-     * Whether there are more pages available
-     */
-    'hasMore': boolean;
-}
 export interface ParticipantUpdateRequest {
     'name'?: string;
 }
@@ -1170,16 +1160,16 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
             };
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+         * Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
-         * @param {number} [page] Page number (0-based)
-         * @param {number} [pageSize] Number of items per page
+         * @param {number} [limit] Page size
+         * @param {string} [pageToken] Opaque cursor for the next page (omit on first request)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdParticipantsSearchGet: async (groupId: string, query?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiGroupsGroupIdParticipantsSearchGet: async (groupId: string, query?: string, limit?: number, pageToken?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'groupId' is not null or undefined
             assertParamExists('apiGroupsGroupIdParticipantsSearchGet', 'groupId', groupId)
             const localVarPath = `/api/groups/{groupId}/participants/search`
@@ -1203,12 +1193,12 @@ export const ParticipantsApiAxiosParamCreator = function (configuration?: Config
                 localVarQueryParameter['query'] = query;
             }
 
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
             }
 
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
+            if (pageToken !== undefined) {
+                localVarQueryParameter['pageToken'] = pageToken;
             }
 
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1305,17 +1295,17 @@ export const ParticipantsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+         * Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
-         * @param {number} [page] Page number (0-based)
-         * @param {number} [pageSize] Number of items per page
+         * @param {number} [limit] Page size
+         * @param {string} [pageToken] Opaque cursor for the next page (omit on first request)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ParticipantSearchResult>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options);
+        async apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ParticipantPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiGroupsGroupIdParticipantsSearchGet(groupId, query, limit, pageToken, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ParticipantsApi.apiGroupsGroupIdParticipantsSearchGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1388,17 +1378,17 @@ export const ParticipantsApiFactory = function (configuration?: Configuration, b
             return localVarFp.apiGroupsGroupIdParticipantsPost(groupId, participantCreateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+         * Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
          * @summary Search participants in group with pagination (member-only)
          * @param {string} groupId 
          * @param {string} [query] Search query (filters by name, case-insensitive)
-         * @param {number} [page] Page number (0-based)
-         * @param {number} [pageSize] Number of items per page
+         * @param {number} [limit] Page size
+         * @param {string} [pageToken] Opaque cursor for the next page (omit on first request)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantSearchResult> {
-            return localVarFp.apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options).then((request) => request(axios, basePath));
+        apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantPage> {
+            return localVarFp.apiGroupsGroupIdParticipantsSearchGet(groupId, query, limit, pageToken, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1461,16 +1451,16 @@ export interface ParticipantsApiInterface {
     apiGroupsGroupIdParticipantsPost(groupId: string, participantCreateRequest: ParticipantCreateRequest, options?: RawAxiosRequestConfig): AxiosPromise<Participant>;
 
     /**
-     * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+     * Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
      * @summary Search participants in group with pagination (member-only)
      * @param {string} groupId 
      * @param {string} [query] Search query (filters by name, case-insensitive)
-     * @param {number} [page] Page number (0-based)
-     * @param {number} [pageSize] Number of items per page
+     * @param {number} [limit] Page size
+     * @param {string} [pageToken] Opaque cursor for the next page (omit on first request)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantSearchResult>;
+    apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig): AxiosPromise<ParticipantPage>;
 
 }
 
@@ -1542,17 +1532,17 @@ export class ParticipantsApi extends BaseAPI implements ParticipantsApiInterface
     }
 
     /**
-     * Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+     * Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
      * @summary Search participants in group with pagination (member-only)
      * @param {string} groupId 
      * @param {string} [query] Search query (filters by name, case-insensitive)
-     * @param {number} [page] Page number (0-based)
-     * @param {number} [pageSize] Number of items per page
+     * @param {number} [limit] Page size
+     * @param {string} [pageToken] Opaque cursor for the next page (omit on first request)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
-        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsSearchGet(groupId, query, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    public apiGroupsGroupIdParticipantsSearchGet(groupId: string, query?: string, limit?: number, pageToken?: string, options?: RawAxiosRequestConfig) {
+        return ParticipantsApiFp(this.configuration).apiGroupsGroupIdParticipantsSearchGet(groupId, query, limit, pageToken, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

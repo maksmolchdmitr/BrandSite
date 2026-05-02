@@ -310,9 +310,9 @@ const { status, data } = await apiInstance.apiGroupsGroupIdParticipantsPost(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **apiGroupsGroupIdParticipantsSearchGet**
-> ParticipantSearchResult apiGroupsGroupIdParticipantsSearchGet()
+> ParticipantPage apiGroupsGroupIdParticipantsSearchGet()
 
-Search participants by name with pagination. Results are sorted alphabetically. Response contains the current page of `items` and `hasMore` for infinite scroll / \"load more\". 
+Search participants by name with cursor pagination. Results are sorted alphabetically. Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page. 
 
 ### Example
 
@@ -327,14 +327,14 @@ const apiInstance = new ParticipantsApi(configuration);
 
 let groupId: string; // (default to undefined)
 let query: string; //Search query (filters by name, case-insensitive) (optional) (default to '')
-let page: number; //Page number (0-based) (optional) (default to 0)
-let pageSize: number; //Number of items per page (optional) (default to 10)
+let limit: number; //Page size (optional) (default to 10)
+let pageToken: string; //Opaque cursor for the next page (omit on first request) (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiGroupsGroupIdParticipantsSearchGet(
     groupId,
     query,
-    page,
-    pageSize
+    limit,
+    pageToken
 );
 ```
 
@@ -344,13 +344,13 @@ const { status, data } = await apiInstance.apiGroupsGroupIdParticipantsSearchGet
 |------------- | ------------- | ------------- | -------------|
 | **groupId** | [**string**] |  | defaults to undefined|
 | **query** | [**string**] | Search query (filters by name, case-insensitive) | (optional) defaults to ''|
-| **page** | [**number**] | Page number (0-based) | (optional) defaults to 0|
-| **pageSize** | [**number**] | Number of items per page | (optional) defaults to 10|
+| **limit** | [**number**] | Page size | (optional) defaults to 10|
+| **pageToken** | [**string**] | Opaque cursor for the next page (omit on first request) | (optional) defaults to undefined|
 
 
 ### Return type
 
-**ParticipantSearchResult**
+**ParticipantPage**
 
 ### Authorization
 
@@ -365,7 +365,7 @@ const { status, data } = await apiInstance.apiGroupsGroupIdParticipantsSearchGet
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-|**200** | Paginated participants |  -  |
+|**200** | Participants search page |  -  |
 |**401** | Unauthorized |  -  |
 |**403** | Forbidden |  -  |
 |**404** | Not found |  -  |

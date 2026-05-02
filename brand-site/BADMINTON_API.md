@@ -50,7 +50,7 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 
 ### Participants
 - `GET /groups/{groupId}/participants` - List participants (query: `limit`, `pageToken`; response: `{ items, pageToken }`)
-- `GET /groups/{groupId}/participants/search` - Search participants with pagination (response: `{ items, hasMore }`)
+- `GET /groups/{groupId}/participants/search` - Search participants (query: `query`, `limit`, `pageToken`; response: `{ items, pageToken }` — как у списка участников)
 - `POST /groups/{groupId}/participants` - Create participant (admin)
 - `PATCH /groups/{groupId}/participants/{participantId}` - Update participant (admin)
 - `DELETE /groups/{groupId}/participants/{participantId}` - Delete participant (admin)

@@ -338,7 +338,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam1P1" 
                     @input="searchParticipantsField('team1P1')"
-                    @focus="loadParticipantsPage('team1P1', 0)"
+                    @focus="loadParticipantsPage('team1P1')"
                     :placeholder="$t('common.placeholders.searchParticipant')"
                     autocomplete="off"
                   />
@@ -395,7 +395,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam2P1" 
                     @input="searchParticipantsField('team2P1')"
-                    @focus="loadParticipantsPage('team2P1', 0)"
+                    @focus="loadParticipantsPage('team2P1')"
                     :placeholder="$t('common.placeholders.searchParticipant')"
                     autocomplete="off"
                   />
@@ -455,7 +455,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam1P1" 
                     @input="searchParticipantsField('team1P1')"
-                    @focus="loadParticipantsPage('team1P1', 0)"
+                    @focus="loadParticipantsPage('team1P1')"
                     :placeholder="$t('common.placeholders.searchParticipant1')"
                     autocomplete="off"
                   />
@@ -486,7 +486,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam1P2" 
                     @input="searchParticipantsField('team1P2')"
-                    @focus="loadParticipantsPage('team1P2', 0)"
+                    @focus="loadParticipantsPage('team1P2')"
                     :placeholder="$t('common.placeholders.searchParticipant2')"
                     autocomplete="off"
                   />
@@ -538,7 +538,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam2P1" 
                     @input="searchParticipantsField('team2P1')"
-                    @focus="loadParticipantsPage('team2P1', 0)"
+                    @focus="loadParticipantsPage('team2P1')"
                     :placeholder="$t('common.placeholders.searchParticipant1')"
                     autocomplete="off"
                   />
@@ -564,7 +564,7 @@
                     class="input" 
                     v-model="modal.payload.searchTeam2P2" 
                     @input="searchParticipantsField('team2P2')"
-                    @focus="loadParticipantsPage('team2P2', 0)"
+                    @focus="loadParticipantsPage('team2P2')"
                     :placeholder="$t('common.placeholders.searchParticipant2')"
                     autocomplete="off"
                   />
@@ -681,10 +681,10 @@ export default defineComponent({
       
       // Participant search pagination state for each field
       participantSearchState: {
-        team1P1: {items: [], page: 0, hasMore: false, loading: false},
-        team1P2: {items: [], page: 0, hasMore: false, loading: false},
-        team2P1: {items: [], page: 0, hasMore: false, loading: false},
-        team2P2: {items: [], page: 0, hasMore: false, loading: false},
+        team1P1: { items: [], nextPageToken: null, loading: false },
+        team1P2: { items: [], nextPageToken: null, loading: false },
+        team2P1: { items: [], nextPageToken: null, loading: false },
+        team2P2: { items: [], nextPageToken: null, loading: false },
       },
     };
   },
@@ -1207,10 +1207,10 @@ export default defineComponent({
     openCreateMatch(kind) {
       // Reset search states
       this.participantSearchState = {
-        team1P1: {items: [], page: 0, hasMore: false, loading: false},
-        team1P2: {items: [], page: 0, hasMore: false, loading: false},
-        team2P1: {items: [], page: 0, hasMore: false, loading: false},
-        team2P2: {items: [], page: 0, hasMore: false, loading: false},
+        team1P1: { items: [], nextPageToken: null, loading: false },
+        team1P2: { items: [], nextPageToken: null, loading: false },
+        team2P1: { items: [], nextPageToken: null, loading: false },
+        team2P2: { items: [], nextPageToken: null, loading: false },
       };
       this.modal = {
         type: "match",
@@ -1236,10 +1236,10 @@ export default defineComponent({
     openEditMatch(m) {
       // Reset search states
       this.participantSearchState = {
-        team1P1: {items: [], page: 0, hasMore: false, loading: false},
-        team1P2: {items: [], page: 0, hasMore: false, loading: false},
-        team2P1: {items: [], page: 0, hasMore: false, loading: false},
-        team2P2: {items: [], page: 0, hasMore: false, loading: false},
+        team1P1: { items: [], nextPageToken: null, loading: false },
+        team1P2: { items: [], nextPageToken: null, loading: false },
+        team2P1: { items: [], nextPageToken: null, loading: false },
+        team2P2: { items: [], nextPageToken: null, loading: false },
       };
       const games = m.score?.games || [];
       const team1Scores = games.map(g => g.pointsA);
@@ -1280,48 +1280,43 @@ export default defineComponent({
       }
     },
     getParticipantsList(field) {
-      return this.participantSearchState[field] || {items: [], page: 0, hasMore: false, loading: false};
+      return this.participantSearchState[field] || { items: [], nextPageToken: null, loading: false };
     },
-    async loadParticipantsPage(field, page, append = false) {
+    async loadParticipantsPage(field, append = false) {
       if (!this.groupId) return;
       const state = this.participantSearchState[field];
       if (!state) return;
-      
-      // Don't load if already loading or no more pages
-      if (state.loading || (!append && page === 0 && state.items.length > 0)) return;
-      if (append && !state.hasMore) return;
-      
+
+      if (state.loading || (!append && state.items.length > 0)) return;
+      if (append && !state.nextPageToken) return;
+
       state.loading = true;
       const searchField = `search${field.charAt(0).toUpperCase() + field.slice(1)}`;
       const query = this.modal.payload[searchField] || "";
-      
+
       try {
         const result = await badmintonClient.searchParticipants(this.groupId, {
           query: query.trim(),
-          page,
-          pageSize: 10,
+          limit: 10,
+          pageToken: append ? state.nextPageToken : undefined,
         });
-        
-        // Filter out already selected participants
-        const filtered = result.items.filter(p => !this.isParticipantSelected(p.id, field));
-        
+
+        const filtered = (result.items || []).filter(p => !this.isParticipantSelected(p.id, field));
+
         if (append) {
-          // Append new items, avoiding duplicates
           const existingIds = new Set(state.items.map(p => p.id));
           const newItems = filtered.filter(p => !existingIds.has(p.id));
           state.items = [...state.items, ...newItems];
         } else {
-          // Replace items
           state.items = filtered;
         }
-        state.page = page;
-        state.hasMore = result.hasMore;
+        state.nextPageToken = result.pageToken || null;
       } catch (e) {
         console.error("Failed to load participants:", e);
         if (!append) {
           state.items = [];
         }
-        state.hasMore = false;
+        state.nextPageToken = null;
       } finally {
         state.loading = false;
       }
@@ -1333,20 +1328,18 @@ export default defineComponent({
       // Load next page when scrolled near bottom (within 50px)
       if (scrollBottom < 50) {
         const state = this.participantSearchState[field];
-        if (state && state.hasMore && !state.loading) {
-          this.loadParticipantsPage(field, state.page + 1, true);
+        if (state && state.nextPageToken && !state.loading) {
+          this.loadParticipantsPage(field, true);
         }
       }
     },
     async searchParticipantsField(field) {
-      // Reset state and load page 0
       const state = this.participantSearchState[field];
       if (state) {
         state.items = [];
-        state.page = 0;
-        state.hasMore = false;
+        state.nextPageToken = null;
       }
-      await this.loadParticipantsPage(field, 0, false);
+      await this.loadParticipantsPage(field, false);
     },
     isParticipantSelected(participantId, excludeField) {
       const payload = this.modal.payload;
@@ -1362,7 +1355,7 @@ export default defineComponent({
       this.modal.payload[searchField] = "";
       // Reset search state
       if (this.participantSearchState[field]) {
-        this.participantSearchState[field] = {items: [], page: 0, hasMore: false, loading: false};
+        this.participantSearchState[field] = { items: [], nextPageToken: null, loading: false };
       }
     },
     addScore(team) {

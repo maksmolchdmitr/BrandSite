@@ -21,7 +21,6 @@ docs/MatchesApi.md
 docs/Participant.md
 docs/ParticipantCreateRequest.md
 docs/ParticipantPage.md
-docs/ParticipantSearchResult.md
 docs/ParticipantUpdateRequest.md
 docs/ParticipantsApi.md
 docs/RatingRowDoubles.md

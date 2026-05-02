@@ -259,8 +259,8 @@ paths:
       tags: [ Participants ]
       summary: Search participants in group with pagination (member-only)
       description: |
-        Search participants by name with pagination. Results are sorted alphabetically.
-        Response contains the current page of `items` and `hasMore` for infinite scroll / "load more".
+        Search participants by name with cursor pagination. Results are sorted alphabetically.
+        Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
@@ -268,20 +268,20 @@ paths:
           description: Search query (filters by name, case-insensitive)
           schema: { type: string, default: "" }
         - in: query
-          name: page
-          description: Page number (0-based)
-          schema: { type: integer, minimum: 0, default: 0 }
-        - in: query
-          name: pageSize
-          description: Number of items per page
+          name: limit
+          description: Page size
           schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+        - in: query
+          name: pageToken
+          description: Opaque cursor for the next page (omit on first request)
+          schema: { type: string }
       responses:
         "200":
-          description: Paginated participants
+          description: Participants search page
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ParticipantSearchResult"
+                $ref: "#/components/schemas/ParticipantPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -791,20 +791,6 @@ components:
       additionalProperties: false
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
-
-    ParticipantSearchResult:
-      type: object
-      additionalProperties: false
-      description: Paginated search result for participants
-      properties:
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/Participant"
-        hasMore:
-          type: boolean
-          description: Whether there are more pages available
-      required: [ items, hasMore ]
 
     LinkUserRequest:
       type: object

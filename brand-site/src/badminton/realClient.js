@@ -55,8 +55,8 @@ export const realClient = {
     return api.listParticipants(groupId, { limit, pageToken });
   },
 
-  async searchParticipants(groupId, {query = "", page = 0, pageSize = 10} = {}) {
-    return api.searchParticipants(groupId, {query, page, pageSize});
+  async searchParticipants(groupId, { query = "", limit = 10, pageToken } = {}) {
+    return api.searchParticipants(groupId, { query, limit, pageToken });
   },
 
   async createParticipant(groupId, {name}) {
