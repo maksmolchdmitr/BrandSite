@@ -46,19 +46,17 @@ npm run build
    ```
 2. В `.env` выстави:
    - `VITE_BADMINTON_USE_MOCKS=false` — использовать реальный API
-   - `VITE_BADMINTON_API_BASE_URL=http://localhost:8080` (или URL твоего бека)
+   - `VITE_BADMINTON_API_BASE_URL=http://localhost:8080` для локального бека по HTTP, или `https://badminton-service.website` для продакшена
 3. Перезапусти dev-сервер (`npm run dev`).
 
 В консоли браузера в режиме разработки будет лог: `Badminton client: REAL API` и URL базы.
 
-### Деплой на Netlify без HTTPS на бекенде (прокси)
+### Деплой на Netlify (прокси на HTTPS-бекенд)
 
-Если бекенд без валидного сертификата или доступен только по HTTP:
-
-1. В проекте уже настроен прокси в `public/_redirects`: запросы с сайта на `/api/*` проксируются на твой бек.
+1. В проекте настроен прокси в `public/_redirects`: запросы на `/api/*` уходят на `https://badminton-service.website/api/...`.
 2. В **Netlify → Site settings → Environment variables** при деплое задай:
-   - `VITE_BADMINTON_API_BASE_URL` — **оставь пустым** (или не задавай), чтобы фронт ходил на тот же хост (`/api/...`), и Netlify вёл трафик на бек по HTTP.
+   - `VITE_BADMINTON_API_BASE_URL` — **оставь пустым** (или не задавай), чтобы фронт ходил на тот же хост (`/api/...`), а Netlify проксировал на бек по HTTPS.
    - `VITE_BADMINTON_USE_MOCKS=false`.
 3. Пересобери и задеплой.
 
-Тогда браузер обращается только к Netlify по HTTPS, а Netlify уже ходит на `http://badminton-service.website/api/...`. Сертификат на беке не нужен. Бек должен быть доступен с серверов Netlify (проверь DNS: с их сети домен должен резолвиться в нужный IP).
+Браузер общается только с Netlify по HTTPS; Netlify ходит на бек по HTTPS. У бека должен быть валидный сертификат и доступность с серверов Netlify (DNS и файрвол).

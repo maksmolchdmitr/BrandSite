@@ -9,7 +9,7 @@ info:
     - **User**: registers via Telegram, views own stats/ratings, views own groups, creates new groups.
     - **Group admin**: manages participants, links registered users to participants, manages match results.
 servers:
-  - url: https://api.example.com
+  - url: https://badminton-service.website
     description: Production
   - url: http://localhost:8080
     description: Local
