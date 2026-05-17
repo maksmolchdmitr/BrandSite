@@ -149,16 +149,18 @@ export async function getMyGamesStats() {
   return apiRequest("/api/me/games-stats");
 }
 
-export async function getMySinglesMatches({ limit, pageToken } = {}) {
+export async function getMySinglesMatches({ groupId, limit, pageToken } = {}) {
   const params = new URLSearchParams();
+  if (groupId) params.append("groupId", groupId);
   if (limit) params.append("limit", limit);
   if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
   return apiRequest(`/api/me/matches/singles${query ? `?${query}` : ""}`);
 }
 
-export async function getMyDoublesMatches({ limit, pageToken } = {}) {
+export async function getMyDoublesMatches({ groupId, limit, pageToken } = {}) {
   const params = new URLSearchParams();
+  if (groupId) params.append("groupId", groupId);
   if (limit) params.append("limit", limit);
   if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
@@ -221,20 +223,14 @@ export async function linkUserToParticipant(groupId, participantId, {userId}) {
   });
 }
 
-// Match endpoints
-export async function listMatches(groupId, { kind, limit, pageToken } = {}) {
-  const params = new URLSearchParams();
-  if (kind) params.append("kind", kind);
-  if (limit) params.append("limit", limit);
-  if (pageToken) params.append("pageToken", pageToken);
-  const query = params.toString();
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches${query ? `?${query}` : ""}`);
-}
-
+// Match endpoints — список матчей в группе: GET /api/me/matches/singles|doubles?groupId=...
+/** Body may include `kind` for routing; it is not sent (path implies singles vs doubles). */
 export async function createMatch(groupId, match) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches`, {
+  const { kind, ...rest } = match;
+  const segment = kind === "doubles" ? "doubles" : "singles";
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches/${segment}`, {
     method: "POST",
-    body: match,
+    body: rest,
   });
 }
 

@@ -372,45 +372,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/groups/{groupId}/matches:
-    get:
-      tags: [ Matches ]
-      summary: List matches in group (member-only)
-      description: |
-        Returns matches sorted by startedAt descending.
-        Use `kind` to filter by match type (singles or doubles).
-      parameters:
-        - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: kind
-          description: Filter by match type
-          schema:
-            type: string
-            enum: [ singles, doubles ]
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
-      responses:
-        "200":
-          description: Matches page
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MatchPage"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+  /api/groups/{groupId}/matches/singles:
     post:
       tags: [ Matches ]
-      summary: Create match result (admin-only)
-      description: Supports singles and doubles.
+      summary: Create singles match (admin-only)
+      description: Body without `kind` (path selects singles).
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -418,7 +384,36 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MatchCreateRequest"
+              $ref: "#/components/schemas/MatchSinglesCreateRequest"
+      responses:
+        "201":
+          description: Match created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/groups/{groupId}/matches/doubles:
+    post:
+      tags: [ Matches ]
+      summary: Create doubles match (admin-only)
+      description: Body without `kind` (path selects doubles).
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchDoublesCreateRequest"
       responses:
         "201":
           description: Match created
@@ -501,8 +496,19 @@ paths:
       summary: List current user's singles matches (paginated)
       description: |
         Returns singles matches where the current user participated (via linked participant),
-        sorted by startedAt descending. Use for "My games – Singles" page.
+        sorted by startedAt descending.
+
+        Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
+
+        Group match history in the UI should use this endpoint with **`groupId`** instead of `GET /api/groups/{groupId}/matches`.
       parameters:
+        - in: query
+          name: groupId
+          required: false
+          description: Filter to this group UUID (membership required)
+          schema:
+            type: string
+            format: uuid
         - in: query
           name: limit
           schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
@@ -518,6 +524,10 @@ paths:
                 $ref: "#/components/schemas/MatchPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/me/matches/doubles:
     get:
@@ -525,8 +535,19 @@ paths:
       summary: List current user's doubles matches (paginated)
       description: |
         Returns doubles matches where the current user participated (via linked participant),
-        sorted by startedAt descending. Use for "My games – Doubles" page.
+        sorted by startedAt descending.
+
+        Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
+
+        Group match history in the UI should use this endpoint with **`groupId`** instead of `GET /api/groups/{groupId}/matches`.
       parameters:
+        - in: query
+          name: groupId
+          required: false
+          description: Filter to this group UUID (membership required)
+          schema:
+            type: string
+            format: uuid
         - in: query
           name: limit
           schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
@@ -542,6 +563,10 @@ paths:
                 $ref: "#/components/schemas/MatchPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/me/ratings:
     get:
@@ -851,6 +876,7 @@ components:
     MatchCreateRequest:
       type: object
       additionalProperties: false
+      description: Legacy combined shape; use MatchSinglesCreateRequest / MatchDoublesCreateRequest on API.
       properties:
         kind: { $ref: "#/components/schemas/MatchKind" }
         teamA:
@@ -866,6 +892,42 @@ components:
         score:
           $ref: "#/components/schemas/MatchScore"
       required: [ kind, teamA, teamB, score ]
+
+    MatchSinglesCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        teamA:
+          type: array
+          items: { type: string }
+          minItems: 1
+          maxItems: 1
+        teamB:
+          type: array
+          items: { type: string }
+          minItems: 1
+          maxItems: 1
+        score:
+          $ref: "#/components/schemas/MatchScore"
+      required: [ teamA, teamB, score ]
+
+    MatchDoublesCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        teamA:
+          type: array
+          items: { type: string }
+          minItems: 2
+          maxItems: 2
+        teamB:
+          type: array
+          items: { type: string }
+          minItems: 2
+          maxItems: 2
+        score:
+          $ref: "#/components/schemas/MatchScore"
+      required: [ teamA, teamB, score ]
 
     MatchUpdateRequest:
       type: object

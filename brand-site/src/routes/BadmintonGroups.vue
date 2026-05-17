@@ -11,8 +11,8 @@
         <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
           <span class="ctaText">{{ $t('badminton.groups.myRatings') }}</span>
         </RouterLink>
-        <RouterLink class="cta secondary cta-games" to="/?page=badminton&section=games">
-          <span class="ctaText">{{ $t('badminton.groups.myGames') }}</span>
+        <RouterLink class="cta secondary cta-games-hub" to="/?page=badminton&section=games&tab=singles">
+          <span class="ctaText">{{ $t('badminton.groups.myMatches') }}</span>
         </RouterLink>
         <button class="cta secondary cta-logout" :disabled="loading" @click="logout">
           <span class="ctaText">{{ $t('common.actions.logout') }}</span>
@@ -60,6 +60,7 @@
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import {badmintonClient} from "@/badminton/client.js";
+import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
 export default defineComponent({
   components: {HeadBar},
@@ -77,11 +78,7 @@ export default defineComponent({
   },
   computed: {
     localizedHeadItems() {
-      return [
-        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
-        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
-        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
-      ];
+      return getDefaultBadmintonHeadItems(this.$t);
     },
   },
   methods: {
@@ -184,13 +181,12 @@ export default defineComponent({
   color: #9C27B0;
 }
 
-/* My games - яркий синий */
-.cta-games.secondary {
-  background-color: #E3F2FD;
-  border-color: #2196F3;
+.cta-games-hub.secondary {
+  background-color: #EDE7F6;
+  border-color: #673AB7;
 }
-.cta-games.secondary .ctaText {
-  color: #2196F3;
+.cta-games-hub.secondary .ctaText {
+  color: #5E35B1;
 }
 
 /* Logout - красноватый */

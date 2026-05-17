@@ -2,7 +2,7 @@ import { badmintonClient } from "@/badminton/client.js";
 
 /**
  * Shared logic for formatting match data and loading participant names.
- * Used by BadmintonGamesSingles, BadmintonGamesDoubles, and group match views.
+ * Used by BadmintonGames and group match views.
  */
 export const matchFormatMixin = {
   data() {

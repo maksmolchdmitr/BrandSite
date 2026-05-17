@@ -28,6 +28,7 @@ const messages = {
         delete: "Delete",
         logout: "Logout",
         link: "Link",
+        back: "← Back",
         backToProducts: "← Back to products",
       },
       placeholders: {
@@ -80,6 +81,10 @@ const messages = {
       alt: "Go to another date entry",
     },
     badminton: {
+      gamesHub: {
+        title: "My matches",
+        chooseHint: "Choose singles or doubles to open the list.",
+      },
       login: {
         telegramTitle: "Login via Telegram",
         telegramButton: "Login via Telegram",
@@ -100,7 +105,9 @@ const messages = {
       groups: {
         title: "My groups",
         myRatings: "My ratings",
-        myGames: "My games",
+        myMatches: "My matches",
+        mySinglesMatches: "Singles matches",
+        myDoublesMatches: "Doubles matches",
         createGroup: "Create group",
         groupName: "Group name",
         creating: "Creating...",
@@ -111,7 +118,9 @@ const messages = {
       },
       ratings: {
         title: "My ratings",
-        myGames: "My games",
+        myMatches: "My matches",
+        mySinglesMatches: "Singles matches",
+        myDoublesMatches: "Doubles matches",
         myGroups: "My groups",
         individual: "Individual Elo Rating",
         doublesByPartner: "Doubles Elo by Partner",
@@ -126,18 +135,9 @@ const messages = {
         errLoad: "Failed to load ratings",
         errNext: "Failed to load next page",
       },
-      gamesHub: {
-        title: "My games",
-        myRatings: "My ratings",
-        myGroups: "My groups",
-        singlesTitle: "Singles Games",
-        singlesDesc: "View and browse your singles matches",
-        doublesTitle: "Doubles Games",
-        doublesDesc: "View and browse your doubles matches",
-      },
       singles: {
         title: "Singles Games",
-        backToGames: "← My games",
+        linkDoubles: "Doubles matches",
         myRatings: "My ratings",
         myGroups: "My groups",
         cardTitle: "Singles Games",
@@ -155,7 +155,7 @@ const messages = {
       },
       doubles: {
         title: "Doubles Games",
-        backToGames: "← My games",
+        linkSingles: "Singles matches",
         myRatings: "My ratings",
         myGroups: "My groups",
         cardTitle: "Doubles Games",
@@ -243,6 +243,7 @@ const messages = {
         delete: "Удалить",
         logout: "Выйти",
         link: "Связать",
+        back: "← Назад",
         backToProducts: "← Назад к продуктам",
       },
       placeholders: {
@@ -295,6 +296,10 @@ const messages = {
       alt: "Перейти к другой дате",
     },
     badminton: {
+      gamesHub: {
+        title: "Мои матчи",
+        chooseHint: "Выберите одиночные или парные — откроется список матчей.",
+      },
       login: {
         telegramTitle: "Вход через Telegram",
         telegramButton: "Войти через Telegram",
@@ -315,7 +320,9 @@ const messages = {
       groups: {
         title: "Мои группы",
         myRatings: "Мои рейтинги",
-        myGames: "Мои игры",
+        myMatches: "Мои матчи",
+        mySinglesMatches: "Одиночные матчи",
+        myDoublesMatches: "Парные матчи",
         createGroup: "Создать группу",
         groupName: "Название группы",
         creating: "Создание...",
@@ -326,7 +333,9 @@ const messages = {
       },
       ratings: {
         title: "Мои рейтинги",
-        myGames: "Мои игры",
+        myMatches: "Мои матчи",
+        mySinglesMatches: "Одиночные матчи",
+        myDoublesMatches: "Парные матчи",
         myGroups: "Мои группы",
         individual: "Индивидуальный рейтинг Elo",
         doublesByPartner: "Парный Elo по партнёрам",
@@ -341,18 +350,9 @@ const messages = {
         errLoad: "Не удалось загрузить рейтинги",
         errNext: "Не удалось загрузить следующую страницу",
       },
-      gamesHub: {
-        title: "Мои игры",
-        myRatings: "Мои рейтинги",
-        myGroups: "Мои группы",
-        singlesTitle: "Одиночные игры",
-        singlesDesc: "Просмотр и история ваших одиночных матчей",
-        doublesTitle: "Парные игры",
-        doublesDesc: "Просмотр и история ваших парных матчей",
-      },
       singles: {
         title: "Одиночные игры",
-        backToGames: "← Мои игры",
+        linkDoubles: "Парные матчи",
         myRatings: "Мои рейтинги",
         myGroups: "Мои группы",
         cardTitle: "Одиночные игры",
@@ -370,7 +370,7 @@ const messages = {
       },
       doubles: {
         title: "Парные игры",
-        backToGames: "← Мои игры",
+        linkSingles: "Одиночные матчи",
         myRatings: "Мои рейтинги",
         myGroups: "Мои группы",
         cardTitle: "Парные игры",

@@ -12,9 +12,7 @@ import BadmintonLogin from "@/routes/BadmintonLogin.vue";
 import BadmintonGroups from "@/routes/BadmintonGroups.vue";
 import BadmintonGroup from "@/routes/BadmintonGroup.vue";
 import BadmintonRatings from "@/routes/BadmintonRatings.vue";
-import BadmintonGamesHub from "@/routes/badminton/BadmintonGamesHub.vue";
-import BadmintonGamesSingles from "@/routes/badminton/BadmintonGamesSingles.vue";
-import BadmintonGamesDoubles from "@/routes/badminton/BadmintonGamesDoubles.vue";
+import BadmintonGames from "@/routes/BadmintonGames.vue";
 
 export default defineComponent({
   setup() {
@@ -23,22 +21,45 @@ export default defineComponent({
     return { route, router };
   },
   async mounted() {
-    // Когда пользователь возвращается с oauth.telegram.org, Telegram редиректит на origin (корень сайта).
-    // Параметры приходят в hash или query — перенаправляем на страницу логина, чтобы их обработать.
     this.redirectToLoginIfTelegramCallback();
 
     await this.maybeRedirectBadmintonToSection();
+    this.redirectLegacyBadmintonGamesSection();
+    this.normalizeBadmintonGamesSection();
   },
   watch: {
-    // При клике по ссылке (например с Products) mounted не вызывается — редирект по смене роута
     "$route": {
       handler() {
         this.redirectToLoginIfTelegramCallback();
         this.maybeRedirectBadmintonToSection();
+        this.redirectLegacyBadmintonGamesSection();
+        this.normalizeBadmintonGamesSection();
       },
     },
   },
   methods: {
+    /** games-singles / games-doubles → section=games&tab=… */
+    redirectLegacyBadmintonGamesSection() {
+      if (this.page !== "badminton") return;
+      if (this.section === "games-singles") {
+        this.router.replace({
+          query: { ...this.route.query, page: "badminton", section: "games", tab: "singles" },
+        });
+      } else if (this.section === "games-doubles") {
+        this.router.replace({
+          query: { ...this.route.query, page: "badminton", section: "games", tab: "doubles" },
+        });
+      }
+    },
+    /** section=games без tab → tab=singles */
+    normalizeBadmintonGamesSection() {
+      if (this.page !== "badminton" || this.section !== "games") return;
+      const tab = this.route.query.tab;
+      if (tab === "singles" || tab === "doubles") return;
+      this.router.replace({
+        query: { ...this.route.query, page: "badminton", section: "games", tab: "singles" },
+      });
+    },
     async maybeRedirectBadmintonToSection() {
       if (this.page !== "badminton" || this.section) return;
       const { getLoggedInUserId } = await import("@/badminton/cookies.js");
@@ -88,7 +109,6 @@ export default defineComponent({
       return this.route.query.userId || null;
     },
     currentComponent() {
-      // Badminton service routing
       if (this.page === 'badminton') {
         if (this.section === 'login') {
           return markRaw(BadmintonLogin);
@@ -99,24 +119,18 @@ export default defineComponent({
           return markRaw(BadmintonGroups);
         } else if (this.section === 'ratings') {
           return markRaw(BadmintonRatings);
-        } else if (this.section === 'games') {
-          const tab = this.route?.query?.tab;
-          if (tab === 'singles') return markRaw(BadmintonGamesSingles);
-          if (tab === 'doubles') return markRaw(BadmintonGamesDoubles);
-          return markRaw(BadmintonGamesHub);
+        } else if (this.section === "games") {
+          return markRaw(BadmintonGames);
         }
-        // If no section and not redirected, show login (shouldn't happen due to mounted redirect)
         return markRaw(BadmintonLogin);
       }
-      
-      // Main pages routing
+
       if (this.page === 'contact') {
         return markRaw(TouchMe);
       } else if (this.page === 'products') {
         return markRaw(Products);
       }
-      
-      // Default to Main
+
       return markRaw(Main);
     },
     componentProps() {
@@ -124,6 +138,12 @@ export default defineComponent({
       if (this.page === 'badminton' && this.section === 'groups' && this.groupId) {
         props.groupId = this.groupId;
         props.groupSection = this.route?.query?.groupSection || 'participants';
+        const mt = this.route?.query?.matchTab;
+        props.matchTab = mt === "doubles" || mt === "singles" ? mt : "singles";
+      }
+      if (this.page === 'badminton' && this.section === 'games') {
+        const tab = this.route?.query?.tab;
+        props.gamesTab = tab === "doubles" ? "doubles" : "singles";
       }
       if (this.page === 'badminton' && this.userId) {
         props.userId = this.userId;
@@ -133,4 +153,3 @@ export default defineComponent({
   }
 });
 </script>
-

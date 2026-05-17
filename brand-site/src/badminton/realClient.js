@@ -33,12 +33,12 @@ export const realClient = {
     return api.getMyGamesStats();
   },
 
-  async getMySinglesMatches({ limit, pageToken } = {}) {
-    return api.getMySinglesMatches({ limit, pageToken });
+  async getMySinglesMatches({ groupId, limit, pageToken } = {}) {
+    return api.getMySinglesMatches({ groupId, limit, pageToken });
   },
 
-  async getMyDoublesMatches({ limit, pageToken } = {}) {
-    return api.getMyDoublesMatches({ limit, pageToken });
+  async getMyDoublesMatches({ groupId, limit, pageToken } = {}) {
+    return api.getMyDoublesMatches({ groupId, limit, pageToken });
   },
 
   // Group endpoints
@@ -76,10 +76,6 @@ export const realClient = {
   },
 
   // Match endpoints
-  async listMatches(groupId, { kind, limit, pageToken } = {}) {
-    return api.listMatches(groupId, { kind, limit, pageToken });
-  },
-
   async createMatch(groupId, match) {
     return api.createMatch(groupId, match);
   },

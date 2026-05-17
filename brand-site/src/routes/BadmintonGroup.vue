@@ -32,7 +32,7 @@
         <RouterLink
           class="groupNavLink"
           :class="{ active: groupSection === 'matches' }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches`"
+          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=singles`"
         >
           {{ $t('badminton.group.matches') }}
         </RouterLink>
@@ -44,6 +44,12 @@
           {{ $t('badminton.group.leaderboards') }}
         </RouterLink>
       </nav>
+
+      <BadmintonPillNav
+        v-if="groupSection === 'matches'"
+        :items="groupMatchesNavItems"
+        aria-label="group matches kind"
+      />
 
       <div v-if="groupSection === 'participants'" class="grid">
         <div class="card">
@@ -111,8 +117,8 @@
           <button class="btn" @click="openCreateMatch('singles')">+ {{ $t('badminton.group.singlesMatch') }}</button>
           <button class="btn" @click="openCreateMatch('doubles')">+ {{ $t('badminton.group.doublesMatch') }}</button>
         </div>
-        <div v-if="singlesMatches.length === 0 && doublesMatches.length === 0" class="empty">{{ $t('badminton.group.noMatches') }}</div>
-        <div v-if="singlesMatches.length > 0" class="matchSection">
+        <div v-if="noMatchesForCurrentTab" class="empty">{{ $t('badminton.group.noMatches') }}</div>
+        <div v-if="singlesMatches.length > 0 && effectiveMatchTab === 'singles'" class="matchSection">
           <div class="matchSectionTitle">{{ $t('badminton.group.singles') }}</div>
           <div class="tableWrapper">
             <table class="table">
@@ -154,7 +160,7 @@
             @change-limit="changeSinglesLimit"
           />
         </div>
-        <div v-if="doublesMatches.length > 0" class="matchSection">
+        <div v-if="doublesMatches.length > 0 && effectiveMatchTab === 'doubles'" class="matchSection">
           <div class="matchSectionTitle">{{ $t('badminton.group.doubles') }}</div>
           <div class="tableWrapper">
             <table class="table">
@@ -632,14 +638,18 @@
 import { defineComponent } from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
+import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import { badmintonClient } from "@/badminton/client.js";
+import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar },
+  components: { HeadBar, PagerBar, BadmintonPillNav },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "participants" },
+    /** 'singles' | 'doubles' — внутри «Матчи» всегда один из двух */
+    matchTab: { type: String, default: "singles" },
   },
   data() {
     return {
@@ -690,11 +700,7 @@ export default defineComponent({
   },
   computed: {
     localizedHeadItems() {
-      return [
-        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
-        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
-        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
-      ];
+      return getDefaultBadmintonHeadItems(this.$t);
     },
     isAdmin() {
       return this.group?.myRole === "admin";
@@ -799,18 +805,45 @@ export default defineComponent({
       if (n < this.lbLimit && this.doublesLbPageIndex > 0) return false;
       return !!page.pageToken;
     },
+    effectiveMatchTab() {
+      const t = String(this.matchTab || "singles").toLowerCase();
+      return t === "doubles" ? "doubles" : "singles";
+    },
+    noMatchesForCurrentTab() {
+      return this.effectiveMatchTab === "singles"
+        ? this.singlesMatches.length === 0
+        : this.doublesMatches.length === 0;
+    },
+    groupMatchesNavItems() {
+      const tab = this.effectiveMatchTab;
+      return [
+        {
+          to: this.matchesSubNavTo("singles"),
+          label: this.$t("badminton.groups.mySinglesMatches"),
+          active: tab === "singles",
+        },
+        {
+          to: this.matchesSubNavTo("doubles"),
+          label: this.$t("badminton.groups.myDoublesMatches"),
+          active: tab === "doubles",
+        },
+      ];
+    },
   },
   watch: {
     groupSection() {
-      this.loadSection();
+      this.normalizeMatchesQueryThenLoad();
+    },
+    matchTab() {
+      if (this.groupSection === "matches") this.loadSection();
     },
     groupId() {
       this.loadGroup();
-      this.loadSection();
+      this.normalizeMatchesQueryThenLoad();
     },
   },
   mounted() {
-    this.loadGroup().then(() => this.loadSection());
+    this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
   },
   methods: {
     mergeParticipantNames(items) {
@@ -822,6 +855,20 @@ export default defineComponent({
       if (role === "admin") return this.$t("badminton.roles.admin");
       if (role === "member") return this.$t("badminton.roles.member");
       return role;
+    },
+    matchesSubNavTo(tab) {
+      const gid = encodeURIComponent(this.groupId);
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${tab}`;
+    },
+    async normalizeMatchesQueryThenLoad() {
+      if (this.groupSection === "matches") {
+        const q = this.$route.query;
+        const mt = String(q.matchTab || "").toLowerCase();
+        if (mt !== "singles" && mt !== "doubles") {
+          await this.$router.replace({ query: { ...q, matchTab: "singles" } });
+        }
+      }
+      this.loadSection();
     },
     async loadGroup() {
       this.loading = true;
@@ -846,16 +893,33 @@ export default defineComponent({
           this.participantsPageIndex = 0;
           this.mergeParticipantNames(pItems);
         } else if (this.groupSection === "matches") {
+          const tab = this.effectiveMatchTab;
+          const needSingles = tab === "singles";
+          const needDoubles = tab === "doubles";
           const [participantsRes, singlesRes, doublesRes] = await Promise.all([
             badmintonClient.listParticipants(this.groupId, { limit: 500 }),
-            badmintonClient.listMatches(this.groupId, { kind: "singles", limit: this.singlesLimit }),
-            badmintonClient.listMatches(this.groupId, { kind: "doubles", limit: this.doublesLimit }),
+            needSingles
+              ? badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit: this.singlesLimit })
+              : Promise.resolve({ items: [], pageToken: null }),
+            needDoubles
+              ? badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit: this.doublesLimit })
+              : Promise.resolve({ items: [], pageToken: null }),
           ]);
           this.mergeParticipantNames(participantsRes?.items || []);
-          this.singlesPages = [{ items: singlesRes?.items || [], pageToken: singlesRes?.pageToken || null }];
-          this.singlesPageIndex = 0;
-          this.doublesPages = [{ items: doublesRes?.items || [], pageToken: doublesRes?.pageToken || null }];
-          this.doublesPageIndex = 0;
+          if (needSingles) {
+            this.singlesPages = [{ items: singlesRes?.items || [], pageToken: singlesRes?.pageToken || null }];
+            this.singlesPageIndex = 0;
+          } else {
+            this.singlesPages = [];
+            this.singlesPageIndex = 0;
+          }
+          if (needDoubles) {
+            this.doublesPages = [{ items: doublesRes?.items || [], pageToken: doublesRes?.pageToken || null }];
+            this.doublesPageIndex = 0;
+          } else {
+            this.doublesPages = [];
+            this.doublesPageIndex = 0;
+          }
         } else if (this.groupSection === "leaderboards") {
           await this.loadLeaderboards();
         }
@@ -918,8 +982,7 @@ export default defineComponent({
       }
     },
     refresh() {
-      this.loadGroup();
-      this.loadSection();
+      this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
     },
     async goPrevSingles() {
       if (this.singlesPageIndex > 0) this.singlesPageIndex--;
@@ -935,7 +998,7 @@ export default defineComponent({
       }
       this.loading = true;
       try {
-        const res = await badmintonClient.listMatches(this.groupId, { kind: "singles", limit: this.singlesLimit, pageToken: nextToken });
+        const res = await badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit: this.singlesLimit, pageToken: nextToken });
         this.singlesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.singlesPageIndex = this.singlesPages.length - 1;
       } catch (e) {
@@ -953,7 +1016,7 @@ export default defineComponent({
       this.showSinglesLimitDropdown = false;
       this.loading = true;
       try {
-        const res = await badmintonClient.listMatches(this.groupId, { kind: "singles", limit });
+        const res = await badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit });
         this.singlesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.singlesPageIndex = 0;
       } catch (e) {
@@ -976,7 +1039,7 @@ export default defineComponent({
       }
       this.loading = true;
       try {
-        const res = await badmintonClient.listMatches(this.groupId, { kind: "doubles", limit: this.doublesLimit, pageToken: nextToken });
+        const res = await badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit: this.doublesLimit, pageToken: nextToken });
         this.doublesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.doublesPageIndex = this.doublesPages.length - 1;
       } catch (e) {
@@ -994,7 +1057,7 @@ export default defineComponent({
       this.showDoublesLimitDropdown = false;
       this.loading = true;
       try {
-        const res = await badmintonClient.listMatches(this.groupId, { kind: "doubles", limit });
+        const res = await badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit });
         this.doublesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.doublesPageIndex = 0;
       } catch (e) {

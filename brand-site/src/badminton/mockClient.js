@@ -444,35 +444,10 @@ export const mockClient = {
     return dto;
   },
 
-  async listMatches(groupId, { kind, limit = 50, pageToken = null } = {}) {
-    logRequest("GET", `/api/groups/${groupId}/matches`, { kind, limit, pageToken });
-    await delay();
-    const db = loadDb();
-    const userId = getLoggedInUserId() || "u_alex";
-    const u = db.users.find(x => x.id === userId) || db.users[0];
-    if (u) {
-      const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
-      if (!exists) {
-        db.memberships.push({groupId, userId: u.id, role: "member"});
-        saveDb(db);
-      }
-    }
-    let all = db.matches.filter(m => m.groupId === groupId).sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
-    if (kind === "singles" || kind === "doubles") {
-      all = all.filter(m => m.kind === kind);
-    }
-    const start = pageToken && pageToken.startsWith("offset_")
-      ? parseInt(pageToken.slice("offset_".length), 10) || 0
-      : 0;
-    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
-    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
-    const result = { items: pageItems, pageToken: nextToken };
-    logResponse("GET", `/api/groups/${groupId}/matches`, result);
-    return result;
-  },
-
   async createMatch(groupId, match) {
-    logRequest("POST", `/api/groups/${groupId}/matches`, match);
+    const { kind, ...rest } = match;
+    const segment = kind === "doubles" ? "doubles" : "singles";
+    logRequest("POST", `/api/groups/${groupId}/matches/${segment}`, rest);
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
@@ -481,19 +456,19 @@ export const mockClient = {
     const m = {
       id: uuid("m"),
       groupId,
-      kind: match.kind,
+      kind: kind || (segment === "doubles" ? "doubles" : "singles"),
       startedAt: nowIso(), // Backend sets this automatically
-      teamA: match.teamA || [],
-      teamB: match.teamB || [],
-      score: match.score,
-      notes: match.notes || "",
+      teamA: rest.teamA || match.teamA || [],
+      teamB: rest.teamB || match.teamB || [],
+      score: rest.score || match.score,
+      notes: rest.notes || match.notes || "",
       createdAt: nowIso(),
       createdByUserId: u.id,
     };
     db.matches.unshift(m);
     saveDb(db);
     const dto = matchToClientDto(m);
-    logResponse("POST", `/api/groups/${groupId}/matches`, dto, 201);
+    logResponse("POST", `/api/groups/${groupId}/matches/${segment}`, dto, 201);
     return dto;
   },
 
@@ -576,15 +551,19 @@ export const mockClient = {
     return result;
   },
 
-  async getMySinglesMatches({ limit = 20, pageToken = null } = {}) {
-    logRequest("GET", "/api/me/matches/singles", { limit, pageToken });
+  async getMySinglesMatches({ groupId = null, limit = 20, pageToken = null } = {}) {
+    logRequest("GET", "/api/me/matches/singles", { groupId, limit, pageToken });
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     const myPIds = new Set((db.participants || []).filter(p => p.userId === u?.id).map(p => p.id));
     const all = (db.matches || [])
-      .filter(m => m.kind === "singles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
+      .filter(m => {
+        if (m.kind !== "singles") return false;
+        if (groupId != null && m.groupId !== groupId) return false;
+        return (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id));
+      })
       .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
     const pageItems = all.slice(start, start + limit).map(matchToClientDto);
@@ -594,15 +573,19 @@ export const mockClient = {
     return result;
   },
 
-  async getMyDoublesMatches({ limit = 20, pageToken = null } = {}) {
-    logRequest("GET", "/api/me/matches/doubles", { limit, pageToken });
+  async getMyDoublesMatches({ groupId = null, limit = 20, pageToken = null } = {}) {
+    logRequest("GET", "/api/me/matches/doubles", { groupId, limit, pageToken });
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     const myPIds = new Set((db.participants || []).filter(p => p.userId === u?.id).map(p => p.id));
     const all = (db.matches || [])
-      .filter(m => m.kind === "doubles" && ((m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id))))
+      .filter(m => {
+        if (m.kind !== "doubles") return false;
+        if (groupId != null && m.groupId !== groupId) return false;
+        return (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id));
+      })
       .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
     const pageItems = all.slice(start, start + limit).map(matchToClientDto);
