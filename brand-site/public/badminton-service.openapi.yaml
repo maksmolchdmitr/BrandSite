@@ -376,7 +376,10 @@ paths:
     post:
       tags: [ Matches ]
       summary: Create singles match (admin-only)
-      description: Body without `kind` (path selects singles).
+      description: |
+        Create a singles match. Body is the same as before without `kind` (singles is implied by the path).
+
+        Replaces the old `POST /api/groups/{groupId}/matches` with `kind: singles`.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -405,7 +408,10 @@ paths:
     post:
       tags: [ Matches ]
       summary: Create doubles match (admin-only)
-      description: Body without `kind` (path selects doubles).
+      description: |
+        Create a doubles match. Body is the same as before without `kind`.
+
+        Replaces the old `POST /api/groups/{groupId}/matches` with `kind: doubles`.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -500,7 +506,7 @@ paths:
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
-        Group match history in the UI should use this endpoint with **`groupId`** instead of `GET /api/groups/{groupId}/matches`.
+        Group match history in the UI should use this endpoint with **`groupId`** instead of a separate group matches list API.
       parameters:
         - in: query
           name: groupId
@@ -539,7 +545,7 @@ paths:
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
-        Group match history in the UI should use this endpoint with **`groupId`** instead of `GET /api/groups/{groupId}/matches`.
+        Group match history in the UI should use this endpoint with **`groupId`** instead of a separate group matches list API.
       parameters:
         - in: query
           name: groupId
