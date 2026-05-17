@@ -346,6 +346,17 @@ export const mockClient = {
     return result;
   },
 
+  async listAllParticipants(groupId) {
+    const items = [];
+    let pageToken;
+    do {
+      const page = await this.listParticipants(groupId, { limit: 200, pageToken });
+      items.push(...(page?.items || []));
+      pageToken = page?.pageToken || null;
+    } while (pageToken);
+    return { items };
+  },
+
   async searchParticipants(groupId, { query = "", limit = 10, pageToken = null } = {}) {
     logRequest("GET", `/api/groups/${groupId}/participants/search`, { query, limit, pageToken });
     await delay();

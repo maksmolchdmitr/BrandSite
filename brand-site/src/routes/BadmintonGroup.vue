@@ -897,7 +897,7 @@ export default defineComponent({
           const needSingles = tab === "singles";
           const needDoubles = tab === "doubles";
           const [participantsRes, singlesRes, doublesRes] = await Promise.all([
-            badmintonClient.listParticipants(this.groupId, { limit: 500 }),
+            badmintonClient.listAllParticipants(this.groupId),
             needSingles
               ? badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit: this.singlesLimit })
               : Promise.resolve({ items: [], pageToken: null }),

@@ -55,6 +55,10 @@ export const realClient = {
     return api.listParticipants(groupId, { limit, pageToken });
   },
 
+  async listAllParticipants(groupId) {
+    return api.listAllParticipants(groupId);
+  },
+
   async searchParticipants(groupId, { query = "", limit = 10, pageToken } = {}) {
     return api.searchParticipants(groupId, { query, limit, pageToken });
   },

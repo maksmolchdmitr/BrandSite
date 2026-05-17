@@ -180,12 +180,30 @@ export async function getGroup(groupId) {
 }
 
 // Participant endpoints
+/** Max page size per OpenAPI spec for GET /api/groups/{groupId}/participants */
+export const PARTICIPANTS_LIST_MAX_LIMIT = 200;
+
 export async function listParticipants(groupId, { limit, pageToken } = {}) {
   const params = new URLSearchParams();
   if (limit) params.append("limit", limit);
   if (pageToken) params.append("pageToken", pageToken);
   const query = params.toString();
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants${query ? `?${query}` : ""}`);
+}
+
+/** Fetches all participants, paginating with the API max page size. */
+export async function listAllParticipants(groupId) {
+  const items = [];
+  let pageToken;
+  do {
+    const page = await listParticipants(groupId, {
+      limit: PARTICIPANTS_LIST_MAX_LIMIT,
+      pageToken,
+    });
+    items.push(...(page?.items || []));
+    pageToken = page?.pageToken || null;
+  } while (pageToken);
+  return { items };
 }
 
 export async function searchParticipants(groupId, { query = "", limit = 10, pageToken } = {}) {

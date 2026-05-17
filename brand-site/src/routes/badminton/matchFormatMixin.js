@@ -36,7 +36,7 @@ export const matchFormatMixin = {
         const items = groupsRes?.items || [];
         const allParticipants = [];
         for (const g of items) {
-          const res = await badmintonClient.listParticipants(g.id, { limit: 500 });
+          const res = await badmintonClient.listAllParticipants(g.id);
           allParticipants.push(...(res?.items || []));
         }
         this.participantNames = new Map(allParticipants.map((p) => [p.id, p.name]));
