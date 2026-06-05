@@ -1,5 +1,5 @@
 <template>
-  <div className="contentDiv">
+  <div class="contentDiv">
     <HeadBar :headItems="localizedHeadItems"></HeadBar>
     <Description></Description>
     <ExperienceBar :items="formattedExperienceItems"></ExperienceBar>

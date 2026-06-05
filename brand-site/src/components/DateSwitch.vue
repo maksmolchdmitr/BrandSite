@@ -61,10 +61,12 @@ export default {
 .dateSwitcher {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 16px;
   max-width: 100%;
   min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .dateText {
@@ -97,8 +99,6 @@ export default {
 @media (max-width: 768px) {
   .dateSwitcher {
     gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
   }
 
   .dateText {

@@ -1,6 +1,6 @@
 <template>
-  <div className="bar">
-    <div v-for="(el, i) in items" :key="i">
+  <div class="bar">
+    <div class="barItem" v-for="(el, i) in items" :key="i">
       <ExperienceItem :data="{dateText: el.date, dateNumber: items.length - i - 1, dateCount: items.length, experienceText: el.text}"></ExperienceItem>
     </div>
   </div>
@@ -31,19 +31,25 @@ export default {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  justify-content: center;
   align-items: center;
-  padding: 36px;
+  padding: 36px 50px;
+}
+
+.barItem {
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
   .bar {
     gap: 12px;
-    width: 100%;
+    align-items: stretch;
+    padding: 12px 16px;
+  }
+
+  .barItem {
     max-width: 100%;
-    justify-content: center;
-    align-items: center;
-    padding: 12px;
   }
 }
 </style>

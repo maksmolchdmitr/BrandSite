@@ -1,7 +1,7 @@
 <template>
-  <div :id="'date_' + this.data.dateNumber" className="experienceItem">
+  <div :id="'date_' + this.data.dateNumber" class="experienceItem">
     <DateSwitch :dateData="getDateData()"></DateSwitch>
-    <div className="experienceText" v-html="data.experienceText"></div>
+    <div class="experienceText" v-html="data.experienceText"></div>
   </div>
 </template>
 
@@ -35,12 +35,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
+  padding: 24px;
   background-color: white;
   border-radius: 32px;
   width: 100%;
-  max-width: min(600px, 100%);
+  max-width: 100%;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .experienceText {
@@ -58,7 +59,9 @@ export default {
   }
 
   .experienceItem {
-    max-width: 100%;
+    padding: 16px;
+    border-radius: 20px;
+    gap: 12px;
   }
 }
 
