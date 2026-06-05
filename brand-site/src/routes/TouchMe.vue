@@ -12,12 +12,14 @@
           :is-compact="true"
         ></Link>
       </div>
-      <Link
-        v-else-if="currentLink"
-        :logoImg="currentLink.img"
-        :logoRef="currentLink.ref"
-        :logo-text="currentLink.text"
-      ></Link>
+      <div v-else-if="currentLink" class="linksGrid linksGridSingle">
+        <Link
+          :logoImg="currentLink.img"
+          :logoRef="currentLink.ref"
+          :logo-text="currentLink.text"
+          :is-compact="true"
+        ></Link>
+      </div>
     </div>
     <div
       class="startRouletteContainer"
@@ -195,6 +197,11 @@ html {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
+}
+
+.linksGridSingle {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 152px;
 }
 
 .mainContainer {
