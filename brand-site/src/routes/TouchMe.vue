@@ -1,7 +1,7 @@
 <template>
-  <div className="mainContainer">
+  <div class="mainContainer">
     <HeadBar :headItems="localizedHeadItems"></HeadBar>
-    <div className="container" ref="linksContainer">
+    <div class="container" ref="linksContainer">
       <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref"
             :logo-text="currentLink.text"></Link>
     </div>
@@ -121,13 +121,7 @@ html {
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
-}
-
-.circle {
-  width: 100px;
-  height: 100px;
-  cursor: pointer;
-  transition: filter 0.3s;
+  padding-bottom: 24px;
 }
 
 .startRouletteContainer {
@@ -135,10 +129,19 @@ html {
   justify-content: center;
   align-items: center;
   position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
 .circle {
+  width: 100px;
+  height: 100px;
   display: block;
+  transition: filter 0.3s ease;
 }
 
 .spin-text {
@@ -146,19 +149,26 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-weight: bold; /* Жирность текста */
-  pointer-events: none; /* Чтобы текст не мешал кликать по изображению */
+  font-weight: bold;
+  pointer-events: none;
   font-size: 24px;
   color: black;
   font-family: var(--font-display);
 }
 
-.circle:hover {
+.startRouletteContainer:hover {
   transform: scale(1.1);
+}
+
+.startRouletteContainer:hover .circle {
   filter: brightness(90%);
 }
 
-.circle:active {
+.startRouletteContainer:active {
+  transform: scale(1.05);
+}
+
+.startRouletteContainer:active .circle {
   filter: brightness(70%);
 }
 
@@ -169,6 +179,21 @@ html {
 
   .mainContainer {
     gap: 50px;
+    padding-bottom: 16px;
+  }
+
+  .startRouletteContainer {
+    width: 80px;
+    height: 80px;
+  }
+
+  .circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .spin-text {
+    font-size: 18px;
   }
 }
 
