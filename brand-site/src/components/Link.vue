@@ -1,9 +1,9 @@
 <template>
-  <a :href="logoRef" target="_blank">
-    <div className="linkContent">
-      <img className="logoImage" :src="logoImg" v-bind:alt="logoText">
-      <LinkRefRect></LinkRefRect>
-      <a className="logoText">{{ logoText }}</a>
+  <a :href="logoRef" target="_blank" rel="noopener noreferrer" class="linkWrapper">
+    <div class="linkContent" :class="{ compact: isCompact }">
+      <img class="logoImage" :src="logoImg" :alt="logoText">
+      <LinkRefRect v-if="!isCompact"></LinkRefRect>
+      <span class="logoText">{{ logoText }}</span>
     </div>
   </a>
 </template>
@@ -24,12 +24,22 @@ export default defineComponent({
       type: String,
       required: true
     },
-    logoRef: String
+    logoRef: String,
+    isCompact: {
+      type: Boolean,
+      default: false
+    }
   }
 })
 </script>
 
 <style scoped>
+.linkWrapper {
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
 .linkContent {
   background-color: #4F3DFF;
   border-radius: 100px;
@@ -45,6 +55,15 @@ export default defineComponent({
   box-sizing: border-box;
 }
 
+.linkContent.compact {
+  flex-direction: column;
+  height: auto;
+  padding: 12px 10px;
+  gap: 8px;
+  border-radius: 20px;
+  width: 100%;
+}
+
 .logoText {
   font-size: 36px;
   color: white;
@@ -55,9 +74,22 @@ export default defineComponent({
   white-space: nowrap;
 }
 
+.linkContent.compact .logoText {
+  font-size: 14px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
 .logoImage {
   width: 60px;
   height: 60px;
+  flex-shrink: 0;
+}
+
+.linkContent.compact .logoImage {
+  width: 32px;
+  height: 32px;
 }
 
 @media (max-width: 768px) {
@@ -74,6 +106,20 @@ export default defineComponent({
   .logoImage {
     width: 30px;
     height: 30px;
+  }
+
+  .linkContent.compact {
+    padding: 10px 8px;
+    gap: 6px;
+  }
+
+  .linkContent.compact .logoImage {
+    width: 28px;
+    height: 28px;
+  }
+
+  .linkContent.compact .logoText {
+    font-size: 12px;
   }
 }
 </style>

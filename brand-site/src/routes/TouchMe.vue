@@ -1,11 +1,32 @@
 <template>
   <div class="mainContainer">
     <HeadBar :headItems="localizedHeadItems"></HeadBar>
-    <div class="container" ref="linksContainer">
-      <Link v-if="currentLink" :logoImg="currentLink.img" :logoRef="currentLink.ref"
-            :logo-text="currentLink.text"></Link>
+    <div class="container" :class="{ isGallery: isGalleryOpen }" ref="linksContainer">
+      <div v-if="isGalleryOpen" class="linksGrid">
+        <Link
+          v-for="(link, index) in localizedLinks"
+          :key="index"
+          :logoImg="link.img"
+          :logoRef="link.ref"
+          :logo-text="link.text"
+          :is-compact="true"
+        ></Link>
+      </div>
+      <Link
+        v-else-if="currentLink"
+        :logoImg="currentLink.img"
+        :logoRef="currentLink.ref"
+        :logo-text="currentLink.text"
+      ></Link>
     </div>
-    <div class="startRouletteContainer" @click="startRoulette">
+    <div
+      class="startRouletteContainer"
+      @click="startRoulette"
+      @pointerdown="onSpinPressStart"
+      @pointerup="onSpinPressEnd"
+      @pointercancel="onSpinPressEnd"
+      @contextmenu.prevent
+    >
       <img class="circle" :alt="$t('touchMe.spinAlt')" src="@/assets/CircleLinker.svg"/>
       <span class="spin-text">{{ $t('touchMe.spin') }}</span>
     </div>
@@ -21,29 +42,73 @@ import gmailImgSource from "@/assets/logo/Gmail.svg";
 import linkedInImgSource from "@/assets/logo/LinkedIn.svg";
 import githubImgSource from "@/assets/logo/Github.svg";
 
+const HOLD_DELAY_MS = 250;
+
 export default {
   methods: {
+    onSpinPressStart(event) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      this.skipClick = false;
+      this.clearPressTimer();
+      this.pressTimer = window.setTimeout(() => {
+        this.isGalleryOpen = true;
+        this.skipClick = true;
+      }, HOLD_DELAY_MS);
+    },
+    onSpinPressEnd(event) {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      this.clearPressTimer();
+    },
+    closeGallery() {
+      this.isGalleryOpen = false;
+    },
+    clearPressTimer() {
+      if (this.pressTimer) {
+        window.clearTimeout(this.pressTimer);
+        this.pressTimer = null;
+      }
+    },
     startRoulette() {
+      if (this.skipClick || this.isSpinning) {
+        this.skipClick = false;
+        return;
+      }
+
+      if (this.isGalleryOpen) {
+        this.closeGallery();
+        return;
+      }
+
       const links = this.links;
       let currentIndex = this.currentIndex;
-      const interval = 100; // Speed of the roulette
-      const rounds = Math.floor(Math.random() * 9) + 5; // Random number of full rounds between 5 and 13
+      const interval = 100;
+      const rounds = Math.floor(Math.random() * 9) + 5;
       const totalSteps = rounds * links.length + Math.floor(Math.random() * links.length);
       let stepsTaken = 0;
 
-      const rouletteInterval = setInterval(() => {
+      this.isSpinning = true;
+
+      const rouletteInterval = window.setInterval(() => {
         currentIndex = (currentIndex + 1) % links.length;
         this.currentIndex = currentIndex;
         stepsTaken++;
 
         if (stepsTaken >= totalSteps) {
-          clearInterval(rouletteInterval);
-          // Optionally, you can trigger a click or highlight the selected link here
+          window.clearInterval(rouletteInterval);
+          this.isSpinning = false;
         }
       }, interval);
     }
   },
   components: {Link, HeadBar},
+  mounted() {
+    this.currentIndex = Math.floor(Math.random() * this.links.length);
+  },
+  beforeUnmount() {
+    this.clearPressTimer();
+  },
   data() {
     return {
       links: [
@@ -73,7 +138,11 @@ export default {
           ref: "https://github.com/maksmolchdmitr",
         },
       ],
-      currentIndex: 0
+      currentIndex: 0,
+      isGalleryOpen: false,
+      isSpinning: false,
+      skipClick: false,
+      pressTimer: null,
     }
   },
   computed: {
@@ -91,8 +160,7 @@ export default {
       }));
     },
     currentLink() {
-      this.currentIndex = Math.floor(Math.random() * this.localizedLinks.length);
-      return this.localizedLinks[this.currentIndex];
+      return this.localizedLinks[this.currentIndex] ?? null;
     }
   }
 }
@@ -107,11 +175,26 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px; /* Adjusted height to fit one link */
+  min-height: 200px;
   overflow: hidden;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.container.isGallery {
+  min-height: 240px;
+  align-items: stretch;
+}
+
+.linksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .mainContainer {
@@ -135,6 +218,9 @@ html {
   flex-shrink: 0;
   cursor: pointer;
   transition: transform 0.3s ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .circle {
@@ -174,7 +260,16 @@ html {
 
 @media (max-width: 768px) {
   .container {
-    height: 150px; /* Adjusted height for smaller screens */
+    min-height: 150px;
+  }
+
+  .container.isGallery {
+    min-height: 220px;
+  }
+
+  .linksGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .mainContainer {
