@@ -23,7 +23,7 @@
     </div>
     <div
       class="startRouletteContainer"
-      @click="startRoulette"
+      :class="{ galleryActive: isGalleryOpen }"
       @pointerdown="onSpinPressStart"
       @pointerup="onSpinPressEnd"
       @pointercancel="onSpinPressEnd"
@@ -50,18 +50,40 @@ export default {
   methods: {
     onSpinPressStart(event) {
       event.currentTarget.setPointerCapture(event.pointerId);
-      this.skipClick = false;
+      this.pressStartTime = Date.now();
+      this.openedGalleryOnThisPress = false;
       this.clearPressTimer();
-      this.pressTimer = window.setTimeout(() => {
-        this.isGalleryOpen = true;
-        this.skipClick = true;
-      }, HOLD_DELAY_MS);
+
+      if (!this.isGalleryOpen) {
+        this.pressTimer = window.setTimeout(() => {
+          this.isGalleryOpen = true;
+          this.openedGalleryOnThisPress = true;
+        }, HOLD_DELAY_MS);
+      }
     },
     onSpinPressEnd(event) {
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
       this.clearPressTimer();
+
+      const pressDuration = Date.now() - this.pressStartTime;
+      const isQuickTap = pressDuration < HOLD_DELAY_MS;
+
+      if (this.openedGalleryOnThisPress) {
+        this.openedGalleryOnThisPress = false;
+        return;
+      }
+
+      if (!isQuickTap) {
+        return;
+      }
+
+      if (this.isGalleryOpen) {
+        this.closeGallery();
+      }
+
+      this.runRoulette();
     },
     closeGallery() {
       this.isGalleryOpen = false;
@@ -72,14 +94,8 @@ export default {
         this.pressTimer = null;
       }
     },
-    startRoulette() {
-      if (this.skipClick || this.isSpinning) {
-        this.skipClick = false;
-        return;
-      }
-
-      if (this.isGalleryOpen) {
-        this.closeGallery();
+    runRoulette() {
+      if (this.isSpinning) {
         return;
       }
 
@@ -143,7 +159,8 @@ export default {
       currentIndex: 0,
       isGalleryOpen: false,
       isSpinning: false,
-      skipClick: false,
+      pressStartTime: 0,
+      openedGalleryOnThisPress: false,
       pressTimer: null,
     }
   },
@@ -177,17 +194,17 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  height: 260px;
   overflow: hidden;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
   padding: 0 16px;
+  flex-shrink: 0;
 }
 
 .container.isGallery {
-  min-height: 240px;
-  align-items: stretch;
+  align-items: center;
 }
 
 .linksGrid {
@@ -249,29 +266,29 @@ html {
   font-family: var(--font-display);
 }
 
-.startRouletteContainer:hover {
+.startRouletteContainer:not(.galleryActive):hover {
   transform: scale(1.1);
 }
 
-.startRouletteContainer:hover .circle {
+.startRouletteContainer:not(.galleryActive):hover .circle {
   filter: brightness(90%);
 }
 
-.startRouletteContainer:active {
+.startRouletteContainer:not(.galleryActive):active {
   transform: scale(1.05);
 }
 
-.startRouletteContainer:active .circle {
+.startRouletteContainer:not(.galleryActive):active .circle {
   filter: brightness(70%);
+}
+
+.startRouletteContainer.galleryActive .circle {
+  filter: brightness(95%);
 }
 
 @media (max-width: 768px) {
   .container {
-    min-height: 150px;
-  }
-
-  .container.isGallery {
-    min-height: 220px;
+    height: 300px;
   }
 
   .linksGrid {
