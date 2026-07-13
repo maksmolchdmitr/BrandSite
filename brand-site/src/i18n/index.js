@@ -260,7 +260,7 @@ const messages = {
       ru: "ру",
     },
     brand: {
-      name: "Максим Молчанов",
+      name: "Макс Молчанов",
     },
     main: {
       name: "Макс",
