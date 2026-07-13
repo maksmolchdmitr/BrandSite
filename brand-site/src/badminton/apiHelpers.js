@@ -2,6 +2,8 @@
  * Helper functions for API client
  */
 
+import { setLoggedInUserId } from "./cookies.js";
+
 const ACCESS_TOKEN_KEY = "badminton.accessToken";
 const REFRESH_TOKEN_KEY = "badminton.refreshToken";
 
@@ -66,5 +68,36 @@ export function isAuthed() {
 /** True if user has access or refresh token (real API) or cookie (mock). Use for "already logged in" redirect. */
 export function hasAuth() {
   return Boolean(getAccessToken() || getRefreshToken());
+}
+
+const LOGIN_PATH = "/?page=badminton&section=login";
+const MOCK_SESSION_KEY = "badminton.useMockSession";
+
+let reauthRedirectHandler = null;
+let reauthInProgress = false;
+
+export function setReauthRedirectHandler(handler) {
+  reauthRedirectHandler = typeof handler === "function" ? handler : null;
+}
+
+/** Clears local auth state and redirects to the badminton login page. */
+export function forceReauth() {
+  if (reauthInProgress) return;
+  reauthInProgress = true;
+
+  clearTokens();
+  setLoggedInUserId("");
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(MOCK_SESSION_KEY);
+  }
+
+  if (typeof window === "undefined") return;
+
+  if (reauthRedirectHandler) {
+    reauthRedirectHandler();
+    return;
+  }
+
+  window.location.assign(LOGIN_PATH);
 }
 

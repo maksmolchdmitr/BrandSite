@@ -1,7 +1,7 @@
 /**
  * Real API client for Badminton Service.
  * Auth flow: Telegram OAuth (oauth.telegram.org) → telegramLogin → Bearer access token.
- * On 401 we try refreshToken once and retry.
+ * On 401 we try refreshToken once and retry; if still unauthorized, force re-login.
  */
 
 import {
@@ -10,6 +10,7 @@ import {
   getRefreshToken,
   setTokens,
   clearTokens,
+  forceReauth,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { setLoggedInUserId } from "./cookies.js";
@@ -41,7 +42,7 @@ async function apiRequest(path, options = {}, skipRefresh = false) {
 
   const response = await fetch(url, config);
 
-  // 401: try refresh once and retry (except for auth endpoints)
+  // 401: try refresh once and retry
   if (response.status === 401 && !skipRefresh && getRefreshToken()) {
     try {
       const refreshed = await doRefreshToken();
@@ -51,6 +52,10 @@ async function apiRequest(path, options = {}, skipRefresh = false) {
     } catch (_) {
       clearTokens();
     }
+  }
+
+  if (response.status === 401 && !path.startsWith("/api/auth/")) {
+    forceReauth();
   }
 
   if (!response.ok) {
