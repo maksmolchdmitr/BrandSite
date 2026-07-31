@@ -17,7 +17,20 @@ import { setLoggedInUserId } from "./cookies.js";
 
 const BASE_URL = getBadmintonApiBaseUrl();
 
-async function apiRequest(path, options = {}, skipRefresh = false) {
+/** Transient upstream errors (e.g. Netlify proxy while badminton-service has no ready pods during deploy). */
+const RETRYABLE_STATUSES = new Set([502, 503, 504]);
+/** Backoff for GET during rolling deploy downtime (~30–90s on 1-replica node). */
+const TRANSIENT_RETRY_DELAYS_MS = [2000, 4000, 8000, 16000];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isIdempotentMethod(method) {
+  return method === "GET" || method === "HEAD";
+}
+
+async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) {
   const { method = "GET", body, headers = {} } = options;
 
   const url = `${BASE_URL}${path}`;
@@ -40,14 +53,23 @@ async function apiRequest(path, options = {}, skipRefresh = false) {
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, config);
+  let response;
+  try {
+    response = await fetch(url, config);
+  } catch (networkError) {
+    if (isIdempotentMethod(method) && attempt < TRANSIENT_RETRY_DELAYS_MS.length) {
+      await sleep(TRANSIENT_RETRY_DELAYS_MS[attempt]);
+      return apiRequest(path, options, skipRefresh, attempt + 1);
+    }
+    throw networkError;
+  }
 
   // 401: try refresh once and retry
   if (response.status === 401 && !skipRefresh && getRefreshToken()) {
     try {
       const refreshed = await doRefreshToken();
       if (refreshed) {
-        return apiRequest(path, options, true);
+        return apiRequest(path, options, true, 0);
       }
     } catch (_) {
       clearTokens();
@@ -56,6 +78,15 @@ async function apiRequest(path, options = {}, skipRefresh = false) {
 
   if (response.status === 401 && !path.startsWith("/api/auth/")) {
     forceReauth();
+  }
+
+  if (
+    RETRYABLE_STATUSES.has(response.status) &&
+    isIdempotentMethod(method) &&
+    attempt < TRANSIENT_RETRY_DELAYS_MS.length
+  ) {
+    await sleep(TRANSIENT_RETRY_DELAYS_MS[attempt]);
+    return apiRequest(path, options, skipRefresh, attempt + 1);
   }
 
   if (!response.ok) {
