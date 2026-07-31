@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
 **kind** | [**MatchKind**](MatchKind.md) |  | [default to undefined]
-**startedAt** | **string** |  | [default to undefined]
+**createdAt** | **string** |  | [default to undefined]
 **teamA** | **Array&lt;string&gt;** |  | [default to undefined]
 **teamB** | **Array&lt;string&gt;** |  | [default to undefined]
 **score** | [**MatchScore**](MatchScore.md) |  | [default to undefined]
@@ -20,7 +20,7 @@ import { Match } from './api';
 const instance: Match = {
     id,
     kind,
-    startedAt,
+    createdAt,
     teamA,
     teamB,
     score,

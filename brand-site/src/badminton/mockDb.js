@@ -230,12 +230,11 @@ function seedDb() {
         id: uuid("m"),
         groupId: "g_weekend_warriors",
         kind: "singles",
-        startedAt: new Date(now - (singlesMatches.length - idx) * 864e5).toISOString(),
+        createdAt: new Date(now - (singlesMatches.length - idx) * 864e5).toISOString(),
         teamA: [p1Id],
         teamB: [p2Id],
         score: {games: m.score},
         notes: "",
-        createdAt: nowIso(),
         createdByUserId: "u_alex",
       });
     }
@@ -282,12 +281,11 @@ function seedDb() {
         id: uuid("m"),
         groupId: "g_weekend_warriors",
         kind: "doubles",
-        startedAt: new Date(now - (doublesMatches.length - idx) * 864e5).toISOString(),
+        createdAt: new Date(now - (doublesMatches.length - idx) * 864e5).toISOString(),
         teamA: [p1a, p1b],
         teamB: [p2a, p2b],
         score: {games: m.score},
         notes: "",
-        createdAt: nowIso(),
         createdByUserId: "u_alex",
       });
     }

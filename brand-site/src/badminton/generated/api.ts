@@ -61,7 +61,7 @@ export interface LinkUserRequest {
 export interface Match {
     'id': string;
     'kind': MatchKind;
-    'startedAt': string;
+    'createdAt': string;
     'teamA': Array<string>;
     'teamB': Array<string>;
     'score': MatchScore;

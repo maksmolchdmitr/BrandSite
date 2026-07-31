@@ -502,7 +502,7 @@ paths:
       summary: List current user's singles matches (paginated)
       description: |
         Returns singles matches where the current user participated (via linked participant),
-        sorted by startedAt descending.
+        sorted by createdAt descending.
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
@@ -541,7 +541,7 @@ paths:
       summary: List current user's doubles matches (paginated)
       description: |
         Returns doubles matches where the current user participated (via linked participant),
-        sorted by startedAt descending.
+        sorted by createdAt descending.
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
@@ -840,7 +840,7 @@ components:
       properties:
         id: { type: string }
         kind: { $ref: "#/components/schemas/MatchKind" }
-        startedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
         # Singles: teamA = [p1], teamB = [p2]
         # Doubles: teamA = [p1,p2], teamB = [p3,p4]
         teamA:
@@ -855,7 +855,7 @@ components:
           maxItems: 2
         score:
           $ref: "#/components/schemas/MatchScore"
-      required: [ id, kind, startedAt, teamA, teamB, score ]
+      required: [ id, kind, createdAt, teamA, teamB, score ]
 
     MatchScore:
       type: object

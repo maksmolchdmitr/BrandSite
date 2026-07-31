@@ -43,7 +43,7 @@
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
-                  <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
+                  <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -83,7 +83,7 @@
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[1]) }}</td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
-                  <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
+                  <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
               </tbody>
             </table>

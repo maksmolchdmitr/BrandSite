@@ -138,7 +138,7 @@
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
-                  <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
+                  <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
                     <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
                     <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
@@ -184,7 +184,7 @@
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
                   <td class="nameCell">{{ getParticipantName(m.teamB?.[1]) }}</td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
-                  <td class="dateCell">{{ formatDate(m.startedAt) }}</td>
+                  <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
                     <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
                     <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
@@ -1179,7 +1179,15 @@ export default defineComponent({
       if (!dateStr) return this.$t("common.misc.noData");
       try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString(this.$i18n.locale === "ru" ? "ru-RU" : "en-US", { day: '2-digit', month: '2-digit', year: 'numeric' });
+        if (Number.isNaN(d.getTime()) || d.getTime() === 0) return this.$t("common.misc.noData");
+        const locale = this.$i18n.locale === "ru" ? "ru-RU" : "en-US";
+        return d.toLocaleString(locale, {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       } catch {
         return dateStr;
       }

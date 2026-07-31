@@ -53,7 +53,7 @@ function matchToClientDto(m) {
   return {
     id: m.id,
     kind: m.kind,
-    startedAt: m.startedAt,
+    createdAt: m.createdAt,
     teamA: m.teamA,
     teamB: m.teamB,
     score: m.score,
@@ -463,17 +463,16 @@ export const mockClient = {
     const db = loadDb();
     const u = requireAuth(db);
     requireAdmin(db, groupId);
-    // Backend sets startedAt automatically (current time)
+    // Backend sets createdAt automatically (current time)
     const m = {
       id: uuid("m"),
       groupId,
       kind: kind || (segment === "doubles" ? "doubles" : "singles"),
-      startedAt: nowIso(), // Backend sets this automatically
+      createdAt: nowIso(),
       teamA: rest.teamA || match.teamA || [],
       teamB: rest.teamB || match.teamB || [],
       score: rest.score || match.score,
       notes: rest.notes || match.notes || "",
-      createdAt: nowIso(),
       createdByUserId: u.id,
     };
     db.matches.unshift(m);
@@ -575,7 +574,7 @@ export const mockClient = {
         if (groupId != null && m.groupId !== groupId) return false;
         return (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id));
       })
-      .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
     const pageItems = all.slice(start, start + limit).map(matchToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
@@ -597,7 +596,7 @@ export const mockClient = {
         if (groupId != null && m.groupId !== groupId) return false;
         return (m.teamA || []).some(id => myPIds.has(id)) || (m.teamB || []).some(id => myPIds.has(id));
       })
-      .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
     const pageItems = all.slice(start, start + limit).map(matchToClientDto);
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
