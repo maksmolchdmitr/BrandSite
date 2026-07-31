@@ -1,0 +1,29 @@
+---
+description: «Засабмитить» = git submit (add + commit + push), не только commit
+alwaysApply: true
+---
+
+# Git submit
+
+Когда пользователь говорит **засабмитить / submit / засабмить** — это не «только commit».
+
+Выполняй alias пользователя:
+
+```bash
+git submit "commit message"
+```
+
+Эквивалент:
+
+```bash
+git add .
+git commit -m "commit message"
+git push
+```
+
+## Правила
+
+- Сообщение коммита передавай аргументом `git submit "…"`.
+- Не останавливайся на локальном `git commit` без `git push`, если просили засабмитить.
+- Не спрашивай отдельно «запушить?» после просьбы засабмитить — push уже входит в submit.
+- По-прежнему не делай submit/commit/push без явной просьбы пользователя.
