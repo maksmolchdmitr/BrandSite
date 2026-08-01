@@ -414,10 +414,10 @@ export const mockClient = {
       all = all.filter(u => {
         const fullName = [u.firstName, u.lastName].filter(Boolean).join(" ").toLowerCase();
         return (
-          String(u.username || "").toLowerCase().includes(lower) ||
-          String(u.firstName || "").toLowerCase().includes(lower) ||
-          String(u.lastName || "").toLowerCase().includes(lower) ||
-          fullName.includes(lower)
+          String(u.username || "").toLowerCase().startsWith(lower) ||
+          String(u.firstName || "").toLowerCase().startsWith(lower) ||
+          String(u.lastName || "").toLowerCase().startsWith(lower) ||
+          fullName.startsWith(lower)
         );
       });
     }

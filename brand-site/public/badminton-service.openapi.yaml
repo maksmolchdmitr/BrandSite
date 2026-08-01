@@ -137,12 +137,12 @@ paths:
       summary: Search users
       operationId: searchUsers
       description: |
-        Global search of registered users by username / first / last name.
-        Sorted by username. Authenticated users only.
+        Global prefix search of registered users by username / first / last name
+        (case-insensitive, starts-with). Sorted by username. Authenticated users only.
       parameters:
         - in: query
           name: query
-          description: Search query (filters by username or name, case-insensitive)
+          description: Prefix filter on username or name (case-insensitive)
           schema: { type: string, default: "" }
         - in: query
           name: limit
