@@ -879,26 +879,6 @@ components:
         pointsB: { type: integer, minimum: 0 }
       required: [ pointsA, pointsB ]
 
-    MatchCreateRequest:
-      type: object
-      additionalProperties: false
-      description: Legacy combined shape; use MatchSinglesCreateRequest / MatchDoublesCreateRequest on API.
-      properties:
-        kind: { $ref: "#/components/schemas/MatchKind" }
-        teamA:
-          type: array
-          items: { type: string }
-          minItems: 1
-          maxItems: 2
-        teamB:
-          type: array
-          items: { type: string }
-          minItems: 1
-          maxItems: 2
-        score:
-          $ref: "#/components/schemas/MatchScore"
-      required: [ kind, teamA, teamB, score ]
-
     MatchSinglesCreateRequest:
       type: object
       additionalProperties: false
