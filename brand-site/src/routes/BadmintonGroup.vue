@@ -389,7 +389,11 @@
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
-                    <button class="btn small secondary" @click="addScore('team1')">+</button>
+                    <button
+                      v-if="!modal.payload.matchId"
+                      class="btn small secondary"
+                      @click="addScore('team1')"
+                    >+</button>
                   </div>
                 </div>
               </div>
@@ -446,7 +450,11 @@
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
-                    <button class="btn small secondary" @click="addScore('team2')">+</button>
+                    <button
+                      v-if="!modal.payload.matchId"
+                      class="btn small secondary"
+                      @click="addScore('team2')"
+                    >+</button>
                   </div>
                 </div>
               </div>
@@ -532,7 +540,11 @@
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
-                    <button class="btn small secondary" @click="addScore('team1')">+</button>
+                    <button
+                      v-if="!modal.payload.matchId"
+                      class="btn small secondary"
+                      @click="addScore('team1')"
+                    >+</button>
                   </div>
                 </div>
               </div>
@@ -615,7 +627,11 @@
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
                     </div>
-                    <button class="btn small secondary" @click="addScore('team2')">+</button>
+                    <button
+                      v-if="!modal.payload.matchId"
+                      class="btn small secondary"
+                      @click="addScore('team2')"
+                    >+</button>
                   </div>
                 </div>
               </div>
@@ -1313,8 +1329,8 @@ export default defineComponent({
         team2P2: { items: [], nextPageToken: null, loading: false },
       };
       const games = m.score?.games || [];
-      const team1Scores = games.map(g => g.pointsA);
-      const team2Scores = games.map(g => g.pointsB);
+      const team1Scores = games.length > 0 ? [games[0].pointsA] : [null];
+      const team2Scores = games.length > 0 ? [games[0].pointsB] : [null];
       
       if (m.kind === "singles") {
         this.modal = {
@@ -1323,9 +1339,9 @@ export default defineComponent({
             matchId: m.id,
             kind: m.kind,
             team1P1: m.teamA?.[0] || null,
-            team1Scores: team1Scores.length > 0 ? team1Scores : [null],
+            team1Scores,
             team2P1: m.teamB?.[0] || null,
-            team2Scores: team2Scores.length > 0 ? team2Scores : [null],
+            team2Scores,
             searchTeam1P1: "",
             searchTeam2P1: "",
           },
@@ -1338,10 +1354,10 @@ export default defineComponent({
             kind: m.kind,
             team1P1: m.teamA?.[0] || null,
             team1P2: m.teamA?.[1] || null,
-            team1Scores: team1Scores.length > 0 ? team1Scores : [null],
+            team1Scores,
             team2P1: m.teamB?.[0] || null,
             team2P2: m.teamB?.[1] || null,
-            team2Scores: team2Scores.length > 0 ? team2Scores : [null],
+            team2Scores,
             searchTeam1P1: "",
             searchTeam1P2: "",
             searchTeam2P1: "",
@@ -1499,12 +1515,17 @@ export default defineComponent({
             games.push({pointsA: score1, pointsB: score2});
           }
         }
-        payload.score = {games};
 
         let m;
         const kind = payload.kind;
         if (this.modal.payload.matchId) {
-          m = await badmintonClient.updateMatch(this.groupId, this.modal.payload.matchId, payload);
+          // Update: one match row → GameScore (not MatchScore.games)
+          const updateBody = {
+            teamA: payload.teamA,
+            teamB: payload.teamB,
+            score: games[0],
+          };
+          m = await badmintonClient.updateMatch(this.groupId, this.modal.payload.matchId, updateBody);
           if (kind === "singles" && this.singlesPages.length && this.singlesPageIndex === 0) {
             const first = this.singlesPages[0];
             this.singlesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
@@ -1513,6 +1534,7 @@ export default defineComponent({
             this.doublesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
           }
         } else {
+          payload.score = {games};
           await badmintonClient.createMatch(this.groupId, payload);
           await this.loadSection();
         }

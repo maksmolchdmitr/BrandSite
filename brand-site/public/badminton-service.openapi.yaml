@@ -941,7 +941,8 @@ components:
           minItems: 1
           maxItems: 2
         score:
-          $ref: "#/components/schemas/MatchScore"
+          $ref: "#/components/schemas/GameScore"
+          description: Single game score for this match row (not a list).
 
     MatchPage:
       type: object
