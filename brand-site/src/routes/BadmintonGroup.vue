@@ -1381,9 +1381,14 @@ export default defineComponent({
 
     onInviteUserSearchFocus() {
       this.inviteUserSearch.open = true;
-      if (this.inviteUserSearch.items.length === 0 && !this.inviteUserSearch.loading) {
-        this.loadInviteUsers(false);
-      }
+      badmintonClient.listAllParticipants(this.groupId)
+        .then(res => this.mergeParticipantNames(res?.items || []))
+        .catch(() => {})
+        .finally(() => {
+          if (this.inviteUserSearch.items.length === 0 && !this.inviteUserSearch.loading) {
+            this.loadInviteUsers(false);
+          }
+        });
     },
 
     onInviteUserSearchInput() {
@@ -1402,12 +1407,13 @@ export default defineComponent({
       if (append && !this.inviteUserSearch.nextPageToken) return;
       this.inviteUserSearch.loading = true;
       try {
-        const result = await badmintonClient.searchUsersForGroup(this.groupId, {
+        const result = await badmintonClient.searchUsers({
           query: String(this.newParticipantName || "").trim(),
           limit: 10,
           pageToken: append ? this.inviteUserSearch.nextPageToken : undefined,
         });
-        const items = result?.items || [];
+        const memberIds = new Set(Object.keys(this.participantNameMap || {}));
+        const items = (result?.items || []).filter(u => !memberIds.has(u.id));
         if (append) {
           const existingIds = new Set(this.inviteUserSearch.items.map(u => u.id));
           this.inviteUserSearch.items = [

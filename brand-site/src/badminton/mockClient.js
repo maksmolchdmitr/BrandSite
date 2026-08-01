@@ -401,18 +401,14 @@ export const mockClient = {
     return result;
   },
 
-  async searchUsersForGroup(groupId, { query = "", limit = 10, pageToken = null } = {}) {
-    logRequest("GET", `/api/groups/${groupId}/users/search`, { query, limit, pageToken });
+  async searchUsers({ query = "", limit = 10, pageToken = null } = {}) {
+    logRequest("GET", "/api/users/search", { query, limit, pageToken });
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
-    const memberIds = new Set(
-      db.memberships.filter(m => m.groupId === groupId).map(m => m.userId)
-    );
     const lower = String(query || "").trim().toLowerCase();
     let all = db.users
-      .filter(u => !memberIds.has(u.id))
+      .slice()
       .sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
     if (lower) {
       all = all.filter(u => {
@@ -437,7 +433,7 @@ export const mockClient = {
     }));
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
-    logResponse("GET", `/api/groups/${groupId}/users/search`, result);
+    logResponse("GET", "/api/users/search", result);
     return result;
   },
 

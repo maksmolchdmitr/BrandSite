@@ -63,8 +63,8 @@ export const realClient = {
     return api.searchParticipants(groupId, { query, limit, pageToken });
   },
 
-  async searchUsersForGroup(groupId, { query = "", limit = 10, pageToken } = {}) {
-    return api.searchUsersForGroup(groupId, { query, limit, pageToken });
+  async searchUsers({ query = "", limit = 10, pageToken } = {}) {
+    return api.searchUsers({ query, limit, pageToken });
   },
 
   async createParticipant(groupId, {name}) {
