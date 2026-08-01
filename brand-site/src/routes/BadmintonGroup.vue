@@ -84,8 +84,11 @@
                       class="dropdownItem"
                       @click="selectInviteUser(u)"
                     >
-                      <PersonChip :name="inviteUserLabel(u)" :photo-url="u.photoUrl" />
-                      <span class="inviteUsername">@{{ u.username }}</span>
+                      <PersonChip
+                        :name="inviteUserLabel(u)"
+                        :photo-url="u.photoUrl"
+                        :username="u.username"
+                      />
                     </div>
                     <div v-if="inviteUserSearch.loading && inviteUserSearch.items.length > 0" class="dropdownItem">
                       {{ $t('badminton.group.loadingMore') }}
@@ -143,16 +146,18 @@
                 <thead>
                   <tr>
                     <th>{{ $t('badminton.group.name') }}</th>
-                    <th>{{ $t('badminton.group.username') }}</th>
                     <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="p in participants" :key="p.id">
                     <td class="nameCell">
-                      <PersonChip :name="p.name" :photo-url="p.photoUrl || getParticipantPhoto(p.id)" />
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </td>
-                    <td class="usernameCell">{{ p.username ? `@${p.username}` : $t('common.misc.noData') }}</td>
                     <td v-if="isAdmin" class="actionsCell">
                       <button class="btn secondary small" @click="startEditParticipant(p)">{{ $t('common.actions.edit') }}</button>
                       <button class="btn secondary small" @click="startLinkUser(p)">{{ $t('common.actions.link') }}</button>
@@ -211,11 +216,19 @@
               <tbody>
                 <tr v-for="m in singlesMatches" :key="m.id">
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :username="getParticipantUsername(m.teamA?.[0])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :username="getParticipantUsername(m.teamB?.[0])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
@@ -259,17 +272,33 @@
               <tbody>
                 <tr v-for="m in doublesMatches" :key="m.id">
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :username="getParticipantUsername(m.teamA?.[0])"
+                    />
                   </td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[1])" :photo-url="getParticipantPhoto(m.teamA?.[1])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[1])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[1])"
+                      :username="getParticipantUsername(m.teamA?.[1])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :username="getParticipantUsername(m.teamB?.[0])"
+                    />
                   </td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[1])" :photo-url="getParticipantPhoto(m.teamB?.[1])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[1])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[1])"
+                      :username="getParticipantUsername(m.teamB?.[1])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
@@ -322,7 +351,11 @@
                     <tr v-for="r in singlesLb" :key="r.participantId">
                       <td class="rankCell">{{ r.rank }}</td>
                       <td class="nameCell">
-                        <PersonChip :name="r.participantName" :photo-url="getParticipantPhoto(r.participantId)" />
+                        <PersonChip
+                          :name="r.participantName"
+                          :photo-url="getParticipantPhoto(r.participantId)"
+                          :username="getParticipantUsername(r.participantId)"
+                        />
                       </td>
                       <td class="eloCell">{{ r.elo }}</td>
                     </tr>
@@ -375,6 +408,7 @@
                             :key="`${r.pairKey}-${idx}`"
                             :name="name"
                             :photo-url="getParticipantPhoto(pairParticipantIds(r.pairKey)[idx])"
+                            :username="getParticipantUsername(pairParticipantIds(r.pairKey)[idx])"
                           />
                         </span>
                       </td>
@@ -459,13 +493,21 @@
                       class="dropdownItem"
                       @click="selectParticipant('team1P1', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                     <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team1P1) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team1P1)"
+                    :photo-url="getParticipantPhoto(modal.payload.team1P1)"
+                    :username="getParticipantUsername(modal.payload.team1P1)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team1P1 = null; modal.payload.searchTeam1P1 = ''">×</button>
                 </div>
                 
@@ -520,13 +562,21 @@
                       class="dropdownItem"
                       @click="selectParticipant('team2P1', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                     <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team2P1" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team2P1) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team2P1)"
+                    :photo-url="getParticipantPhoto(modal.payload.team2P1)"
+                    :username="getParticipantUsername(modal.payload.team2P1)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team2P1 = null; modal.payload.searchTeam2P1 = ''">×</button>
                 </div>
                 
@@ -584,13 +634,21 @@
                       class="dropdownItem"
                       @click="selectParticipant('team1P1', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                     <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team1P1) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team1P1)"
+                    :photo-url="getParticipantPhoto(modal.payload.team1P1)"
+                    :username="getParticipantUsername(modal.payload.team1P1)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team1P1 = null; modal.payload.searchTeam1P1 = ''">×</button>
                 </div>
 
@@ -611,12 +669,20 @@
                       class="dropdownItem"
                       @click="selectParticipant('team1P2', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team1P2" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team1P2) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team1P2)"
+                    :photo-url="getParticipantPhoto(modal.payload.team1P2)"
+                    :username="getParticipantUsername(modal.payload.team1P2)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team1P2 = null; modal.payload.searchTeam1P2 = ''">×</button>
                 </div>
                 
@@ -667,12 +733,20 @@
                       class="dropdownItem"
                       @click="selectParticipant('team2P1', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team2P1" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team2P1) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team2P1)"
+                    :photo-url="getParticipantPhoto(modal.payload.team2P1)"
+                    :username="getParticipantUsername(modal.payload.team2P1)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team2P1 = null; modal.payload.searchTeam2P1 = ''">×</button>
                 </div>
 
@@ -697,13 +771,21 @@
                       class="dropdownItem"
                       @click="selectParticipant('team2P2', p)"
                     >
-                      {{ p.name }}
+                      <PersonChip
+                        :name="p.name"
+                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :username="p.username || getParticipantUsername(p.id)"
+                      />
                     </div>
                     <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
                   </div>
                 </div>
                 <div v-if="modal.payload.team2P2" class="selectedParticipant">
-                  {{ getParticipantName(modal.payload.team2P2) }}
+                  <PersonChip
+                    :name="getParticipantName(modal.payload.team2P2)"
+                    :photo-url="getParticipantPhoto(modal.payload.team2P2)"
+                    :username="getParticipantUsername(modal.payload.team2P2)"
+                  />
                   <button class="btn small danger" @click="modal.payload.team2P2 = null; modal.payload.searchTeam2P2 = ''">×</button>
                 </div>
                 
@@ -781,6 +863,7 @@ export default defineComponent({
       group: null,
       participantNameMap: {},
       participantPhotoMap: {},
+      participantUsernameMap: {},
       participantsPages: [],
       participantsPageIndex: 0,
       participantsLimit: 10,
@@ -995,12 +1078,15 @@ export default defineComponent({
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };
       const photoMap = { ...this.participantPhotoMap };
+      const usernameMap = { ...this.participantUsernameMap };
       (items || []).forEach(p => {
         nameMap[p.id] = p.name;
         if (p.photoUrl) photoMap[p.id] = p.photoUrl;
+        if (p.username) usernameMap[p.id] = p.username;
       });
       this.participantNameMap = nameMap;
       this.participantPhotoMap = photoMap;
+      this.participantUsernameMap = usernameMap;
     },
     formatRole(role) {
       if (role === "admin") return this.$t("badminton.roles.admin");
@@ -1325,6 +1411,10 @@ export default defineComponent({
       if (!participantId) return "";
       return this.participantPhotoMap[participantId] || "";
     },
+    getParticipantUsername(participantId) {
+      if (!participantId) return "";
+      return this.participantUsernameMap[participantId] || "";
+    },
     pairParticipantIds(pairKey) {
       if (!pairKey) return [];
       return String(pairKey).split(":").filter(Boolean);
@@ -1553,6 +1643,8 @@ export default defineComponent({
         this.participantNameMap = rest;
         const { [p.id]: __, ...photoRest } = this.participantPhotoMap;
         this.participantPhotoMap = photoRest;
+        const { [p.id]: ___, ...usernameRest } = this.participantUsernameMap;
+        this.participantUsernameMap = usernameRest;
         const idx = this.participantsPageIndex;
         if (this.participantsPages[idx]) {
           const items = this.participantsPages[idx].items.filter(x => x.id !== p.id);
@@ -1711,6 +1803,7 @@ export default defineComponent({
     },
     selectParticipant(field, participant) {
       this.modal.payload[field] = participant.id;
+      this.mergeParticipantNames([participant]);
       const searchField = `search${field.charAt(0).toUpperCase() + field.slice(1)}`;
       this.modal.payload[searchField] = "";
       // Reset search state
@@ -1888,7 +1981,6 @@ export default defineComponent({
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
 .inviteSearch .input { width: 100%; max-width: 100%; }
-.inviteUsername { font-size: 12px; opacity: 0.65; margin-left: 4px; }
 .dropdownItem.muted { opacity: 0.65; cursor: default; }
 .hint { font-family: var(--font-display); font-size: 14px; opacity: 0.75; }
 .input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
@@ -1910,7 +2002,6 @@ export default defineComponent({
 .table tbody tr:last-child td { border-bottom: none; }
 .nameCell { font-weight: 600; }
 .personChipRow { display: flex; flex-direction: column; gap: 6px; }
-.usernameCell { font-size: 13px; opacity: 0.75; }
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
 .scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }
 .dateCell { font-size: 13px; opacity: 0.8; white-space: nowrap; }

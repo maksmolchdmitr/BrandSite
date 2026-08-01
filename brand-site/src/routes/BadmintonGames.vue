@@ -40,11 +40,19 @@
               <tbody>
                 <tr v-for="m in currentItems" :key="m.id">
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :username="getParticipantUsername(m.teamA?.[0])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :username="getParticipantUsername(m.teamB?.[0])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
@@ -82,17 +90,33 @@
               <tbody>
                 <tr v-for="m in currentItems" :key="m.id">
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :username="getParticipantUsername(m.teamA?.[0])"
+                    />
                   </td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamA?.[1])" :photo-url="getParticipantPhoto(m.teamA?.[1])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamA?.[1])"
+                      :photo-url="getParticipantPhoto(m.teamA?.[1])"
+                      :username="getParticipantUsername(m.teamA?.[1])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[0])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :username="getParticipantUsername(m.teamB?.[0])"
+                    />
                   </td>
                   <td class="nameCell">
-                    <PersonChip :name="getParticipantName(m.teamB?.[1])" :photo-url="getParticipantPhoto(m.teamB?.[1])" />
+                    <PersonChip
+                      :name="getParticipantName(m.teamB?.[1])"
+                      :photo-url="getParticipantPhoto(m.teamB?.[1])"
+                      :username="getParticipantUsername(m.teamB?.[1])"
+                    />
                   </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>

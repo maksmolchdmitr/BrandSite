@@ -19,10 +19,12 @@
         <div class="widgetTitle">{{ $t('badminton.login.mockUsers') }}</div>
         <div class="usersGrid">
           <button v-for="u in users" :key="u.id" class="userBtn" :disabled="loading" @click="loginAs(u.id)">
-            <div class="userName">
-              {{ [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username || u.id }}
-            </div>
-            <div class="userMeta">{{ $t('badminton.login.userId') }}: {{ u.id }} · {{ $t('badminton.login.telegramShort') }}: {{ u.telegramId }}</div>
+            <PersonChip
+              :name="[u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || u.id"
+              :photo-url="u.photoUrl"
+              :username="u.username"
+            />
+            <div class="userMeta">{{ $t('badminton.login.telegramShort') }}: {{ u.telegramId }}</div>
           </button>
         </div>
         <div class="widgetHint">{{ $t('badminton.login.mockHint') }}</div>
@@ -40,6 +42,7 @@
 <script>
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
+import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
@@ -52,7 +55,7 @@ function tgLog(...args) {
 }
 
 export default defineComponent({
-  components: {HeadBar},
+  components: {HeadBar, PersonChip},
   props: {
     userId: {
       type: String,

@@ -1,7 +1,7 @@
 import { badmintonClient } from "@/badminton/client.js";
 
 /**
- * Shared logic for formatting match data and loading participant names/photos.
+ * Shared logic for formatting match data and loading participant names/photos/usernames.
  * Used by BadmintonGames and group match views.
  */
 export const matchFormatMixin = {
@@ -9,6 +9,7 @@ export const matchFormatMixin = {
     return {
       participantNames: new Map(),
       participantPhotos: new Map(),
+      participantUsernames: new Map(),
     };
   },
   methods: {
@@ -19,6 +20,10 @@ export const matchFormatMixin = {
     getParticipantPhoto(participantId) {
       if (!participantId) return "";
       return this.participantPhotos.get(participantId) || "";
+    },
+    getParticipantUsername(participantId) {
+      if (!participantId) return "";
+      return this.participantUsernames.get(participantId) || "";
     },
     getFinalScore(match, side) {
       const games = match?.score?.games || [];
@@ -54,6 +59,9 @@ export const matchFormatMixin = {
         this.participantNames = new Map(allParticipants.map((p) => [p.id, p.name]));
         this.participantPhotos = new Map(
           allParticipants.filter((p) => p.photoUrl).map((p) => [p.id, p.photoUrl])
+        );
+        this.participantUsernames = new Map(
+          allParticipants.filter((p) => p.username).map((p) => [p.id, p.username])
         );
       } catch (e) {
         console.warn("Failed to load participant names", e);

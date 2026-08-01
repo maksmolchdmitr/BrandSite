@@ -9,7 +9,10 @@
       referrerpolicy="no-referrer"
     />
     <span v-else class="avatar avatarFallback" aria-hidden="true">{{ initials }}</span>
-    <span class="personName">{{ name }}</span>
+    <span class="personText">
+      <span class="personName">{{ name }}</span>
+      <span v-if="username" class="personUsername">@{{ username }}</span>
+    </span>
   </span>
 </template>
 
@@ -21,6 +24,7 @@ export default defineComponent({
   props: {
     name: { type: String, default: "—" },
     photoUrl: { type: String, default: "" },
+    username: { type: String, default: "" },
   },
   computed: {
     initials() {
@@ -61,9 +65,22 @@ export default defineComponent({
   color: #4F3DFF;
   letter-spacing: -0.02em;
 }
+.personText {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
 .personName {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.personUsername {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.65;
+  white-space: nowrap;
 }
 </style>

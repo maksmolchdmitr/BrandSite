@@ -114,11 +114,23 @@ function calcDoublesPerPartner(db, userId) {
     const partnerPid = myTeam.find(id => !myPIds.has(id));
     if (!partnerPid) continue;
     const partner = db.participants.find(p => p.id === partnerPid);
+    const partnerUser = partner?.userId ? db.users.find(u => u.id === partner.userId) : null;
     const partnerUserId = partner?.userId || `unlinked:${partnerPid}`;
     const partnerName = partner?.name || partnerPid;
+    const partnerUsername = partnerUser?.username || partner?.username || "";
+    const partnerPhotoUrl = partnerUser?.photoUrl || partner?.photoUrl || "";
 
     const win = didTeamWin(m, mySide);
-    const cur = map.get(partnerUserId) || {partnerUserId, partnerName, elo: 1100, games: 0, wins: 0, losses: 0};
+    const cur = map.get(partnerUserId) || {
+      partnerUserId,
+      partnerName,
+      partnerUsername,
+      partnerPhotoUrl,
+      elo: 1100,
+      games: 0,
+      wins: 0,
+      losses: 0,
+    };
     cur.games += 1;
     if (win === true) cur.wins += 1;
     if (win === false) cur.losses += 1;
@@ -129,6 +141,8 @@ function calcDoublesPerPartner(db, userId) {
   const rows = Array.from(map.values()).map(r => ({
     partnerUserId: r.partnerUserId,
     partnerName: r.partnerName,
+    partnerUsername: r.partnerUsername || undefined,
+    partnerPhotoUrl: r.partnerPhotoUrl || undefined,
     games: r.games,
     wins: r.wins,
     losses: r.losses,

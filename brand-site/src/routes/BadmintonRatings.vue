@@ -41,6 +41,7 @@
                   <PersonChip
                     :name="([me?.firstName, me?.lastName].filter(Boolean).join(' ') || me?.username || me?.id || $t('common.misc.noData'))"
                     :photo-url="me?.photoUrl"
+                    :username="me?.username"
                   />
                 </td>
                 <td class="eloCell">{{ ratings?.singlesElo ?? $t('common.misc.noData') }}</td>
@@ -71,7 +72,7 @@
               <tbody>
                 <tr v-for="r in currentDoublesPage.items" :key="r.partnerUserId">
                   <td class="nameCell">
-                    <PersonChip :name="r.partnerName" :photo-url="r.partnerPhotoUrl" />
+                    <PersonChip :name="r.partnerName" :photo-url="r.partnerPhotoUrl" :username="r.partnerUsername" />
                   </td>
                   <td>{{ r.games }}</td>
                   <td>{{ r.wins }}</td>

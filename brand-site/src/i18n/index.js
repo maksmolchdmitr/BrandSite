@@ -199,7 +199,6 @@ const messages = {
         doublesLeaderboard: "Doubles Leaderboard",
         team: "Team",
         name: "Name",
-        username: "Username",
         userId: "User ID",
         editParticipant: "Edit participant",
         linkUser: "Link user to participant",
