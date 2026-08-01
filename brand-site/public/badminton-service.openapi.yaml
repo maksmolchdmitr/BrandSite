@@ -809,7 +809,7 @@ components:
         username: { type: string }
         firstName: { type: string }
         lastName: { type: string }
-      required: [ id ]
+      required: [ id, username ]
 
     Group:
       type: object
