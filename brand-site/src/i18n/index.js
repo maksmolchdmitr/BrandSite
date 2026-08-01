@@ -422,7 +422,6 @@ const messages = {
         doublesLeaderboard: "Лидерборд парных",
         team: "Команда",
         name: "Имя",
-        username: "Username",
         userId: "ID пользователя",
         editParticipant: "Изменить участника",
         linkUser: "Связать пользователя с участником",
