@@ -415,9 +415,6 @@ export const mockClient = {
     requireAdmin(db, groupId);
     const login = String(username || "").trim();
     if (!login) throw new Error("username is required");
-    if ((db.users || []).some(u => (u.username || "").toLowerCase() === login.toLowerCase())) {
-      throw Object.assign(new Error("Username is already taken"), {status: 409});
-    }
     const userId = uuid("u");
     const displayName = [firstName, lastName].map(s => String(s || "").trim()).filter(Boolean).join(" ") || login;
     db.users.push({
