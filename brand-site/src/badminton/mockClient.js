@@ -45,6 +45,7 @@ function participantToClientDto(p, db) {
   return {
     id: p.id,
     name: p.name,
+    username: linkedUser?.username || p.username || undefined,
     userId: p.userId,
     photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
   };

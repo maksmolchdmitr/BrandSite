@@ -143,7 +143,7 @@
                 <thead>
                   <tr>
                     <th>{{ $t('badminton.group.name') }}</th>
-                    <th>{{ $t('badminton.group.userId') }}</th>
+                    <th>{{ $t('badminton.group.username') }}</th>
                     <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                   </tr>
                 </thead>
@@ -152,7 +152,7 @@
                     <td class="nameCell">
                       <PersonChip :name="p.name" :photo-url="p.photoUrl || getParticipantPhoto(p.id)" />
                     </td>
-                    <td class="userIdCell">{{ p.userId || $t('common.misc.noData') }}</td>
+                    <td class="usernameCell">{{ p.username ? `@${p.username}` : $t('common.misc.noData') }}</td>
                     <td v-if="isAdmin" class="actionsCell">
                       <button class="btn secondary small" @click="startEditParticipant(p)">{{ $t('common.actions.edit') }}</button>
                       <button class="btn secondary small" @click="startLinkUser(p)">{{ $t('common.actions.link') }}</button>
@@ -1910,7 +1910,7 @@ export default defineComponent({
 .table tbody tr:last-child td { border-bottom: none; }
 .nameCell { font-weight: 600; }
 .personChipRow { display: flex; flex-direction: column; gap: 6px; }
-.userIdCell { font-size: 13px; opacity: 0.7; font-family: monospace; }
+.usernameCell { font-size: 13px; opacity: 0.75; }
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
 .scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }
 .dateCell { font-size: 13px; opacity: 0.8; white-space: nowrap; }

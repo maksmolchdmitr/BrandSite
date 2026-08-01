@@ -900,13 +900,16 @@ components:
       properties:
         id: { type: string }
         name: { type: string, example: Maks }
+        username:
+          type: string
+          description: Login / handle
         userId:
           type: string
           description: Linked registered user id (if any)
         photoUrl:
           type: string
           description: Telegram profile photo URL (if available)
-      required: [ id, name ]
+      required: [ id, name, username ]
 
     ParticipantCreateRequest:
       type: object
