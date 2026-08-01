@@ -261,6 +261,13 @@ export async function createParticipant(groupId, {name}) {
   });
 }
 
+export async function createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/unlinked`, {
+    method: "POST",
+    body: {username, firstName, lastName},
+  });
+}
+
 export async function updateParticipant(groupId, participantId, {name}) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "PATCH",

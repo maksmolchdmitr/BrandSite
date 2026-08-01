@@ -67,6 +67,10 @@ export const realClient = {
     return api.createParticipant(groupId, {name});
   },
 
+  async createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
+    return api.createUnlinkedParticipant(groupId, {username, firstName, lastName});
+  },
+
   async updateParticipant(groupId, participantId, {name}) {
     return api.updateParticipant(groupId, participantId, {name});
   },

@@ -293,6 +293,44 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/groups/{groupId}/participants/unlinked:
+    post:
+      tags: [ Participants ]
+      summary: Create unlinked participant (admin-only)
+      operationId: createUnlinkedParticipant
+      description: |
+        Creates a user without Telegram (`tg_id` null) and adds them to the group as a member.
+        Linking to a Telegram account is a separate flow.
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipantUnlinkedCreateRequest"
+      responses:
+        "201":
+          description: Unlinked participant created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participant"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflict (e.g. username already taken)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/groups/{groupId}/participants/{participantId}:
     patch:
       tags: [ Participants ]
@@ -827,6 +865,18 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
       required: [ name ]
+
+    ParticipantUnlinkedCreateRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Create a participant that does not yet have a Telegram account.
+        `username` is chosen by the client (typically derived from first/last name).
+      properties:
+        username: { type: string, minLength: 1, maxLength: 255 }
+        firstName: { type: string, minLength: 1, maxLength: 255 }
+        lastName: { type: string, minLength: 1, maxLength: 255 }
+      required: [ username, firstName, lastName ]
 
     ParticipantUpdateRequest:
       type: object

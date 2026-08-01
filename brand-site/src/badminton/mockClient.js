@@ -407,6 +407,40 @@ export const mockClient = {
     return participantToClientDto(p);
   },
 
+  async createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
+    logRequest("POST", `/api/groups/${groupId}/participants/unlinked`, {username, firstName, lastName});
+    await delay();
+    const db = loadDb();
+    requireAuth(db);
+    requireAdmin(db, groupId);
+    const login = String(username || "").trim();
+    if (!login) throw new Error("username is required");
+    if ((db.users || []).some(u => (u.username || "").toLowerCase() === login.toLowerCase())) {
+      throw Object.assign(new Error("Username is already taken"), {status: 409});
+    }
+    const userId = uuid("u");
+    const displayName = [firstName, lastName].map(s => String(s || "").trim()).filter(Boolean).join(" ") || login;
+    db.users.push({
+      id: userId,
+      username: login,
+      firstName: String(firstName || "").trim(),
+      lastName: String(lastName || "").trim(),
+      tgId: null,
+    });
+    const p = {
+      id: userId,
+      groupId,
+      name: displayName,
+      userId,
+      createdAt: nowIso(),
+    };
+    db.participants.unshift(p);
+    saveDb(db);
+    const dto = participantToClientDto(p);
+    logResponse("POST", `/api/groups/${groupId}/participants/unlinked`, dto, 201);
+    return dto;
+  },
+
   async updateParticipant(groupId, participantId, {name}) {
     logRequest("PUT", `/api/groups/${groupId}/participants/${participantId}`, {name});
     await delay();

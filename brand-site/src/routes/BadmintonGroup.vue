@@ -55,11 +55,49 @@
         <div class="card">
           <div class="cardTitle">{{ $t('badminton.group.participants') }}</div>
 
-          <div v-if="isAdmin" class="row">
-            <input class="input" v-model="newParticipantName" :placeholder="$t('badminton.group.participantName')" />
-            <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
-              {{ loadingAddParticipant ? $t('badminton.group.adding') : $t('common.actions.add') }}
-            </button>
+          <div v-if="isAdmin" class="addParticipantBlock">
+            <div v-if="participants.length === 0" class="hint">{{ $t('badminton.group.createUnlinkedHint') }}</div>
+
+            <div class="addParticipantSection">
+              <div class="addParticipantLabel">{{ $t('badminton.group.inviteExisting') }}</div>
+              <div class="row">
+                <input class="input" v-model="newParticipantName" :placeholder="$t('badminton.group.participantUsername')" />
+                <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
+                  {{ loadingAddParticipant ? $t('badminton.group.adding') : $t('common.actions.add') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="addParticipantSection">
+              <div class="addParticipantLabel">{{ $t('badminton.group.createUnlinked') }}</div>
+              <div class="row">
+                <input
+                  class="input"
+                  v-model="newUnlinkedFirstName"
+                  :placeholder="$t('badminton.group.firstName')"
+                  @input="onUnlinkedNameInput"
+                />
+                <input
+                  class="input"
+                  v-model="newUnlinkedLastName"
+                  :placeholder="$t('badminton.group.lastName')"
+                  @input="onUnlinkedNameInput"
+                />
+                <input
+                  class="input"
+                  v-model="newUnlinkedUsername"
+                  :placeholder="$t('badminton.group.login')"
+                  @input="newUnlinkedUsernameTouched = true"
+                />
+                <button
+                  class="btn"
+                  :disabled="loadingAddUnlinked || !canCreateUnlinked"
+                  @click="addUnlinkedParticipant"
+                >
+                  {{ loadingAddUnlinked ? $t('badminton.group.adding') : $t('common.actions.add') }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div v-if="participants.length === 0" class="empty">{{ $t('badminton.group.noParticipants') }}</div>
@@ -658,6 +696,13 @@ import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
+const CYRILLIC_TO_LATIN = {
+  а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
+  и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
+  с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch",
+  ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+};
+
 export default defineComponent({
   name: "BadmintonGroup",
   components: { HeadBar, PagerBar, BadmintonPillNav },
@@ -702,6 +747,12 @@ export default defineComponent({
       newParticipantName: "",
       loadingAddParticipant: false,
 
+      newUnlinkedFirstName: "",
+      newUnlinkedLastName: "",
+      newUnlinkedUsername: "",
+      newUnlinkedUsernameTouched: false,
+      loadingAddUnlinked: false,
+
       modal: {type: "", payload: {}},
       modalLoading: false,
       
@@ -720,6 +771,13 @@ export default defineComponent({
     },
     isAdmin() {
       return this.group?.myRole === "admin";
+    },
+    canCreateUnlinked() {
+      return Boolean(
+        String(this.newUnlinkedFirstName || "").trim()
+        && String(this.newUnlinkedLastName || "").trim()
+        && String(this.newUnlinkedUsername || "").trim()
+      );
     },
     modalTitle() {
       if (this.modal.type === "editParticipant") return this.$t("badminton.group.editParticipant");
@@ -1227,6 +1285,59 @@ export default defineComponent({
       }
     },
 
+    onUnlinkedNameInput() {
+      if (this.newUnlinkedUsernameTouched) return;
+      this.newUnlinkedUsername = this.suggestUsernameFromName(
+        this.newUnlinkedFirstName,
+        this.newUnlinkedLastName
+      );
+    },
+
+    suggestUsernameFromName(firstName, lastName) {
+      const slug = (value) => {
+        const mapped = String(value || "")
+          .trim()
+          .toLowerCase()
+          .split("")
+          .map((ch) => CYRILLIC_TO_LATIN[ch] || ch)
+          .join("");
+        return mapped
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, ".")
+          .replace(/^\.+|\.+$/g, "");
+      };
+      const parts = [slug(firstName), slug(lastName)].filter(Boolean);
+      if (parts.length) return parts.join(".");
+      return `player.${Date.now().toString(36)}`;
+    },
+
+    async addUnlinkedParticipant() {
+      if (!this.canCreateUnlinked) return;
+      this.loadingAddUnlinked = true;
+      this.error = "";
+      try {
+        const p = await badmintonClient.createUnlinkedParticipant(this.groupId, {
+          username: String(this.newUnlinkedUsername).trim(),
+          firstName: String(this.newUnlinkedFirstName).trim(),
+          lastName: String(this.newUnlinkedLastName).trim(),
+        });
+        this.newUnlinkedFirstName = "";
+        this.newUnlinkedLastName = "";
+        this.newUnlinkedUsername = "";
+        this.newUnlinkedUsernameTouched = false;
+        this.mergeParticipantNames([p]);
+        if (this.participantsPages.length && this.participantsPageIndex === 0) {
+          const first = this.participantsPages[0];
+          this.participantsPages = [{ ...first, items: [p, ...(first.items || [])] }];
+        }
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errAddParticipant");
+      } finally {
+        this.loadingAddUnlinked = false;
+      }
+    },
+
     startEditParticipant(p) {
       this.modal = {type: "editParticipant", payload: {participantId: p.id, name: p.name}};
     },
@@ -1609,6 +1720,10 @@ export default defineComponent({
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; min-width: 0; box-sizing: border-box; }
+.addParticipantBlock { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
+.addParticipantSection { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
+.addParticipantLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #333; }
+.hint { font-family: var(--font-display); font-size: 14px; opacity: 0.75; }
 .input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
 .label { font-family: var(--font-display); font-weight: 700; width: 90px; }
 .btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
