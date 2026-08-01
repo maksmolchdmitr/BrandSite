@@ -388,6 +388,7 @@ paths:
         Create a singles match. Body is the same as before without `kind` (singles is implied by the path).
 
         Replaces the old `POST /api/groups/{groupId}/matches` with `kind: singles`.
+        One DB row is created per game in `score.games` (1–5). No response body.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -398,11 +399,7 @@ paths:
               $ref: "#/components/schemas/MatchSinglesCreateRequest"
       responses:
         "201":
-          description: Match created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Match"
+          description: Match(es) created (one row per game in score; no response body)
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -421,6 +418,7 @@ paths:
         Create a doubles match. Body is the same as before without `kind`.
 
         Replaces the old `POST /api/groups/{groupId}/matches` with `kind: doubles`.
+        One DB row is created per game in `score.games` (1–5). No response body.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -431,11 +429,7 @@ paths:
               $ref: "#/components/schemas/MatchDoublesCreateRequest"
       responses:
         "201":
-          description: Match created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Match"
+          description: Match(es) created (one row per game in score; no response body)
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":

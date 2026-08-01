@@ -1513,14 +1513,8 @@ export default defineComponent({
             this.doublesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
           }
         } else {
-          m = await badmintonClient.createMatch(this.groupId, payload);
-          if (kind === "singles" && this.singlesPages.length && this.singlesPageIndex === 0) {
-            const first = this.singlesPages[0];
-            this.singlesPages = [{ ...first, items: [m, ...(first.items || [])] }];
-          } else if (kind === "doubles" && this.doublesPages.length && this.doublesPageIndex === 0) {
-            const first = this.doublesPages[0];
-            this.doublesPages = [{ ...first, items: [m, ...(first.items || [])] }];
-          }
+          await badmintonClient.createMatch(this.groupId, payload);
+          await this.loadSection();
         }
         this.closeModal();
         if (this.groupSection === "leaderboards") this.loadLeaderboards();

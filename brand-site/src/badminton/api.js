@@ -101,7 +101,11 @@ async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) 
     return null;
   }
 
-  return response.json();
+  const responseText = await response.text();
+  if (!responseText) {
+    return null;
+  }
+  return JSON.parse(responseText);
 }
 
 async function doRefreshToken() {

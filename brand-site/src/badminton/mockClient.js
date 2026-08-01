@@ -463,23 +463,28 @@ export const mockClient = {
     const db = loadDb();
     const u = requireAuth(db);
     requireAdmin(db, groupId);
-    // Backend sets createdAt automatically (current time)
-    const m = {
-      id: uuid("m"),
-      groupId,
-      kind: kind || (segment === "doubles" ? "doubles" : "singles"),
-      createdAt: nowIso(),
-      teamA: rest.teamA || match.teamA || [],
-      teamB: rest.teamB || match.teamB || [],
-      score: rest.score || match.score,
-      notes: rest.notes || match.notes || "",
-      createdByUserId: u.id,
-    };
-    db.matches.unshift(m);
+    const games = (rest.score && rest.score.games) || (match.score && match.score.games) || [];
+    const matchKind = kind || (segment === "doubles" ? "doubles" : "singles");
+    const teamA = rest.teamA || match.teamA || [];
+    const teamB = rest.teamB || match.teamB || [];
+    const createdAt = nowIso();
+    for (const game of games) {
+      const m = {
+        id: uuid("m"),
+        groupId,
+        kind: matchKind,
+        createdAt,
+        teamA,
+        teamB,
+        score: { games: [game] },
+        notes: rest.notes || match.notes || "",
+        createdByUserId: u.id,
+      };
+      db.matches.unshift(m);
+    }
     saveDb(db);
-    const dto = matchToClientDto(m);
-    logResponse("POST", `/api/groups/${groupId}/matches/${segment}`, dto, 201);
-    return dto;
+    logResponse("POST", `/api/groups/${groupId}/matches/${segment}`, null, 201);
+    return null;
   },
 
   async updateMatch(groupId, matchId, patch) {
