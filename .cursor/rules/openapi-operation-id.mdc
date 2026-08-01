@@ -1,0 +1,11 @@
+---
+description: Каждая OpenAPI operation обязана иметь уникальный operationId
+globs: "**/*openapi*.yaml,**/*openapi*.yml"
+alwaysApply: false
+---
+
+# OpenAPI operationId
+
+У **каждой** operation в `paths` должен быть уникальный `operationId` (camelCase: `createSinglesMatch`, `listParticipants`).
+
+Без него клиент генерирует длинные `apiGroupsGroupId…` имена — неудобно искать.

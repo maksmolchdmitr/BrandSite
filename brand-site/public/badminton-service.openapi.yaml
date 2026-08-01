@@ -179,6 +179,7 @@ paths:
     get:
       tags: [ Groups ]
       summary: Get group by id (member-only)
+      operationId: getGroup
       parameters:
         - $ref: "#/components/parameters/GroupId"
       responses:
@@ -199,6 +200,7 @@ paths:
     get:
       tags: [ Participants ]
       summary: List participants in group (member-only)
+      operationId: listParticipants
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
@@ -224,6 +226,7 @@ paths:
     post:
       tags: [ Participants ]
       summary: Create participant (admin-only)
+      operationId: createParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -258,6 +261,7 @@ paths:
     get:
       tags: [ Participants ]
       summary: Search participants in group with pagination (member-only)
+      operationId: searchParticipants
       description: |
         Search participants by name with cursor pagination. Results are sorted alphabetically.
         Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page.
@@ -293,6 +297,7 @@ paths:
     patch:
       tags: [ Participants ]
       summary: Update participant (admin-only)
+      operationId: updateParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"
@@ -321,6 +326,7 @@ paths:
     delete:
       tags: [ Participants ]
       summary: Delete participant (admin-only)
+      operationId: deleteParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"
@@ -338,6 +344,7 @@ paths:
     post:
       tags: [ Participants ]
       summary: Link registered user to participant (admin-only)
+      operationId: linkParticipantUser
       description: |
         Binds a registered user (by id) to a participant entry in a group.
         Useful when participant was created before user registration.
@@ -376,6 +383,7 @@ paths:
     post:
       tags: [ Matches ]
       summary: Create singles match (admin-only)
+      operationId: createSinglesMatch
       description: |
         Create a singles match. Body is the same as before without `kind` (singles is implied by the path).
 
@@ -408,6 +416,7 @@ paths:
     post:
       tags: [ Matches ]
       summary: Create doubles match (admin-only)
+      operationId: createDoublesMatch
       description: |
         Create a doubles match. Body is the same as before without `kind`.
 
@@ -440,6 +449,7 @@ paths:
     patch:
       tags: [ Matches ]
       summary: Update match result (admin-only)
+      operationId: updateMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/MatchId"
@@ -468,6 +478,7 @@ paths:
     delete:
       tags: [ Matches ]
       summary: Delete match result (admin-only)
+      operationId: deleteMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/MatchId"
@@ -485,6 +496,7 @@ paths:
     get:
       tags: [ Stats ]
       summary: Current user aggregate game statistics
+      operationId: getMyGamesStats
       description: Returns win/loss totals for singles and doubles (across all groups the user participates in).
       responses:
         "200":
@@ -500,6 +512,7 @@ paths:
     get:
       tags: [ Stats ]
       summary: List current user's singles matches (paginated)
+      operationId: listMySinglesMatches
       description: |
         Returns singles matches where the current user participated (via linked participant),
         sorted by createdAt descending.
@@ -539,6 +552,7 @@ paths:
     get:
       tags: [ Stats ]
       summary: List current user's doubles matches (paginated)
+      operationId: listMyDoublesMatches
       description: |
         Returns doubles matches where the current user participated (via linked participant),
         sorted by createdAt descending.
@@ -578,6 +592,7 @@ paths:
     get:
       tags: [ Ratings ]
       summary: Current user ratings (singles + doubles)
+      operationId: getMyRatings
       parameters:
         - in: query
           name: limit
@@ -601,6 +616,7 @@ paths:
     get:
       tags: [ Ratings ]
       summary: Singles Elo leaderboard in group (member-only)
+      operationId: listSinglesRatings
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
@@ -627,6 +643,7 @@ paths:
     get:
       tags: [ Ratings ]
       summary: Doubles Elo leaderboard in group (member-only)
+      operationId: listDoublesRatings
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
