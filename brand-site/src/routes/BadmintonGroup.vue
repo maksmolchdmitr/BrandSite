@@ -113,7 +113,9 @@
                 </thead>
                 <tbody>
                   <tr v-for="p in participants" :key="p.id">
-                    <td class="nameCell">{{ p.name }}</td>
+                    <td class="nameCell">
+                      <PersonChip :name="p.name" :photo-url="p.photoUrl || getParticipantPhoto(p.id)" />
+                    </td>
                     <td class="userIdCell">{{ p.userId || $t('common.misc.noData') }}</td>
                     <td v-if="isAdmin" class="actionsCell">
                       <button class="btn secondary small" @click="startEditParticipant(p)">{{ $t('common.actions.edit') }}</button>
@@ -172,9 +174,13 @@
               </thead>
               <tbody>
                 <tr v-for="m in singlesMatches" :key="m.id">
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[0]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                  </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                  </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
@@ -216,11 +222,19 @@
               </thead>
               <tbody>
                 <tr v-for="m in doublesMatches" :key="m.id">
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[0]) }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[1]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                  </td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[1])" :photo-url="getParticipantPhoto(m.teamA?.[1])" />
+                  </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[1]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                  </td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[1])" :photo-url="getParticipantPhoto(m.teamB?.[1])" />
+                  </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
@@ -271,7 +285,9 @@
                   <tbody>
                     <tr v-for="r in singlesLb" :key="r.participantId">
                       <td class="rankCell">{{ r.rank }}</td>
-                      <td class="nameCell">{{ r.participantName }}</td>
+                      <td class="nameCell">
+                        <PersonChip :name="r.participantName" :photo-url="getParticipantPhoto(r.participantId)" />
+                      </td>
                       <td class="eloCell">{{ r.elo }}</td>
                     </tr>
                   </tbody>
@@ -316,7 +332,16 @@
                   <tbody>
                     <tr v-for="r in doublesLb" :key="r.pairKey">
                       <td class="rankCell">{{ r.rank }}</td>
-                      <td class="nameCell">{{ (r.participantNames || []).join(" + ") }}</td>
+                      <td class="nameCell">
+                        <span class="personChipRow">
+                          <PersonChip
+                            v-for="(name, idx) in (r.participantNames || [])"
+                            :key="`${r.pairKey}-${idx}`"
+                            :name="name"
+                            :photo-url="getParticipantPhoto(pairParticipantIds(r.pairKey)[idx])"
+                          />
+                        </span>
+                      </td>
                       <td class="eloCell">{{ r.elo }}</td>
                     </tr>
                   </tbody>
@@ -693,6 +718,7 @@ import { defineComponent } from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
+import PersonChip from "@/components/badminton/PersonChip.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
@@ -705,7 +731,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar, BadmintonPillNav },
+  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "participants" },
@@ -718,6 +744,7 @@ export default defineComponent({
       error: "",
       group: null,
       participantNameMap: {},
+      participantPhotoMap: {},
       participantsPages: [],
       participantsPageIndex: 0,
       participantsLimit: 10,
@@ -921,9 +948,14 @@ export default defineComponent({
   },
   methods: {
     mergeParticipantNames(items) {
-      const map = { ...this.participantNameMap };
-      (items || []).forEach(p => { map[p.id] = p.name; });
-      this.participantNameMap = map;
+      const nameMap = { ...this.participantNameMap };
+      const photoMap = { ...this.participantPhotoMap };
+      (items || []).forEach(p => {
+        nameMap[p.id] = p.name;
+        if (p.photoUrl) photoMap[p.id] = p.photoUrl;
+      });
+      this.participantNameMap = nameMap;
+      this.participantPhotoMap = photoMap;
     },
     formatRole(role) {
       if (role === "admin") return this.$t("badminton.roles.admin");
@@ -1144,10 +1176,12 @@ export default defineComponent({
     async loadLeaderboards() {
       this.loadingLb = true;
       try {
-        const [s, d] = await Promise.all([
+        const [participantsRes, s, d] = await Promise.all([
+          badmintonClient.listAllParticipants(this.groupId),
           badmintonClient.getSinglesLeaderboard(this.groupId, { limit: this.lbLimit }),
           badmintonClient.getDoublesLeaderboard(this.groupId, { limit: this.lbLimit }),
         ]);
+        this.mergeParticipantNames(participantsRes?.items || []);
         this.singlesLbPages = [{ items: s?.items || [], pageToken: s?.pageToken || null }];
         this.singlesLbPageIndex = 0;
         this.doublesLbPages = [{ items: d?.items || [], pageToken: d?.pageToken || null }];
@@ -1241,6 +1275,14 @@ export default defineComponent({
     getParticipantName(participantId) {
       if (!participantId) return this.$t("common.misc.noData");
       return this.participantNameMap[participantId] || participantId;
+    },
+    getParticipantPhoto(participantId) {
+      if (!participantId) return "";
+      return this.participantPhotoMap[participantId] || "";
+    },
+    pairParticipantIds(pairKey) {
+      if (!pairKey) return [];
+      return String(pairKey).split(":").filter(Boolean);
     },
     getFinalScore(match, side) {
       const games = match.score?.games || [];
@@ -1391,6 +1433,8 @@ export default defineComponent({
         await badmintonClient.deleteParticipant(this.groupId, p.id);
         const { [p.id]: _, ...rest } = this.participantNameMap;
         this.participantNameMap = rest;
+        const { [p.id]: __, ...photoRest } = this.participantPhotoMap;
+        this.participantPhotoMap = photoRest;
         const idx = this.participantsPageIndex;
         if (this.participantsPages[idx]) {
           const items = this.participantsPages[idx].items.filter(x => x.id !== p.id);
@@ -1742,6 +1786,7 @@ export default defineComponent({
 .table tbody tr:hover { background: #fafaff; }
 .table tbody tr:last-child td { border-bottom: none; }
 .nameCell { font-weight: 600; }
+.personChipRow { display: flex; flex-direction: column; gap: 6px; }
 .userIdCell { font-size: 13px; opacity: 0.7; font-family: monospace; }
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
 .scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }

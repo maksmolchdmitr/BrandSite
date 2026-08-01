@@ -815,6 +815,9 @@ components:
         username: { type: string }
         firstName: { type: string }
         lastName: { type: string }
+        photoUrl:
+          type: string
+          description: Telegram profile photo URL
       required: [ id, username ]
 
     Group:
@@ -857,6 +860,9 @@ components:
         userId:
           type: string
           description: Linked registered user id (if any)
+        photoUrl:
+          type: string
+          description: Telegram profile photo URL (if available)
       required: [ id, name ]
 
     ParticipantCreateRequest:

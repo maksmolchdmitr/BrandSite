@@ -37,10 +37,11 @@
             </thead>
             <tbody>
               <tr>
-                <td>
-                  {{
-                    ([me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.username || me?.id || $t('common.misc.noData'))
-                  }}
+                <td class="nameCell">
+                  <PersonChip
+                    :name="([me?.firstName, me?.lastName].filter(Boolean).join(' ') || me?.username || me?.id || $t('common.misc.noData'))"
+                    :photo-url="me?.photoUrl"
+                  />
                 </td>
                 <td class="eloCell">{{ ratings?.singlesElo ?? $t('common.misc.noData') }}</td>
               </tr>
@@ -69,7 +70,9 @@
               </thead>
               <tbody>
                 <tr v-for="r in currentDoublesPage.items" :key="r.partnerUserId">
-                  <td class="nameCell">{{ r.partnerName }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="r.partnerName" :photo-url="r.partnerPhotoUrl" />
+                  </td>
                   <td>{{ r.games }}</td>
                   <td>{{ r.wins }}</td>
                   <td>{{ r.losses }}</td>
@@ -125,11 +128,12 @@
 <script>
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
+import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
 export default defineComponent({
-  components: {HeadBar},
+  components: {HeadBar, PersonChip},
   data() {
     return {
       loading: false,

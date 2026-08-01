@@ -107,6 +107,10 @@ export interface Participant {
      * Linked registered user id (if any)
      */
     'userId'?: string;
+    /**
+     * Telegram profile photo URL (if available)
+     */
+    'photoUrl'?: string;
 }
 export interface ParticipantCreateRequest {
     'name': string;
@@ -174,6 +178,10 @@ export interface User {
     'username'?: string;
     'firstName'?: string;
     'lastName'?: string;
+    /**
+     * Telegram profile photo URL
+     */
+    'photoUrl'?: string;
 }
 /**
  * Aggregate singles/doubles statistics for the current user

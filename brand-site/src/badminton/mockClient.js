@@ -39,9 +39,15 @@ function participantNameMap(db, groupId) {
   return map;
 }
 
-function participantToClientDto(p) {
+function participantToClientDto(p, db) {
   if (!p) return p;
-  return { id: p.id, name: p.name, userId: p.userId };
+  const linkedUser = p.userId && db ? db.users.find(u => u.id === p.userId) : null;
+  return {
+    id: p.id,
+    name: p.name,
+    userId: p.userId,
+    photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
+  };
 }
 
 function groupToClientDto(g, myRole) {
@@ -223,6 +229,7 @@ export const mockClient = {
         username: u.username,
         firstName: firstName || "",
         lastName: lastName || "",
+        photoUrl: u.photoUrl || undefined,
       };
     };
 
@@ -323,7 +330,7 @@ export const mockClient = {
       const start = pageToken && pageToken.startsWith("offset_")
         ? parseInt(pageToken.slice("offset_".length), 10) || 0
         : 0;
-      const pageItems = all.slice(start, start + limit).map(participantToClientDto);
+      const pageItems = all.slice(start, start + limit).map(p => participantToClientDto(p, db));
       const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
       const res = { items: pageItems, pageToken: nextToken };
       logResponse("GET", `/api/groups/${groupId}/participants`, res);
@@ -339,7 +346,7 @@ export const mockClient = {
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit).map(participantToClientDto);
+    const pageItems = all.slice(start, start + limit).map(p => participantToClientDto(p, db));
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", `/api/groups/${groupId}/participants`, result);
@@ -387,7 +394,7 @@ export const mockClient = {
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit).map(participantToClientDto);
+    const pageItems = all.slice(start, start + limit).map(p => participantToClientDto(p, db));
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", `/api/groups/${groupId}/participants/search`, result);
@@ -403,8 +410,8 @@ export const mockClient = {
     const p = {id: uuid("p"), groupId, name, userId: null, createdAt: nowIso()};
     db.participants.unshift(p);
     saveDb(db);
-    logResponse("POST", `/api/groups/${groupId}/participants`, participantToClientDto(p), 201);
-    return participantToClientDto(p);
+    logResponse("POST", `/api/groups/${groupId}/participants`, participantToClientDto(p, db), 201);
+    return participantToClientDto(p, db);
   },
 
   async createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
@@ -433,7 +440,7 @@ export const mockClient = {
     };
     db.participants.unshift(p);
     saveDb(db);
-    const dto = participantToClientDto(p);
+    const dto = participantToClientDto(p, db);
     logResponse("POST", `/api/groups/${groupId}/participants/unlinked`, dto, 201);
     return dto;
   },
@@ -448,7 +455,7 @@ export const mockClient = {
     if (idx < 0) throw new Error("Not found");
     db.participants[idx] = {...db.participants[idx], name};
     saveDb(db);
-    const dto = participantToClientDto(db.participants[idx]);
+    const dto = participantToClientDto(db.participants[idx], db);
     logResponse("PUT", `/api/groups/${groupId}/participants/${participantId}`, dto);
     return dto;
   },
@@ -481,7 +488,7 @@ export const mockClient = {
     const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
     if (!exists) db.memberships.push({groupId, userId: u.id, role: "member"});
     saveDb(db);
-    const dto = participantToClientDto(db.participants[idx]);
+    const dto = participantToClientDto(db.participants[idx], db);
     logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, dto);
     return dto;
   },

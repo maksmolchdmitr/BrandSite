@@ -39,9 +39,13 @@
               </thead>
               <tbody>
                 <tr v-for="m in currentItems" :key="m.id">
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[0]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                  </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                  </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
@@ -77,11 +81,19 @@
               </thead>
               <tbody>
                 <tr v-for="m in currentItems" :key="m.id">
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[0]) }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamA?.[1]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[0])" :photo-url="getParticipantPhoto(m.teamA?.[0])" />
+                  </td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamA?.[1])" :photo-url="getParticipantPhoto(m.teamA?.[1])" />
+                  </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[0]) }}</td>
-                  <td class="nameCell">{{ getParticipantName(m.teamB?.[1]) }}</td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[0])" :photo-url="getParticipantPhoto(m.teamB?.[0])" />
+                  </td>
+                  <td class="nameCell">
+                    <PersonChip :name="getParticipantName(m.teamB?.[1])" :photo-url="getParticipantPhoto(m.teamB?.[1])" />
+                  </td>
                   <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
@@ -125,13 +137,14 @@ import { defineComponent } from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
+import PersonChip from "@/components/badminton/PersonChip.vue";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 import { badmintonClient } from "@/badminton/client.js";
 import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
 
 export default defineComponent({
   name: "BadmintonGames",
-  components: { HeadBar, PagerBar, BadmintonPillNav },
+  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip },
   mixins: [matchFormatMixin],
   props: {
     gamesTab: { type: String, default: "singles" },
