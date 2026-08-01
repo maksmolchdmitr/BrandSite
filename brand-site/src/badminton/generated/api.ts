@@ -212,6 +212,10 @@ export interface UserRatingsDoublesByPartnerInner {
     'losses': number;
     'elo': number;
 }
+export interface UserPage {
+    'items': Array<User>;
+    'pageToken'?: string;
+}
 
 /**
  * GroupsApi - axios parameter creator

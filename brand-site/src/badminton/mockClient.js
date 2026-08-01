@@ -401,6 +401,46 @@ export const mockClient = {
     return result;
   },
 
+  async searchUsersForGroup(groupId, { query = "", limit = 10, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/users/search`, { query, limit, pageToken });
+    await delay();
+    const db = loadDb();
+    requireAuth(db);
+    requireAdmin(db, groupId);
+    const memberIds = new Set(
+      db.memberships.filter(m => m.groupId === groupId).map(m => m.userId)
+    );
+    const lower = String(query || "").trim().toLowerCase();
+    let all = db.users
+      .filter(u => !memberIds.has(u.id))
+      .sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+    if (lower) {
+      all = all.filter(u => {
+        const fullName = [u.firstName, u.lastName].filter(Boolean).join(" ").toLowerCase();
+        return (
+          String(u.username || "").toLowerCase().includes(lower) ||
+          String(u.firstName || "").toLowerCase().includes(lower) ||
+          String(u.lastName || "").toLowerCase().includes(lower) ||
+          fullName.includes(lower)
+        );
+      });
+    }
+    const start = pageToken && pageToken.startsWith("offset_")
+      ? parseInt(pageToken.slice("offset_".length), 10) || 0
+      : 0;
+    const pageItems = all.slice(start, start + limit).map(u => ({
+      id: u.id,
+      username: u.username,
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      photoUrl: u.photoUrl || undefined,
+    }));
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", `/api/groups/${groupId}/users/search`, result);
+    return result;
+  },
+
   async createParticipant(groupId, {name}) {
     logRequest("POST", `/api/groups/${groupId}/participants`, {name});
     await delay();

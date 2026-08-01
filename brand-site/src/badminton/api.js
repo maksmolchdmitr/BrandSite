@@ -254,6 +254,14 @@ export async function searchParticipants(groupId, { query = "", limit = 10, page
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/search?${params.toString()}`);
 }
 
+export async function searchUsersForGroup(groupId, { query = "", limit = 10, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (query) params.append("query", query);
+  params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/users/search?${params.toString()}`);
+}
+
 export async function createParticipant(groupId, {name}) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants`, {
     method: "POST",

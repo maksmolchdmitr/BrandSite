@@ -60,8 +60,44 @@
 
             <div class="addParticipantSection">
               <div class="addParticipantLabel">{{ $t('badminton.group.inviteExisting') }}</div>
-              <div class="row">
-                <input class="input" v-model="newParticipantName" :placeholder="$t('badminton.group.participantUsername')" />
+              <div class="row inviteSearchRow">
+                <div class="participantSearch inviteSearch">
+                  <input
+                    class="input"
+                    v-model="newParticipantName"
+                    :placeholder="$t('badminton.group.participantUsername')"
+                    autocomplete="off"
+                    @input="onInviteUserSearchInput"
+                    @focus="onInviteUserSearchFocus"
+                  />
+                  <div
+                    v-if="showInviteUserDropdown"
+                    class="dropdown"
+                    @scroll="onInviteUserDropdownScroll"
+                  >
+                    <div v-if="inviteUserSearch.loading && inviteUserSearch.items.length === 0" class="dropdownItem">
+                      {{ $t('common.actions.loading') }}
+                    </div>
+                    <div
+                      v-for="u in inviteUserSearch.items"
+                      :key="u.id"
+                      class="dropdownItem"
+                      @click="selectInviteUser(u)"
+                    >
+                      <PersonChip :name="inviteUserLabel(u)" :photo-url="u.photoUrl" />
+                      <span class="inviteUsername">@{{ u.username }}</span>
+                    </div>
+                    <div v-if="inviteUserSearch.loading && inviteUserSearch.items.length > 0" class="dropdownItem">
+                      {{ $t('badminton.group.loadingMore') }}
+                    </div>
+                    <div
+                      v-if="!inviteUserSearch.loading && inviteUserSearch.items.length === 0 && newParticipantName.trim()"
+                      class="dropdownItem muted"
+                    >
+                      {{ $t('badminton.group.noUsersFound') }}
+                    </div>
+                  </div>
+                </div>
                 <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
                   {{ loadingAddParticipant ? $t('badminton.group.adding') : $t('common.actions.add') }}
                 </button>
@@ -773,6 +809,8 @@ export default defineComponent({
 
       newParticipantName: "",
       loadingAddParticipant: false,
+      inviteUserSearch: { items: [], nextPageToken: null, loading: false, open: false },
+      inviteUserSearchTimer: null,
 
       newUnlinkedFirstName: "",
       newUnlinkedLastName: "",
@@ -798,6 +836,13 @@ export default defineComponent({
     },
     isAdmin() {
       return this.group?.myRole === "admin";
+    },
+    showInviteUserDropdown() {
+      return this.inviteUserSearch.open && (
+        this.inviteUserSearch.loading
+        || this.inviteUserSearch.items.length > 0
+        || Boolean(String(this.newParticipantName || "").trim())
+      );
     },
     canCreateUnlinked() {
       return Boolean(
@@ -1312,9 +1357,11 @@ export default defineComponent({
     async addParticipant() {
       this.loadingAddParticipant = true;
       this.error = "";
+      this.inviteUserSearch.open = false;
       try {
         const p = await badmintonClient.createParticipant(this.groupId, {name: this.newParticipantName});
         this.newParticipantName = "";
+        this.inviteUserSearch = { items: [], nextPageToken: null, loading: false, open: false };
         this.mergeParticipantNames([p]);
         if (this.participantsPages.length && this.participantsPageIndex === 0) {
           const first = this.participantsPages[0];
@@ -1325,6 +1372,71 @@ export default defineComponent({
       } finally {
         this.loadingAddParticipant = false;
       }
+    },
+
+    inviteUserLabel(user) {
+      const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+      return fullName || user?.username || user?.id || "—";
+    },
+
+    onInviteUserSearchFocus() {
+      this.inviteUserSearch.open = true;
+      if (this.inviteUserSearch.items.length === 0 && !this.inviteUserSearch.loading) {
+        this.loadInviteUsers(false);
+      }
+    },
+
+    onInviteUserSearchInput() {
+      this.inviteUserSearch.open = true;
+      if (this.inviteUserSearchTimer) clearTimeout(this.inviteUserSearchTimer);
+      this.inviteUserSearchTimer = setTimeout(() => {
+        this.inviteUserSearch.items = [];
+        this.inviteUserSearch.nextPageToken = null;
+        this.loadInviteUsers(false);
+      }, 250);
+    },
+
+    async loadInviteUsers(append = false) {
+      if (!this.groupId || !this.isAdmin) return;
+      if (this.inviteUserSearch.loading) return;
+      if (append && !this.inviteUserSearch.nextPageToken) return;
+      this.inviteUserSearch.loading = true;
+      try {
+        const result = await badmintonClient.searchUsersForGroup(this.groupId, {
+          query: String(this.newParticipantName || "").trim(),
+          limit: 10,
+          pageToken: append ? this.inviteUserSearch.nextPageToken : undefined,
+        });
+        const items = result?.items || [];
+        if (append) {
+          const existingIds = new Set(this.inviteUserSearch.items.map(u => u.id));
+          this.inviteUserSearch.items = [
+            ...this.inviteUserSearch.items,
+            ...items.filter(u => !existingIds.has(u.id)),
+          ];
+        } else {
+          this.inviteUserSearch.items = items;
+        }
+        this.inviteUserSearch.nextPageToken = result?.pageToken || null;
+      } catch (e) {
+        if (!append) this.inviteUserSearch.items = [];
+        this.inviteUserSearch.nextPageToken = null;
+      } finally {
+        this.inviteUserSearch.loading = false;
+      }
+    },
+
+    onInviteUserDropdownScroll(event) {
+      const target = event.target;
+      const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+      if (scrollBottom < 50 && this.inviteUserSearch.nextPageToken && !this.inviteUserSearch.loading) {
+        this.loadInviteUsers(true);
+      }
+    },
+
+    selectInviteUser(user) {
+      this.newParticipantName = user?.username || "";
+      this.inviteUserSearch.open = false;
     },
 
     onUnlinkedNameInput() {
@@ -1767,6 +1879,11 @@ export default defineComponent({
 .addParticipantBlock { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
 .addParticipantSection { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
 .addParticipantLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #333; }
+.inviteSearchRow { align-items: flex-start; }
+.inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
+.inviteSearch .input { width: 100%; max-width: 100%; }
+.inviteUsername { font-size: 12px; opacity: 0.65; margin-left: 4px; }
+.dropdownItem.muted { opacity: 0.65; cursor: default; }
 .hint { font-family: var(--font-display); font-size: 14px; opacity: 0.75; }
 .input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
 .label { font-family: var(--font-display); font-weight: 700; width: 90px; }
@@ -1890,7 +2007,7 @@ export default defineComponent({
 
 .participantSearch { position: relative; }
 .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; max-height: 300px; overflow-y: auto; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.dropdownItem { padding: 10px 14px; cursor: pointer; font-family: var(--font-display); font-size: 14px; }
+.dropdownItem { padding: 10px 14px; cursor: pointer; font-family: var(--font-display); font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dropdownItem:hover { background: #f6f6ff; }
 
 .selectedParticipant { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: white; border: 2px solid #4F3DFF; border-radius: 8px; font-family: var(--font-display); font-weight: 600; }
