@@ -9,21 +9,30 @@
     :class="{ photoHoldSourcePressing: pressing }"
     draggable="false"
     @pointerdown="onPointerDown"
+    @click.stop.prevent
     @contextmenu.prevent
     @dragstart.prevent
   />
-  <Teleport v-if="open" to="body">
+  <!--
+    Teleport to <body>: overlay must NOT rely on scoped CSS (Vue data-v on
+    teleported nodes does not match parent scoped selectors; class-only rules
+    can still lose to build/order surprises). Critical layout is inline.
+  -->
+  <Teleport to="body">
     <div
-      class="photoHoldOverlay"
+      v-if="open"
+      class="bmt-photo-hold-overlay"
       role="dialog"
       aria-modal="true"
+      :style="overlayStyle"
       @pointerup="onOverlayDismiss"
       @click="onOverlayDismiss"
     >
       <img
         :src="src"
         :alt="alt"
-        class="photoHoldFull"
+        class="bmt-photo-hold-full"
+        :style="fullStyle"
         referrerpolicy="no-referrer"
         draggable="false"
       />
@@ -39,6 +48,44 @@ const HOLD_MS = 350;
 const MOVE_CANCEL_PX = 28;
 /** Ignore dismiss from the same gesture that opened the overlay. */
 const STICKY_GUARD_MS = 450;
+
+/** Inline — survives Teleport + any scoped/CSS-order issues. */
+const OVERLAY_STYLE = {
+  position: "fixed",
+  top: "0",
+  right: "0",
+  bottom: "0",
+  left: "0",
+  width: "100vw",
+  height: "100vh",
+  maxWidth: "100vw",
+  maxHeight: "100vh",
+  margin: "0",
+  zIndex: "2147483646",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "16px",
+  boxSizing: "border-box",
+  background: "rgba(0, 0, 0, 0.94)",
+  cursor: "zoom-out",
+  transform: "none",
+  filter: "none",
+  inset: "0",
+};
+
+const FULL_STYLE = {
+  display: "block",
+  width: "min(92vw, 720px)",
+  maxWidth: "92vw",
+  maxHeight: "85vh",
+  height: "auto",
+  objectFit: "contain",
+  borderRadius: "4px",
+  pointerEvents: "none",
+  userSelect: "none",
+  transform: "none",
+};
 
 export default defineComponent({
   name: "PhotoHoldPreview",
@@ -57,6 +104,8 @@ export default defineComponent({
       startY: 0,
       activePointerId: null,
       swallowClickUntil: 0,
+      overlayStyle: OVERLAY_STYLE,
+      fullStyle: FULL_STYLE,
     };
   },
   methods: {
@@ -193,39 +242,43 @@ export default defineComponent({
 }
 </style>
 
+<!-- Unscoped backup for teleported nodes (class names are global on purpose). -->
 <style>
-.photoHoldOverlay {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding:
-    max(16px, env(safe-area-inset-top, 0px))
-    max(16px, env(safe-area-inset-right, 0px))
-    max(16px, env(safe-area-inset-bottom, 0px))
-    max(16px, env(safe-area-inset-left, 0px));
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.88);
-  cursor: zoom-out;
-  transform: none;
+.bmt-photo-hold-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  max-height: 100dvh !important;
+  margin: 0 !important;
+  z-index: 2147483646 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  background: rgba(0, 0, 0, 0.94) !important;
+  cursor: zoom-out !important;
+  transform: none !important;
+  filter: none !important;
 }
-.photoHoldFull {
-  display: block;
-  max-width: min(100vw, 100%);
-  max-height: min(100dvh, 100%);
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 4px;
-  -webkit-user-select: none;
-  user-select: none;
-  pointer-events: none;
-  transform: none;
+.bmt-photo-hold-full {
+  display: block !important;
+  width: min(92vw, 720px) !important;
+  max-width: 92vw !important;
+  max-height: 85vh !important;
+  max-height: 85dvh !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 4px !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  pointer-events: none !important;
+  transform: none !important;
 }
 </style>
