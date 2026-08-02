@@ -138,11 +138,10 @@
               </div>
               <div class="photoPickerRow">
                 <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(newUnlinkedPhotoUrl) }">
-                  <img
+                  <PhotoHoldPreview
                     v-if="isPreviewablePhotoUrl(newUnlinkedPhotoUrl)"
                     :src="newUnlinkedPhotoUrl"
                     alt=""
-                    referrerpolicy="no-referrer"
                   />
                   <span v-else>{{ $t('badminton.group.photo') }}</span>
                 </div>
@@ -477,11 +476,10 @@
             <input class="input" v-model="modal.payload.name" :placeholder="$t('badminton.group.name')" />
             <div class="photoPickerRow">
               <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(modal.payload.photoUrl) }">
-                <img
+                <PhotoHoldPreview
                   v-if="isPreviewablePhotoUrl(modal.payload.photoUrl)"
                   :src="modal.payload.photoUrl"
                   alt=""
-                  referrerpolicy="no-referrer"
                 />
                 <span v-else>{{ $t('badminton.group.photo') }}</span>
               </div>
@@ -758,6 +756,7 @@ import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
+import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
@@ -770,7 +769,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, ParticipantSearchSelect },
+  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ParticipantSearchSelect },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "participants" },
@@ -1856,7 +1855,7 @@ export default defineComponent({
   box-sizing: border-box;
 }
 .photoPreview.empty { border-style: dashed; }
-.photoPreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photoPreview :deep(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photoPickerRow .input { flex: 1 1 180px; width: auto; min-width: 160px; }
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }

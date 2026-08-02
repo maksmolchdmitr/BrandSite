@@ -1,12 +1,11 @@
 <template>
   <span class="personChip">
-    <img
+    <PhotoHoldPreview
       v-if="photoUrl"
       class="avatar"
       :src="photoUrl"
       :alt="name"
       loading="lazy"
-      referrerpolicy="no-referrer"
     />
     <span v-else class="avatar avatarFallback" aria-hidden="true">{{ initials }}</span>
     <span class="personText">
@@ -18,9 +17,11 @@
 
 <script>
 import { defineComponent } from "vue";
+import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
 
 export default defineComponent({
   name: "PersonChip",
+  components: { PhotoHoldPreview },
   props: {
     name: { type: String, default: "—" },
     photoUrl: { type: String, default: "" },
@@ -48,7 +49,8 @@ export default defineComponent({
   min-width: 0;
   max-width: 100%;
 }
-.avatar {
+:deep(.avatar),
+.avatarFallback {
   width: 28px;
   height: 28px;
   border-radius: 50%;
