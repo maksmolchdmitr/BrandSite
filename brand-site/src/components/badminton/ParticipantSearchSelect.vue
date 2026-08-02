@@ -1,0 +1,278 @@
+<template>
+  <div class="participantSearch">
+    <input
+      class="input"
+      :value="query"
+      :placeholder="placeholder"
+      autocomplete="off"
+      @input="onQueryInput"
+      @focus="onFocus"
+    />
+    <div v-if="dropdownOpen" class="dropdown">
+      <div v-if="loading && items.length === 0" class="dropdownItem muted">
+        {{ $t("common.actions.loading") }}
+      </div>
+      <div
+        v-for="p in items"
+        :key="p.id"
+        class="dropdownItem"
+        @click="onSelect(p)"
+      >
+        <PersonChip
+          :name="p.name"
+          :photo-url="p.photoUrl || ''"
+          :username="p.username || ''"
+        />
+      </div>
+      <div
+        v-if="!loading && items.length === 0 && query.trim()"
+        class="dropdownItem muted"
+      >
+        {{ $t("badminton.group.noParticipants") }}
+      </div>
+      <div v-if="showPager" class="dropdownPager">
+        <button
+          type="button"
+          class="pagerButton"
+          :disabled="!canGoPrev || loading"
+          @click.stop="goPrev"
+        >
+          ←
+        </button>
+        <span class="pagerPage">{{ $t("common.pager.page", { page: pageIndex + 1 }) }}</span>
+        <button
+          type="button"
+          class="pagerButton"
+          :disabled="!canGoNext || loading"
+          @click.stop="goNext"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { defineComponent } from "vue";
+import PersonChip from "@/components/badminton/PersonChip.vue";
+import { badmintonClient } from "@/badminton/client.js";
+
+const PAGE_LIMIT = 10;
+
+export default defineComponent({
+  name: "ParticipantSearchSelect",
+  components: { PersonChip },
+  props: {
+    groupId: { type: String, required: true },
+    placeholder: { type: String, default: "" },
+    /** Participant ids already picked for other slots — excluded from results */
+    excludeIds: { type: Array, default: () => [] },
+  },
+  emits: ["select"],
+  data() {
+    return {
+      query: "",
+      pages: [],
+      pageIndex: 0,
+      loading: false,
+      open: false,
+      searchTimer: null,
+      requestSeq: 0,
+    };
+  },
+  computed: {
+    currentPage() {
+      return this.pages[this.pageIndex] || { items: [], pageToken: null };
+    },
+    items() {
+      const exclude = new Set((this.excludeIds || []).filter(Boolean));
+      return (this.currentPage.items || []).filter((p) => !exclude.has(p.id));
+    },
+    dropdownOpen() {
+      return this.open && (this.loading || this.items.length > 0 || Boolean(this.query.trim()) || this.pages.length > 0);
+    },
+    canGoPrev() {
+      return this.pageIndex > 0;
+    },
+    canGoNext() {
+      return Boolean(this.currentPage?.pageToken);
+    },
+    showPager() {
+      return this.pages.length > 0 && (this.canGoPrev || this.canGoNext);
+    },
+  },
+  beforeUnmount() {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  },
+  methods: {
+    reset() {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.query = "";
+      this.pages = [];
+      this.pageIndex = 0;
+      this.loading = false;
+      this.open = false;
+    },
+    onFocus() {
+      this.open = true;
+      if (this.pages.length === 0 && !this.loading) {
+        this.loadFirstPage();
+      }
+    },
+    onQueryInput(event) {
+      this.query = event.target.value;
+      this.open = true;
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => {
+        this.loadFirstPage();
+      }, 200);
+    },
+    async loadFirstPage() {
+      this.pages = [];
+      this.pageIndex = 0;
+      await this.fetchPage({ pageToken: undefined, replace: true });
+    },
+    async fetchPage({ pageToken, replace }) {
+      if (!this.groupId) return;
+      const seq = ++this.requestSeq;
+      this.loading = true;
+      try {
+        const result = await badmintonClient.searchParticipants(this.groupId, {
+          query: this.query.trim(),
+          limit: PAGE_LIMIT,
+          pageToken,
+        });
+        if (seq !== this.requestSeq) return;
+        const page = {
+          items: result?.items || [],
+          pageToken: result?.pageToken || null,
+          pageTokenFrom: pageToken || null,
+        };
+        if (replace) {
+          this.pages = [page];
+          this.pageIndex = 0;
+        } else {
+          this.pages.push(page);
+          this.pageIndex = this.pages.length - 1;
+        }
+      } catch (e) {
+        if (seq !== this.requestSeq) return;
+        console.error("Failed to load participants:", e);
+        if (replace) {
+          this.pages = [{ items: [], pageToken: null, pageTokenFrom: null }];
+          this.pageIndex = 0;
+        }
+      } finally {
+        if (seq === this.requestSeq) this.loading = false;
+      }
+    },
+    goPrev() {
+      if (!this.canGoPrev || this.loading) return;
+      this.pageIndex -= 1;
+    },
+    async goNext() {
+      if (!this.canGoNext || this.loading) return;
+      const nextToken = this.currentPage.pageToken;
+      if (!nextToken) return;
+      const existingIndex = this.pages.findIndex(
+        (p, idx) => idx > this.pageIndex && p.pageTokenFrom === nextToken
+      );
+      if (existingIndex >= 0) {
+        this.pageIndex = existingIndex;
+        return;
+      }
+      // Drop forward cache when branching from an earlier page
+      this.pages = this.pages.slice(0, this.pageIndex + 1);
+      await this.fetchPage({ pageToken: nextToken, replace: false });
+    },
+    onSelect(participant) {
+      this.$emit("select", participant);
+      this.reset();
+    },
+  },
+});
+</script>
+
+<style scoped>
+.participantSearch {
+  position: relative;
+}
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.dropdownItem {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dropdownItem:hover {
+  background: #f6f6ff;
+}
+.dropdownItem.muted {
+  cursor: default;
+  opacity: 0.7;
+}
+.dropdownItem.muted:hover {
+  background: transparent;
+}
+.dropdownPager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid #eee;
+  position: sticky;
+  bottom: 0;
+  background: white;
+}
+.pagerButton {
+  border: 2px solid #4f3dff;
+  background-color: white;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #4f3dff;
+  cursor: pointer;
+}
+.pagerButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pagerPage {
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dropdown,
+  .dropdownPager {
+    background: #2d2d2d;
+    border-color: #4a4a4a;
+  }
+  .dropdownItem:hover {
+    background: #3a3a3a;
+  }
+  .pagerButton {
+    background-color: #2d2d2d;
+  }
+}
+</style>

@@ -472,60 +472,37 @@
             <div v-if="modal.payload.kind === 'singles'" class="matchForm">
               <div class="formSection">
                 <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
-                <div v-if="!modal.payload.team1P1" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam1P1" 
-                    @input="searchParticipantsField('team1P1')"
-                    @focus="loadParticipantsPage('team1P1')"
-                    :placeholder="$t('common.placeholders.searchParticipant')"
-                    autocomplete="off"
-                  />
-                  <div 
-                    v-if="getParticipantsList('team1P1').items.length > 0 || getParticipantsList('team1P1').loading" 
-                    class="dropdown"
-                    @scroll="handleScroll('team1P1', $event)"
-                  >
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team1P1').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team1P1', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team1P1"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant')"
+                  @select="selectParticipant('team1P1', $event)"
+                />
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team1P1)"
                     :photo-url="getParticipantPhoto(modal.payload.team1P1)"
                     :username="getParticipantUsername(modal.payload.team1P1)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team1P1 = null; modal.payload.searchTeam1P1 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team1P1 = null">×</button>
                 </div>
-                
+
                 <div class="scoresRow">
                   <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
-                      <input 
-                        type="number" 
-                        class="scoreInput" 
-                        v-model.number="modal.payload.team1Scores[idx]" 
+                      <input
+                        type="number"
+                        class="scoreInput"
+                        v-model.number="modal.payload.team1Scores[idx]"
                         :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
-                      <button 
-                        v-if="modal.payload.team1Scores.length > 1" 
-                        class="btn small danger scoreRemoveBtn" 
+                      <button
+                        v-if="modal.payload.team1Scores.length > 1"
+                        class="btn small danger scoreRemoveBtn"
                         @click="removeScore('team1', idx)"
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
@@ -541,60 +518,37 @@
 
               <div class="formSection">
                 <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
-                <div v-if="!modal.payload.team2P1" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam2P1" 
-                    @input="searchParticipantsField('team2P1')"
-                    @focus="loadParticipantsPage('team2P1')"
-                    :placeholder="$t('common.placeholders.searchParticipant')"
-                    autocomplete="off"
-                  />
-                  <div 
-                    v-if="getParticipantsList('team2P1').items.length > 0 || getParticipantsList('team2P1').loading" 
-                    class="dropdown"
-                    @scroll="handleScroll('team2P1', $event)"
-                  >
-                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team2P1').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team2P1', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                    <div v-if="getParticipantsList('team2P1').loading && getParticipantsList('team2P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team2P1"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant')"
+                  @select="selectParticipant('team2P1', $event)"
+                />
                 <div v-if="modal.payload.team2P1" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team2P1)"
                     :photo-url="getParticipantPhoto(modal.payload.team2P1)"
                     :username="getParticipantUsername(modal.payload.team2P1)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team2P1 = null; modal.payload.searchTeam2P1 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team2P1 = null">×</button>
                 </div>
-                
+
                 <div class="scoresRow">
                   <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
-                      <input 
-                        type="number" 
-                        class="scoreInput" 
-                        v-model.number="modal.payload.team2Scores[idx]" 
+                      <input
+                        type="number"
+                        class="scoreInput"
+                        v-model.number="modal.payload.team2Scores[idx]"
                         :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
-                      <button 
-                        v-if="modal.payload.team2Scores.length > 1" 
-                        class="btn small danger scoreRemoveBtn" 
+                      <button
+                        v-if="modal.payload.team2Scores.length > 1"
+                        class="btn small danger scoreRemoveBtn"
                         @click="removeScore('team2', idx)"
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
@@ -613,94 +567,53 @@
             <div v-else class="matchForm">
               <div class="formSection">
                 <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
-                <div v-if="!modal.payload.team1P1" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam1P1" 
-                    @input="searchParticipantsField('team1P1')"
-                    @focus="loadParticipantsPage('team1P1')"
-                    :placeholder="$t('common.placeholders.searchParticipant1')"
-                    autocomplete="off"
-                  />
-                  <div 
-                    v-if="getParticipantsList('team1P1').items.length > 0 || getParticipantsList('team1P1').loading" 
-                    class="dropdown"
-                    @scroll="handleScroll('team1P1', $event)"
-                  >
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team1P1').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team1P1', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                    <div v-if="getParticipantsList('team1P1').loading && getParticipantsList('team1P1').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team1P1"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant1')"
+                  @select="selectParticipant('team1P1', $event)"
+                />
                 <div v-if="modal.payload.team1P1" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team1P1)"
                     :photo-url="getParticipantPhoto(modal.payload.team1P1)"
                     :username="getParticipantUsername(modal.payload.team1P1)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team1P1 = null; modal.payload.searchTeam1P1 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team1P1 = null">×</button>
                 </div>
 
-                <div v-if="!modal.payload.team1P2" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam1P2" 
-                    @input="searchParticipantsField('team1P2')"
-                    @focus="loadParticipantsPage('team1P2')"
-                    :placeholder="$t('common.placeholders.searchParticipant2')"
-                    autocomplete="off"
-                  />
-                  <div v-if="getParticipantsList('team1P2').items.length > 0 || getParticipantsList('team1P2').loading" class="dropdown">
-                    <div v-if="getParticipantsList('team1P2').loading" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team1P2').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team1P2', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team1P2"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant2')"
+                  @select="selectParticipant('team1P2', $event)"
+                />
                 <div v-if="modal.payload.team1P2" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team1P2)"
                     :photo-url="getParticipantPhoto(modal.payload.team1P2)"
                     :username="getParticipantUsername(modal.payload.team1P2)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team1P2 = null; modal.payload.searchTeam1P2 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team1P2 = null">×</button>
                 </div>
-                
+
                 <div class="scoresRow">
                   <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
-                      <input 
-                        type="number" 
-                        class="scoreInput" 
-                        v-model.number="modal.payload.team1Scores[idx]" 
+                      <input
+                        type="number"
+                        class="scoreInput"
+                        v-model.number="modal.payload.team1Scores[idx]"
                         :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
-                      <button 
-                        v-if="modal.payload.team1Scores.length > 1" 
-                        class="btn small danger scoreRemoveBtn" 
+                      <button
+                        v-if="modal.payload.team1Scores.length > 1"
+                        class="btn small danger scoreRemoveBtn"
                         @click="removeScore('team1', idx)"
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
@@ -716,94 +629,53 @@
 
               <div class="formSection">
                 <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
-                <div v-if="!modal.payload.team2P1" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam2P1" 
-                    @input="searchParticipantsField('team2P1')"
-                    @focus="loadParticipantsPage('team2P1')"
-                    :placeholder="$t('common.placeholders.searchParticipant1')"
-                    autocomplete="off"
-                  />
-                  <div v-if="getParticipantsList('team2P1').items.length > 0 || getParticipantsList('team2P1').loading" class="dropdown">
-                    <div v-if="getParticipantsList('team2P1').loading" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team2P1').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team2P1', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team2P1"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant1')"
+                  @select="selectParticipant('team2P1', $event)"
+                />
                 <div v-if="modal.payload.team2P1" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team2P1)"
                     :photo-url="getParticipantPhoto(modal.payload.team2P1)"
                     :username="getParticipantUsername(modal.payload.team2P1)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team2P1 = null; modal.payload.searchTeam2P1 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team2P1 = null">×</button>
                 </div>
 
-                <div v-if="!modal.payload.team2P2" class="participantSearch">
-                  <input 
-                    class="input" 
-                    v-model="modal.payload.searchTeam2P2" 
-                    @input="searchParticipantsField('team2P2')"
-                    @focus="loadParticipantsPage('team2P2')"
-                    :placeholder="$t('common.placeholders.searchParticipant2')"
-                    autocomplete="off"
-                  />
-                  <div 
-                    v-if="getParticipantsList('team2P2').items.length > 0 || getParticipantsList('team2P2').loading" 
-                    class="dropdown"
-                    @scroll="handleScroll('team2P2', $event)"
-                  >
-                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page === 0" class="dropdownItem">{{ $t('common.actions.loading') }}</div>
-                    <div 
-                      v-for="p in getParticipantsList('team2P2').items" 
-                      :key="p.id"
-                      class="dropdownItem"
-                      @click="selectParticipant('team2P2', p)"
-                    >
-                      <PersonChip
-                        :name="p.name"
-                        :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :username="p.username || getParticipantUsername(p.id)"
-                      />
-                    </div>
-                    <div v-if="getParticipantsList('team2P2').loading && getParticipantsList('team2P2').page > 0" class="dropdownItem">{{ $t('badminton.group.loadingMore') }}</div>
-                  </div>
-                </div>
+                <ParticipantSearchSelect
+                  v-if="!modal.payload.team2P2"
+                  :group-id="groupId"
+                  :exclude-ids="matchSelectedParticipantIds"
+                  :placeholder="$t('common.placeholders.searchParticipant2')"
+                  @select="selectParticipant('team2P2', $event)"
+                />
                 <div v-if="modal.payload.team2P2" class="selectedParticipant">
                   <PersonChip
                     :name="getParticipantName(modal.payload.team2P2)"
                     :photo-url="getParticipantPhoto(modal.payload.team2P2)"
                     :username="getParticipantUsername(modal.payload.team2P2)"
                   />
-                  <button class="btn small danger" @click="modal.payload.team2P2 = null; modal.payload.searchTeam2P2 = ''">×</button>
+                  <button class="btn small danger" @click="modal.payload.team2P2 = null">×</button>
                 </div>
-                
+
                 <div class="scoresRow">
                   <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
                   <div class="scoresInputs">
                     <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
-                      <input 
-                        type="number" 
-                        class="scoreInput" 
-                        v-model.number="modal.payload.team2Scores[idx]" 
+                      <input
+                        type="number"
+                        class="scoreInput"
+                        v-model.number="modal.payload.team2Scores[idx]"
                         :placeholder="$t('badminton.group.scorePlaceholder')"
                         min="0"
                         max="30"
                       />
-                      <button 
-                        v-if="modal.payload.team2Scores.length > 1" 
-                        class="btn small danger scoreRemoveBtn" 
+                      <button
+                        v-if="modal.payload.team2Scores.length > 1"
+                        class="btn small danger scoreRemoveBtn"
                         @click="removeScore('team2', idx)"
                         :title="$t('badminton.group.removeScore')"
                       >×</button>
@@ -837,6 +709,7 @@ import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
+import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
@@ -849,7 +722,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip },
+  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, ParticipantSearchSelect },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "participants" },
@@ -903,14 +776,6 @@ export default defineComponent({
 
       modal: {type: "", payload: {}},
       modalLoading: false,
-      
-      // Participant search pagination state for each field
-      participantSearchState: {
-        team1P1: { items: [], nextPageToken: null, loading: false },
-        team1P2: { items: [], nextPageToken: null, loading: false },
-        team2P1: { items: [], nextPageToken: null, loading: false },
-        team2P2: { items: [], nextPageToken: null, loading: false },
-      },
     };
   },
   computed: {
@@ -919,6 +784,10 @@ export default defineComponent({
     },
     isAdmin() {
       return this.group?.myRole === "admin";
+    },
+    matchSelectedParticipantIds() {
+      const p = this.modal?.payload || {};
+      return [p.team1P1, p.team1P2, p.team2P1, p.team2P2].filter(Boolean);
     },
     showInviteUserDropdown() {
       return this.inviteUserSearch.open && (
@@ -1657,46 +1526,25 @@ export default defineComponent({
     },
 
     openCreateMatch(kind) {
-      // Reset search states
-      this.participantSearchState = {
-        team1P1: { items: [], nextPageToken: null, loading: false },
-        team1P2: { items: [], nextPageToken: null, loading: false },
-        team2P1: { items: [], nextPageToken: null, loading: false },
-        team2P2: { items: [], nextPageToken: null, loading: false },
-      };
       this.modal = {
         type: "match",
         payload: {
           matchId: "",
           kind,
-          // Singles
           team1P1: null,
           team1Scores: [21],
           team2P1: null,
           team2Scores: [21],
-          // Doubles
           team1P2: null,
           team2P2: null,
-          // Search fields
-          searchTeam1P1: "",
-          searchTeam1P2: "",
-          searchTeam2P1: "",
-          searchTeam2P2: "",
         },
       };
     },
     openEditMatch(m) {
-      // Reset search states
-      this.participantSearchState = {
-        team1P1: { items: [], nextPageToken: null, loading: false },
-        team1P2: { items: [], nextPageToken: null, loading: false },
-        team2P1: { items: [], nextPageToken: null, loading: false },
-        team2P2: { items: [], nextPageToken: null, loading: false },
-      };
       const games = m.score?.games || [];
       const team1Scores = games.length > 0 ? [games[0].pointsA] : [null];
       const team2Scores = games.length > 0 ? [games[0].pointsB] : [null];
-      
+
       if (m.kind === "singles") {
         this.modal = {
           type: "match",
@@ -1707,8 +1555,6 @@ export default defineComponent({
             team1Scores,
             team2P1: m.teamB?.[0] || null,
             team2Scores,
-            searchTeam1P1: "",
-            searchTeam2P1: "",
           },
         };
       } else {
@@ -1723,93 +1569,13 @@ export default defineComponent({
             team2P1: m.teamB?.[0] || null,
             team2P2: m.teamB?.[1] || null,
             team2Scores,
-            searchTeam1P1: "",
-            searchTeam1P2: "",
-            searchTeam2P1: "",
-            searchTeam2P2: "",
           },
         };
       }
     },
-    getParticipantsList(field) {
-      return this.participantSearchState[field] || { items: [], nextPageToken: null, loading: false };
-    },
-    async loadParticipantsPage(field, append = false) {
-      if (!this.groupId) return;
-      const state = this.participantSearchState[field];
-      if (!state) return;
-
-      if (state.loading || (!append && state.items.length > 0)) return;
-      if (append && !state.nextPageToken) return;
-
-      state.loading = true;
-      const searchField = `search${field.charAt(0).toUpperCase() + field.slice(1)}`;
-      const query = this.modal.payload[searchField] || "";
-
-      try {
-        const result = await badmintonClient.searchParticipants(this.groupId, {
-          query: query.trim(),
-          limit: 10,
-          pageToken: append ? state.nextPageToken : undefined,
-        });
-
-        const filtered = (result.items || []).filter(p => !this.isParticipantSelected(p.id, field));
-
-        if (append) {
-          const existingIds = new Set(state.items.map(p => p.id));
-          const newItems = filtered.filter(p => !existingIds.has(p.id));
-          state.items = [...state.items, ...newItems];
-        } else {
-          state.items = filtered;
-        }
-        state.nextPageToken = result.pageToken || null;
-      } catch (e) {
-        console.error("Failed to load participants:", e);
-        if (!append) {
-          state.items = [];
-        }
-        state.nextPageToken = null;
-      } finally {
-        state.loading = false;
-      }
-    },
-    handleScroll(field, event) {
-      const target = event.target;
-      const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
-      
-      // Load next page when scrolled near bottom (within 50px)
-      if (scrollBottom < 50) {
-        const state = this.participantSearchState[field];
-        if (state && state.nextPageToken && !state.loading) {
-          this.loadParticipantsPage(field, true);
-        }
-      }
-    },
-    async searchParticipantsField(field) {
-      const state = this.participantSearchState[field];
-      if (state) {
-        state.items = [];
-        state.nextPageToken = null;
-      }
-      await this.loadParticipantsPage(field, false);
-    },
-    isParticipantSelected(participantId, excludeField) {
-      const payload = this.modal.payload;
-      if (excludeField !== "team1P1" && payload.team1P1 === participantId) return true;
-      if (excludeField !== "team1P2" && payload.team1P2 === participantId) return true;
-      if (excludeField !== "team2P1" && payload.team2P1 === participantId) return true;
-      if (excludeField !== "team2P2" && payload.team2P2 === participantId) return true;
-      return false;
-    },
     selectParticipant(field, participant) {
       this.modal.payload[field] = participant.id;
       this.mergeParticipantNames([participant]);
-      const searchField = `search${field.charAt(0).toUpperCase() + field.slice(1)}`;
-      this.modal.payload[searchField] = "";
-      // Reset search state
-      if (this.participantSearchState[field]) {
-        this.participantSearchState[field] = { items: [], nextPageToken: null, loading: false };
-      }
     },
     addScore(team) {
       const field = `${team}Scores`;
