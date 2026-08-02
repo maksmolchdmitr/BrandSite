@@ -45,14 +45,14 @@ export default defineComponent({
 .personChip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   max-width: 100%;
 }
 :deep(.avatar),
 .avatarFallback {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
   flex: 0 0 auto;
@@ -62,7 +62,7 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
   color: #4F3DFF;
   letter-spacing: -0.02em;
