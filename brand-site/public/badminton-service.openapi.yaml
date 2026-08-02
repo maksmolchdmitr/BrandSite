@@ -294,13 +294,14 @@ paths:
       summary: Search participants in group with pagination (member-only)
       operationId: searchParticipants
       description: |
-        Search participants by name with cursor pagination. Results are sorted alphabetically.
+        Prefix search of group participants by username / first / last / full name
+        (case-insensitive, starts-with). Results are sorted alphabetically.
         Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - in: query
           name: query
-          description: Search query (filters by name, case-insensitive)
+          description: Prefix filter on username or name (case-insensitive)
           schema: { type: string, default: "" }
         - in: query
           name: limit

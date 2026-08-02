@@ -400,10 +400,23 @@ export const mockClient = {
       .filter(p => p.groupId === groupId)
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Filter by query if provided
+    // Prefix filter on username / first / last / full name (same as API)
     if (query && query.trim()) {
-      const lower = query.toLowerCase();
-      all = all.filter(p => p.name.toLowerCase().includes(lower));
+      const lower = query.trim().toLowerCase();
+      all = all.filter((p) => {
+        const linkedUser = p.userId ? db.users.find((u) => u.id === p.userId) : null;
+        const username = String(linkedUser?.username || p.username || "").toLowerCase();
+        const firstName = String(linkedUser?.firstName || "").toLowerCase();
+        const lastName = String(linkedUser?.lastName || "").toLowerCase();
+        const fullName = [firstName, lastName].filter(Boolean).join(" ")
+          || String(p.name || "").toLowerCase();
+        return (
+          username.startsWith(lower) ||
+          firstName.startsWith(lower) ||
+          lastName.startsWith(lower) ||
+          fullName.startsWith(lower)
+        );
+      });
     }
 
     const start = pageToken && pageToken.startsWith("offset_")
