@@ -909,7 +909,7 @@ components:
           description: Linked registered user id (if any)
         photoUrl:
           type: string
-          description: Profile photo URL (Telegram, external, or data URL)
+          description: Profile photo URL (http/https; Telegram or external)
       required: [ id, name, username ]
 
     ParticipantCreateRequest:
@@ -931,8 +931,8 @@ components:
         lastName: { type: string, minLength: 1, maxLength: 255 }
         photoUrl:
           type: string
-          maxLength: 150000
-          description: Optional profile photo (URL or data URL)
+          maxLength: 2048
+          description: Optional profile photo http/https URL
       required: [ username, firstName, lastName ]
 
     ParticipantUpdateRequest:
@@ -945,8 +945,8 @@ components:
         name: { type: string, minLength: 1, maxLength: 120 }
         photoUrl:
           type: string
-          maxLength: 150000
-          description: Profile photo URL or data URL; empty string clears photo
+          maxLength: 2048
+          description: Profile photo http/https URL; empty string clears photo
 
     LinkUserRequest:
       type: object

@@ -137,19 +137,15 @@
                 </button>
               </div>
               <div class="photoPickerRow">
-                <div class="photoPreview" :class="{ empty: !newUnlinkedPhotoUrl }">
-                  <img v-if="newUnlinkedPhotoUrl" :src="newUnlinkedPhotoUrl" alt="" />
+                <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(newUnlinkedPhotoUrl) }">
+                  <img v-if="isPreviewablePhotoUrl(newUnlinkedPhotoUrl)" :src="newUnlinkedPhotoUrl" alt="" />
                   <span v-else>{{ $t('badminton.group.photo') }}</span>
                 </div>
-                <label class="btn secondary small photoFileLabel">
-                  {{ $t('badminton.group.choosePhoto') }}
-                  <input
-                    class="photoFileInput"
-                    type="file"
-                    accept="image/*"
-                    @change="onUnlinkedPhotoSelected"
-                  />
-                </label>
+                <input
+                  class="input"
+                  v-model="newUnlinkedPhotoUrl"
+                  :placeholder="$t('badminton.group.photoUrlPlaceholder')"
+                />
                 <button
                   v-if="newUnlinkedPhotoUrl"
                   type="button"
@@ -475,19 +471,20 @@
           <div v-if="modal.type === 'editParticipant'" class="modalBody">
             <input class="input" v-model="modal.payload.name" :placeholder="$t('badminton.group.name')" />
             <div class="photoPickerRow">
-              <div class="photoPreview" :class="{ empty: !modal.payload.photoUrl }">
-                <img v-if="modal.payload.photoUrl" :src="modal.payload.photoUrl" alt="" />
+              <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(modal.payload.photoUrl) }">
+                <img
+                  v-if="isPreviewablePhotoUrl(modal.payload.photoUrl)"
+                  :src="modal.payload.photoUrl"
+                  alt=""
+                />
                 <span v-else>{{ $t('badminton.group.photo') }}</span>
               </div>
-              <label class="btn secondary small photoFileLabel">
-                {{ $t('badminton.group.choosePhoto') }}
-                <input
-                  class="photoFileInput"
-                  type="file"
-                  accept="image/*"
-                  @change="onEditParticipantPhotoSelected"
-                />
-              </label>
+              <input
+                class="input"
+                v-model="modal.payload.photoUrl"
+                :placeholder="$t('badminton.group.photoUrlPlaceholder')"
+                @input="onEditPhotoUrlInput"
+              />
               <button
                 v-if="modal.payload.photoUrl || modal.payload.photoCleared"
                 type="button"
@@ -758,8 +755,6 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
-import { fileToAvatarDataUrl } from "@/badminton/avatarDataUrl.js";
-
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
   и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
@@ -1480,32 +1475,19 @@ export default defineComponent({
       return `player.${Date.now().toString(36)}`;
     },
 
-    async onUnlinkedPhotoSelected(event) {
-      const file = event?.target?.files?.[0];
-      if (event?.target) event.target.value = "";
-      if (!file) return;
-      try {
-        this.newUnlinkedPhotoUrl = await fileToAvatarDataUrl(file);
-      } catch (e) {
-        this.error = e?.message || this.$t("badminton.group.errAddParticipant");
-      }
+    isPreviewablePhotoUrl(url) {
+      const value = String(url || "").trim();
+      return value.startsWith("http://") || value.startsWith("https://");
     },
     clearUnlinkedPhoto() {
       this.newUnlinkedPhotoUrl = "";
     },
-    async onEditParticipantPhotoSelected(event) {
-      const file = event?.target?.files?.[0];
-      if (event?.target) event.target.value = "";
-      if (!file || this.modal.type !== "editParticipant") return;
-      try {
-        const photoUrl = await fileToAvatarDataUrl(file);
-        this.modal = {
-          ...this.modal,
-          payload: {...this.modal.payload, photoUrl, photoTouched: true, photoCleared: false},
-        };
-      } catch (e) {
-        this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
-      }
+    onEditPhotoUrlInput() {
+      if (this.modal.type !== "editParticipant") return;
+      this.modal = {
+        ...this.modal,
+        payload: {...this.modal.payload, photoTouched: true, photoCleared: false},
+      };
     },
     clearEditParticipantPhoto() {
       if (this.modal.type !== "editParticipant") return;
@@ -1869,8 +1851,7 @@ export default defineComponent({
 }
 .photoPreview.empty { border-style: dashed; }
 .photoPreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.photoFileLabel { position: relative; overflow: hidden; display: inline-flex; align-items: center; }
-.photoFileInput { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photoPickerRow .input { flex: 1 1 180px; width: auto; min-width: 160px; }
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
 .inviteSearch .input { width: 100%; max-width: 100%; }
