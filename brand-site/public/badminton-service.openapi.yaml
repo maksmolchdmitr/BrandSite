@@ -1099,11 +1099,15 @@ components:
             properties:
               partnerUserId: { type: string }
               partnerName: { type: string }
+              partnerUsername: { type: string }
+              partnerPhotoUrl:
+                type: string
+                description: Telegram profile photo URL (if available)
               games: { type: integer, minimum: 0 }
               wins: { type: integer, minimum: 0 }
               losses: { type: integer, minimum: 0 }
               elo: { type: number, format: double }
-            required: [ partnerUserId, partnerName, games, wins, losses, elo ]
+            required: [ partnerUserId, partnerName, partnerUsername, games, wins, losses, elo ]
         doublesByPartnerPageToken:
           type: string
           description: Opaque page token for fetching next page of doubles-by-partner ratings
