@@ -11,15 +11,12 @@
     @contextmenu.prevent
     @dragstart.prevent
   />
-  <Teleport to="body">
+  <Teleport v-if="open" to="body">
     <div
-      v-if="open"
       class="photoHoldOverlay"
       role="dialog"
       aria-modal="true"
       @click="close"
-      @wheel.prevent
-      @touchmove.prevent
     >
       <img
         :src="src"
@@ -54,9 +51,6 @@ export default defineComponent({
       startX: 0,
       startY: 0,
       activePointerId: null,
-      prevBodyOverflow: "",
-      prevHtmlOverflow: "",
-      scrollLocked: false,
     };
   },
   methods: {
@@ -103,38 +97,15 @@ export default defineComponent({
     openLightbox() {
       if (this.open) return;
       this.open = true;
-      this.lockScroll();
       document.addEventListener("keydown", this.onKeydown);
     },
     close() {
       if (!this.open) return;
       this.open = false;
-      this.unlockScroll();
       document.removeEventListener("keydown", this.onKeydown);
     },
     onKeydown(e) {
       if (e.key === "Escape") this.close();
-    },
-    lockScroll() {
-      if (this.scrollLocked) return;
-      this.scrollLocked = true;
-      this.prevBodyOverflow = document.body.style.overflow;
-      this.prevHtmlOverflow = document.documentElement.style.overflow;
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-      document.addEventListener("touchmove", this.preventScroll, { passive: false });
-      document.addEventListener("wheel", this.preventScroll, { passive: false });
-    },
-    unlockScroll() {
-      if (!this.scrollLocked) return;
-      this.scrollLocked = false;
-      document.body.style.overflow = this.prevBodyOverflow;
-      document.documentElement.style.overflow = this.prevHtmlOverflow;
-      document.removeEventListener("touchmove", this.preventScroll);
-      document.removeEventListener("wheel", this.preventScroll);
-    },
-    preventScroll(e) {
-      e.preventDefault();
     },
     cancelHold() {
       if (this.holdTimer != null) {
@@ -149,8 +120,7 @@ export default defineComponent({
   },
   beforeUnmount() {
     this.cancelHold();
-    this.unlockScroll();
-    document.removeEventListener("keydown", this.onKeydown);
+    this.close();
   },
 });
 </script>
@@ -168,14 +138,7 @@ export default defineComponent({
 <style>
 .photoHoldOverlay {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -184,12 +147,11 @@ export default defineComponent({
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.88);
   cursor: zoom-out;
-  touch-action: none;
-  overscroll-behavior: none;
 }
 .photoHoldFull {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   width: auto;
   height: auto;
   object-fit: contain;
