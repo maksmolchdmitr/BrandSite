@@ -138,7 +138,12 @@
               </div>
               <div class="photoPickerRow">
                 <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(newUnlinkedPhotoUrl) }">
-                  <img v-if="isPreviewablePhotoUrl(newUnlinkedPhotoUrl)" :src="newUnlinkedPhotoUrl" alt="" />
+                  <img
+                    v-if="isPreviewablePhotoUrl(newUnlinkedPhotoUrl)"
+                    :src="newUnlinkedPhotoUrl"
+                    alt=""
+                    referrerpolicy="no-referrer"
+                  />
                   <span v-else>{{ $t('badminton.group.photo') }}</span>
                 </div>
                 <input
@@ -476,6 +481,7 @@
                   v-if="isPreviewablePhotoUrl(modal.payload.photoUrl)"
                   :src="modal.payload.photoUrl"
                   alt=""
+                  referrerpolicy="no-referrer"
                 />
                 <span v-else>{{ $t('badminton.group.photo') }}</span>
               </div>

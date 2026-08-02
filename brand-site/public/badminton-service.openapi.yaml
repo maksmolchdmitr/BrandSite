@@ -931,8 +931,8 @@ components:
         lastName: { type: string, minLength: 1, maxLength: 255 }
         photoUrl:
           type: string
-          maxLength: 2048
-          description: Optional profile photo http/https URL
+          maxLength: 4096
+          description: Optional profile photo http/https URL (Telegram, VK, etc.)
       required: [ username, firstName, lastName ]
 
     ParticipantUpdateRequest:
@@ -945,7 +945,7 @@ components:
         name: { type: string, minLength: 1, maxLength: 120 }
         photoUrl:
           type: string
-          maxLength: 2048
+          maxLength: 4096
           description: Profile photo http/https URL; empty string clears photo
 
     LinkUserRequest:
