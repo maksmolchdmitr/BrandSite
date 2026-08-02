@@ -136,6 +136,29 @@
                   {{ loadingAddUnlinked ? $t('badminton.group.adding') : $t('common.actions.add') }}
                 </button>
               </div>
+              <div class="photoPickerRow">
+                <div class="photoPreview" :class="{ empty: !newUnlinkedPhotoUrl }">
+                  <img v-if="newUnlinkedPhotoUrl" :src="newUnlinkedPhotoUrl" alt="" />
+                  <span v-else>{{ $t('badminton.group.photo') }}</span>
+                </div>
+                <label class="btn secondary small photoFileLabel">
+                  {{ $t('badminton.group.choosePhoto') }}
+                  <input
+                    class="photoFileInput"
+                    type="file"
+                    accept="image/*"
+                    @change="onUnlinkedPhotoSelected"
+                  />
+                </label>
+                <button
+                  v-if="newUnlinkedPhotoUrl"
+                  type="button"
+                  class="btn secondary small"
+                  @click="clearUnlinkedPhoto"
+                >
+                  {{ $t('badminton.group.clearPhoto') }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -451,6 +474,29 @@
           <!-- Edit participant -->
           <div v-if="modal.type === 'editParticipant'" class="modalBody">
             <input class="input" v-model="modal.payload.name" :placeholder="$t('badminton.group.name')" />
+            <div class="photoPickerRow">
+              <div class="photoPreview" :class="{ empty: !modal.payload.photoUrl }">
+                <img v-if="modal.payload.photoUrl" :src="modal.payload.photoUrl" alt="" />
+                <span v-else>{{ $t('badminton.group.photo') }}</span>
+              </div>
+              <label class="btn secondary small photoFileLabel">
+                {{ $t('badminton.group.choosePhoto') }}
+                <input
+                  class="photoFileInput"
+                  type="file"
+                  accept="image/*"
+                  @change="onEditParticipantPhotoSelected"
+                />
+              </label>
+              <button
+                v-if="modal.payload.photoUrl || modal.payload.photoCleared"
+                type="button"
+                class="btn secondary small"
+                @click="clearEditParticipantPhoto"
+              >
+                {{ $t('badminton.group.clearPhoto') }}
+              </button>
+            </div>
             <div class="row">
               <button class="btn" :disabled="modalLoading" @click="saveParticipantEdit">{{ $t('common.actions.save') }}</button>
               <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
@@ -712,6 +758,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
+import { fileToAvatarDataUrl } from "@/badminton/avatarDataUrl.js";
 
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
@@ -772,6 +819,7 @@ export default defineComponent({
       newUnlinkedLastName: "",
       newUnlinkedUsername: "",
       newUnlinkedUsernameTouched: false,
+      newUnlinkedPhotoUrl: "",
       loadingAddUnlinked: false,
 
       modal: {type: "", payload: {}},
@@ -951,6 +999,7 @@ export default defineComponent({
       (items || []).forEach(p => {
         nameMap[p.id] = p.name;
         if (p.photoUrl) photoMap[p.id] = p.photoUrl;
+        else delete photoMap[p.id];
         if (p.username) usernameMap[p.id] = p.username;
       });
       this.participantNameMap = nameMap;
@@ -1431,20 +1480,58 @@ export default defineComponent({
       return `player.${Date.now().toString(36)}`;
     },
 
+    async onUnlinkedPhotoSelected(event) {
+      const file = event?.target?.files?.[0];
+      if (event?.target) event.target.value = "";
+      if (!file) return;
+      try {
+        this.newUnlinkedPhotoUrl = await fileToAvatarDataUrl(file);
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errAddParticipant");
+      }
+    },
+    clearUnlinkedPhoto() {
+      this.newUnlinkedPhotoUrl = "";
+    },
+    async onEditParticipantPhotoSelected(event) {
+      const file = event?.target?.files?.[0];
+      if (event?.target) event.target.value = "";
+      if (!file || this.modal.type !== "editParticipant") return;
+      try {
+        const photoUrl = await fileToAvatarDataUrl(file);
+        this.modal = {
+          ...this.modal,
+          payload: {...this.modal.payload, photoUrl, photoTouched: true, photoCleared: false},
+        };
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
+      }
+    },
+    clearEditParticipantPhoto() {
+      if (this.modal.type !== "editParticipant") return;
+      this.modal = {
+        ...this.modal,
+        payload: {...this.modal.payload, photoUrl: "", photoTouched: true, photoCleared: true},
+      };
+    },
+
     async addUnlinkedParticipant() {
       if (!this.canCreateUnlinked) return;
       this.loadingAddUnlinked = true;
       this.error = "";
       try {
-        const p = await badmintonClient.createUnlinkedParticipant(this.groupId, {
+        const payload = {
           username: String(this.newUnlinkedUsername).trim(),
           firstName: String(this.newUnlinkedFirstName).trim(),
           lastName: String(this.newUnlinkedLastName).trim(),
-        });
+        };
+        if (this.newUnlinkedPhotoUrl) payload.photoUrl = this.newUnlinkedPhotoUrl;
+        const p = await badmintonClient.createUnlinkedParticipant(this.groupId, payload);
         this.newUnlinkedFirstName = "";
         this.newUnlinkedLastName = "";
         this.newUnlinkedUsername = "";
         this.newUnlinkedUsernameTouched = false;
+        this.newUnlinkedPhotoUrl = "";
         this.mergeParticipantNames([p]);
         if (this.participantsPages.length && this.participantsPageIndex === 0) {
           const first = this.participantsPages[0];
@@ -1458,13 +1545,30 @@ export default defineComponent({
     },
 
     startEditParticipant(p) {
-      this.modal = {type: "editParticipant", payload: {participantId: p.id, name: p.name}};
+      this.modal = {
+        type: "editParticipant",
+        payload: {
+          participantId: p.id,
+          name: p.name,
+          photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
+          photoTouched: false,
+          photoCleared: false,
+        },
+      };
     },
     async saveParticipantEdit() {
       this.modalLoading = true;
       this.error = "";
       try {
-        const upd = await badmintonClient.updateParticipant(this.groupId, this.modal.payload.participantId, {name: this.modal.payload.name});
+        const patch = {name: this.modal.payload.name};
+        if (this.modal.payload.photoTouched) {
+          patch.photoUrl = this.modal.payload.photoCleared ? "" : (this.modal.payload.photoUrl || "");
+        }
+        const upd = await badmintonClient.updateParticipant(
+          this.groupId,
+          this.modal.payload.participantId,
+          patch
+        );
         this.mergeParticipantNames([upd]);
         const idx = this.participantsPageIndex;
         if (this.participantsPages[idx]) {
@@ -1744,6 +1848,29 @@ export default defineComponent({
 .addParticipantBlock { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
 .addParticipantSection { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
 .addParticipantLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #333; }
+.photoPickerRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.photoPreview {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f6ff;
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.photoPreview.empty { border-style: dashed; }
+.photoPreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photoFileLabel { position: relative; overflow: hidden; display: inline-flex; align-items: center; }
+.photoFileInput { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
 .inviteSearch .input { width: 100%; max-width: 100%; }

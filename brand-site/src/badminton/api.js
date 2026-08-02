@@ -269,17 +269,22 @@ export async function createParticipant(groupId, {name}) {
   });
 }
 
-export async function createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
+export async function createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl}) {
+  const body = {username, firstName, lastName};
+  if (photoUrl) body.photoUrl = photoUrl;
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/unlinked`, {
     method: "POST",
-    body: {username, firstName, lastName},
+    body,
   });
 }
 
-export async function updateParticipant(groupId, participantId, {name}) {
+export async function updateParticipant(groupId, participantId, {name, photoUrl}) {
+  const body = {};
+  if (name != null) body.name = name;
+  if (photoUrl !== undefined) body.photoUrl = photoUrl;
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "PATCH",
-    body: {name},
+    body,
   });
 }
 

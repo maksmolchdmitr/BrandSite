@@ -909,7 +909,7 @@ components:
           description: Linked registered user id (if any)
         photoUrl:
           type: string
-          description: Telegram profile photo URL (if available)
+          description: Profile photo URL (Telegram, external, or data URL)
       required: [ id, name, username ]
 
     ParticipantCreateRequest:
@@ -929,13 +929,24 @@ components:
         username: { type: string, minLength: 1, maxLength: 255 }
         firstName: { type: string, minLength: 1, maxLength: 255 }
         lastName: { type: string, minLength: 1, maxLength: 255 }
+        photoUrl:
+          type: string
+          maxLength: 150000
+          description: Optional profile photo (URL or data URL)
       required: [ username, firstName, lastName ]
 
     ParticipantUpdateRequest:
       type: object
       additionalProperties: false
+      description: |
+        Update participant. `name` updates first name; `photoUrl` sets photo
+        (empty string clears). At least one field must be present.
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
+        photoUrl:
+          type: string
+          maxLength: 150000
+          description: Profile photo URL or data URL; empty string clears photo
 
     LinkUserRequest:
       type: object

@@ -478,8 +478,8 @@ export const mockClient = {
     return participantToClientDto(p, db);
   },
 
-  async createUnlinkedParticipant(groupId, {username, firstName, lastName}) {
-    logRequest("POST", `/api/groups/${groupId}/participants/unlinked`, {username, firstName, lastName});
+  async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl}) {
+    logRequest("POST", `/api/groups/${groupId}/participants/unlinked`, {username, firstName, lastName, photoUrl});
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -488,18 +488,21 @@ export const mockClient = {
     if (!login) throw new Error("username is required");
     const userId = uuid("u");
     const displayName = [firstName, lastName].map(s => String(s || "").trim()).filter(Boolean).join(" ") || login;
+    const avatar = photoUrl ? String(photoUrl) : undefined;
     db.users.push({
       id: userId,
       username: login,
       firstName: String(firstName || "").trim(),
       lastName: String(lastName || "").trim(),
       tgId: null,
+      photoUrl: avatar,
     });
     const p = {
       id: userId,
       groupId,
       name: displayName,
       userId,
+      photoUrl: avatar,
       createdAt: nowIso(),
     };
     db.participants.unshift(p);
@@ -509,18 +512,26 @@ export const mockClient = {
     return dto;
   },
 
-  async updateParticipant(groupId, participantId, {name}) {
-    logRequest("PUT", `/api/groups/${groupId}/participants/${participantId}`, {name});
+  async updateParticipant(groupId, participantId, {name, photoUrl}) {
+    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}`, {name, photoUrl});
     await delay();
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
     const idx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
     if (idx < 0) throw new Error("Not found");
-    db.participants[idx] = {...db.participants[idx], name};
+    if (name == null && photoUrl === undefined) throw new Error("name or photoUrl is required");
+    const next = {...db.participants[idx]};
+    if (name != null) next.name = name;
+    if (photoUrl !== undefined) {
+      next.photoUrl = photoUrl || undefined;
+      const user = db.users.find(u => u.id === next.userId || u.id === participantId);
+      if (user) user.photoUrl = photoUrl || undefined;
+    }
+    db.participants[idx] = next;
     saveDb(db);
     const dto = participantToClientDto(db.participants[idx], db);
-    logResponse("PUT", `/api/groups/${groupId}/participants/${participantId}`, dto);
+    logResponse("PATCH", `/api/groups/${groupId}/participants/${participantId}`, dto);
     return dto;
   },
 
