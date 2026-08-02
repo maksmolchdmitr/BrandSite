@@ -1,5 +1,6 @@
 <template>
   <img
+    ref="source"
     v-bind="$attrs"
     :src="src"
     :alt="alt"
@@ -8,7 +9,6 @@
     :class="{ photoHoldSourcePressing: pressing }"
     draggable="false"
     @pointerdown="onPointerDown"
-    @click="onClick"
     @contextmenu.prevent
     @dragstart.prevent
   />
@@ -17,6 +17,7 @@
       class="photoHoldOverlay"
       role="dialog"
       aria-modal="true"
+      @pointerup="onOverlayPointerUp"
       @click="onOverlayClick"
     >
       <img
@@ -25,7 +26,6 @@
         class="photoHoldFull"
         referrerpolicy="no-referrer"
         draggable="false"
-        @click.stop
       />
     </div>
   </Teleport>
@@ -35,9 +35,10 @@
 import { defineComponent } from "vue";
 
 const HOLD_MS = 350;
-const MOVE_CANCEL_PX = 10;
-/** After the opening finger lifts, ignore overlay click briefly (synthetic click). */
-const STICKY_GUARD_MS = 300;
+/** Finger jitter / OS touch slop — 10px was cancelling real holds on phones. */
+const MOVE_CANCEL_PX = 28;
+/** Ignore dismiss from the same gesture that opened the overlay. */
+const STICKY_GUARD_MS = 450;
 
 export default defineComponent({
   name: "PhotoHoldPreview",
@@ -51,7 +52,6 @@ export default defineComponent({
       open: false,
       pressing: false,
       holdTimer: null,
-      suppressClick: false,
       /** Touch/pen: stay open until overlay tap / Esc. Mouse: release closes. */
       stickyOpen: false,
       ignoreOverlayCloseUntil: 0,
@@ -59,6 +59,7 @@ export default defineComponent({
       startY: 0,
       activePointerId: null,
       activePointerType: null,
+      swallowClickUntil: 0,
     };
   },
   methods: {
@@ -66,21 +67,28 @@ export default defineComponent({
       if (!this.src) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
 
+      // Don't let the press start a parent drag/scroll gesture chain.
+      e.stopPropagation();
+
       this.cancelHold();
       this.pressing = true;
       this.activePointerId = e.pointerId;
       this.activePointerType = e.pointerType || "mouse";
       this.startX = e.clientX;
       this.startY = e.clientY;
-      this.suppressClick = false;
 
-      window.addEventListener("pointermove", this.onPointerMove);
+      try {
+        this.$refs.source?.setPointerCapture?.(e.pointerId);
+      } catch {
+        /* ignore NotFoundError if capture fails */
+      }
+
+      window.addEventListener("pointermove", this.onPointerMove, { passive: true });
       window.addEventListener("pointerup", this.onPointerUp);
-      window.addEventListener("pointercancel", this.onPointerUp);
+      window.addEventListener("pointercancel", this.onPointerCancel);
 
       this.holdTimer = window.setTimeout(() => {
         this.holdTimer = null;
-        this.suppressClick = true;
         this.openLightbox(this.activePointerType);
       }, HOLD_MS);
     },
@@ -96,25 +104,39 @@ export default defineComponent({
       if (this.activePointerId != null && e.pointerId !== this.activePointerId) return;
       const wasOpen = this.open;
       const pointerType = e.pointerType || this.activePointerType;
+      this.releaseCapture(e.pointerId);
       this.cancelHold();
 
       if (!wasOpen) return;
 
       if (pointerType === "mouse") {
-        // Desktop: hold-to-preview / release-to-close
         this.close();
         return;
       }
 
-      // Touch/pen sticky: arm dismiss only after this finger lifts, then guard
-      // against the synthetic click from the same gesture.
+      // Sticky: arm dismiss after this finger lifts; guard synthetic click.
       this.ignoreOverlayCloseUntil = Date.now() + STICKY_GUARD_MS;
+      this.armClickSwallow();
     },
-    onClick(e) {
-      if (!this.suppressClick) return;
-      e.preventDefault();
-      e.stopPropagation();
-      this.suppressClick = false;
+    onPointerCancel(e) {
+      if (this.activePointerId != null && e.pointerId !== this.activePointerId) return;
+      // If already open & sticky, keep it; otherwise abort the unfinished hold.
+      const keepSticky = this.open && this.stickyOpen;
+      this.releaseCapture(e.pointerId);
+      this.cancelHold();
+      if (keepSticky) {
+        this.ignoreOverlayCloseUntil = Date.now() + STICKY_GUARD_MS;
+        this.armClickSwallow();
+      }
+    },
+    onOverlayPointerUp(e) {
+      if (!this.open || !this.stickyOpen) return;
+      if (Date.now() < this.ignoreOverlayCloseUntil) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      this.close();
     },
     onOverlayClick(e) {
       if (!this.open) return;
@@ -123,14 +145,15 @@ export default defineComponent({
         e.stopPropagation();
         return;
       }
-      this.close();
+      // Mouse path already closed on pointerup; sticky closes here / via pointerup.
+      if (this.stickyOpen) this.close();
     },
     openLightbox(pointerType) {
       if (this.open) return;
       this.stickyOpen = pointerType !== "mouse";
-      // Block overlay dismiss until the opening finger lifts (see onPointerUp).
       this.ignoreOverlayCloseUntil = this.stickyOpen ? Number.POSITIVE_INFINITY : 0;
       this.open = true;
+      this.armClickSwallow();
       document.addEventListener("keydown", this.onKeydown);
     },
     close() {
@@ -143,6 +166,32 @@ export default defineComponent({
     onKeydown(e) {
       if (e.key === "Escape") this.close();
     },
+    armClickSwallow() {
+      // Parent buttons (e.g. mock login) must not fire after a successful hold.
+      this.swallowClickUntil = Date.now() + STICKY_GUARD_MS;
+      document.addEventListener("click", this.swallowClick, true);
+      window.setTimeout(() => {
+        document.removeEventListener("click", this.swallowClick, true);
+      }, STICKY_GUARD_MS + 50);
+    },
+    swallowClick(e) {
+      if (Date.now() > this.swallowClickUntil) {
+        document.removeEventListener("click", this.swallowClick, true);
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    },
+    releaseCapture(pointerId) {
+      try {
+        if (pointerId != null && this.$refs.source?.hasPointerCapture?.(pointerId)) {
+          this.$refs.source.releasePointerCapture(pointerId);
+        }
+      } catch {
+        /* ignore */
+      }
+    },
     cancelHold() {
       if (this.holdTimer != null) {
         clearTimeout(this.holdTimer);
@@ -153,12 +202,13 @@ export default defineComponent({
       this.activePointerType = null;
       window.removeEventListener("pointermove", this.onPointerMove);
       window.removeEventListener("pointerup", this.onPointerUp);
-      window.removeEventListener("pointercancel", this.onPointerUp);
+      window.removeEventListener("pointercancel", this.onPointerCancel);
     },
   },
   beforeUnmount() {
     this.cancelHold();
     this.close();
+    document.removeEventListener("click", this.swallowClick, true);
   },
 });
 </script>
@@ -168,11 +218,12 @@ export default defineComponent({
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: manipulation;
+  /* Must be none from the start — toggling on press is too late for the browser. */
+  touch-action: none;
   cursor: zoom-in;
 }
 .photoHoldSourcePressing {
-  touch-action: none;
+  opacity: 0.85;
 }
 </style>
 
