@@ -17,8 +17,8 @@
       class="photoHoldOverlay"
       role="dialog"
       aria-modal="true"
-      @pointerup="onOverlayPointerUp"
-      @click="onOverlayClick"
+      @pointerup="onOverlayDismiss"
+      @click="onOverlayDismiss"
     >
       <img
         :src="src"
@@ -35,7 +35,7 @@
 import { defineComponent } from "vue";
 
 const HOLD_MS = 350;
-/** Finger jitter / OS touch slop — 10px was cancelling real holds on phones. */
+/** OS touch slop / finger jitter — smaller values cancelled real holds on phones. */
 const MOVE_CANCEL_PX = 28;
 /** Ignore dismiss from the same gesture that opened the overlay. */
 const STICKY_GUARD_MS = 450;
@@ -52,13 +52,10 @@ export default defineComponent({
       open: false,
       pressing: false,
       holdTimer: null,
-      /** Touch/pen: stay open until overlay tap / Esc. Mouse: release closes. */
-      stickyOpen: false,
-      ignoreOverlayCloseUntil: 0,
+      ignoreDismissUntil: 0,
       startX: 0,
       startY: 0,
       activePointerId: null,
-      activePointerType: null,
       swallowClickUntil: 0,
     };
   },
@@ -67,29 +64,27 @@ export default defineComponent({
       if (!this.src) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
 
-      // Don't let the press start a parent drag/scroll gesture chain.
       e.stopPropagation();
 
       this.cancelHold();
       this.pressing = true;
       this.activePointerId = e.pointerId;
-      this.activePointerType = e.pointerType || "mouse";
       this.startX = e.clientX;
       this.startY = e.clientY;
 
       try {
         this.$refs.source?.setPointerCapture?.(e.pointerId);
       } catch {
-        /* ignore NotFoundError if capture fails */
+        /* ignore */
       }
 
       window.addEventListener("pointermove", this.onPointerMove, { passive: true });
-      window.addEventListener("pointerup", this.onPointerUp);
-      window.addEventListener("pointercancel", this.onPointerCancel);
+      window.addEventListener("pointerup", this.onPointerEnd);
+      window.addEventListener("pointercancel", this.onPointerEnd);
 
       this.holdTimer = window.setTimeout(() => {
         this.holdTimer = null;
-        this.openLightbox(this.activePointerType);
+        this.openLightbox();
       }, HOLD_MS);
     },
     onPointerMove(e) {
@@ -100,58 +95,31 @@ export default defineComponent({
         this.cancelHold();
       }
     },
-    onPointerUp(e) {
+    onPointerEnd(e) {
       if (this.activePointerId != null && e.pointerId !== this.activePointerId) return;
       const wasOpen = this.open;
-      const pointerType = e.pointerType || this.activePointerType;
       this.releaseCapture(e.pointerId);
       this.cancelHold();
 
       if (!wasOpen) return;
 
-      if (pointerType === "mouse") {
-        this.close();
-        return;
-      }
-
-      // Sticky: arm dismiss after this finger lifts; guard synthetic click.
-      this.ignoreOverlayCloseUntil = Date.now() + STICKY_GUARD_MS;
+      // Sticky for every pointer type: stay open until overlay tap / Esc.
+      this.ignoreDismissUntil = Date.now() + STICKY_GUARD_MS;
       this.armClickSwallow();
     },
-    onPointerCancel(e) {
-      if (this.activePointerId != null && e.pointerId !== this.activePointerId) return;
-      // If already open & sticky, keep it; otherwise abort the unfinished hold.
-      const keepSticky = this.open && this.stickyOpen;
-      this.releaseCapture(e.pointerId);
-      this.cancelHold();
-      if (keepSticky) {
-        this.ignoreOverlayCloseUntil = Date.now() + STICKY_GUARD_MS;
-        this.armClickSwallow();
-      }
-    },
-    onOverlayPointerUp(e) {
-      if (!this.open || !this.stickyOpen) return;
-      if (Date.now() < this.ignoreOverlayCloseUntil) {
+    onOverlayDismiss(e) {
+      if (!this.open) return;
+      if (Date.now() < this.ignoreDismissUntil) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
       this.close();
     },
-    onOverlayClick(e) {
-      if (!this.open) return;
-      if (this.stickyOpen && Date.now() < this.ignoreOverlayCloseUntil) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      // Mouse path already closed on pointerup; sticky closes here / via pointerup.
-      if (this.stickyOpen) this.close();
-    },
-    openLightbox(pointerType) {
+    openLightbox() {
       if (this.open) return;
-      this.stickyOpen = pointerType !== "mouse";
-      this.ignoreOverlayCloseUntil = this.stickyOpen ? Number.POSITIVE_INFINITY : 0;
+      // Block dismiss until the opening finger/mouse lifts.
+      this.ignoreDismissUntil = Number.POSITIVE_INFINITY;
       this.open = true;
       this.armClickSwallow();
       document.addEventListener("keydown", this.onKeydown);
@@ -159,8 +127,7 @@ export default defineComponent({
     close() {
       if (!this.open) return;
       this.open = false;
-      this.stickyOpen = false;
-      this.ignoreOverlayCloseUntil = 0;
+      this.ignoreDismissUntil = 0;
       document.removeEventListener("keydown", this.onKeydown);
     },
     onKeydown(e) {
@@ -199,10 +166,9 @@ export default defineComponent({
       }
       this.pressing = false;
       this.activePointerId = null;
-      this.activePointerType = null;
       window.removeEventListener("pointermove", this.onPointerMove);
-      window.removeEventListener("pointerup", this.onPointerUp);
-      window.removeEventListener("pointercancel", this.onPointerCancel);
+      window.removeEventListener("pointerup", this.onPointerEnd);
+      window.removeEventListener("pointercancel", this.onPointerEnd);
     },
   },
   beforeUnmount() {
