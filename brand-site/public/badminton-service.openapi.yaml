@@ -939,8 +939,9 @@ components:
       type: object
       additionalProperties: false
       description: |
-        Update participant. `name` updates first name; `photoUrl` sets photo
-        (empty string clears). At least one field must be present.
+        Update participant. `name` is the full display name (same as Participant.name):
+        stored as firstName + optional lastName split on the first space.
+        `photoUrl` sets photo (empty string clears). At least one field must be present.
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
         photoUrl:

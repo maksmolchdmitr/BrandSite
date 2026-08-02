@@ -473,7 +473,11 @@
 
           <!-- Edit participant -->
           <div v-if="modal.type === 'editParticipant'" class="modalBody">
-            <input class="input" v-model="modal.payload.name" :placeholder="$t('badminton.group.name')" />
+            <input
+              class="input modalFullWidthInput"
+              v-model="modal.payload.name"
+              :placeholder="$t('badminton.group.name')"
+            />
             <div class="photoPickerRow">
               <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(modal.payload.photoUrl) }">
                 <PhotoHoldPreview
@@ -506,7 +510,7 @@
 
           <!-- Link user -->
           <div v-else-if="modal.type === 'linkUser'" class="modalBody">
-            <input class="input" v-model="modal.payload.userId" :placeholder="$t('badminton.group.userId')" />
+            <input class="input modalFullWidthInput" v-model="modal.payload.userId" :placeholder="$t('badminton.group.userId')" />
             <div class="row">
               <button class="btn" :disabled="modalLoading || !modal.payload.userId" @click="confirmLinkUser">{{ $t('common.actions.link') }}</button>
               <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
@@ -1536,7 +1540,7 @@ export default defineComponent({
         type: "editParticipant",
         payload: {
           participantId: p.id,
-          name: p.name,
+          name: p.name || this.getParticipantName(p.id) || "",
           photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
           photoTouched: false,
           photoCleared: false,
@@ -1547,7 +1551,12 @@ export default defineComponent({
       this.modalLoading = true;
       this.error = "";
       try {
-        const patch = {name: this.modal.payload.name};
+        const name = String(this.modal.payload.name || "").trim();
+        if (!name) {
+          this.error = this.$t("badminton.group.errUpdateParticipant");
+          return;
+        }
+        const patch = {name};
         if (this.modal.payload.photoTouched) {
           patch.photoUrl = this.modal.payload.photoCleared ? "" : (this.modal.payload.photoUrl || "");
         }
@@ -1857,6 +1866,8 @@ export default defineComponent({
 .photoPreview.empty { border-style: dashed; }
 .photoPreview :deep(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photoPickerRow .input { flex: 1 1 180px; width: auto; min-width: 160px; }
+/* .input defaults to width:0 for row flex; standalone modal fields need full width */
+.modalFullWidthInput { width: 100%; flex: 0 0 auto; }
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
 .inviteSearch .input { width: 100%; max-width: 100%; }
