@@ -366,7 +366,10 @@ paths:
   /api/groups/{groupId}/participants/{participantId}:
     patch:
       tags: [ Participants ]
-      summary: Update participant (admin-only)
+      summary: Update unlinked participant (admin-only)
+      description: |
+        Updates firstName / lastName / photoUrl of an unlinked participant
+        (`groupId` set, no Telegram). Forbidden for registered Telegram users.
       operationId: updateParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -909,6 +912,11 @@ components:
         userId:
           type: string
           description: Linked registered user id (if any)
+        groupId:
+          type: string
+          description: |
+            Owning group for an unlinked (not registered via Telegram) participant.
+            Null for registered Telegram users.
         photoUrl:
           type: string
           description: Profile photo URL (http/https; Telegram or external)

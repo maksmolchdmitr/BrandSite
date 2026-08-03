@@ -49,6 +49,8 @@ function participantToClientDto(p, db) {
     || linkedUser?.username
     || p.username
     || undefined;
+  const user = linkedUser || (db ? db.users.find(u => u.id === p.id) : null);
+  const groupId = user?.groupId || p.groupId || undefined;
   return {
     id: p.id,
     name: displayName,
@@ -56,6 +58,7 @@ function participantToClientDto(p, db) {
     lastName,
     username: linkedUser?.username || p.username || undefined,
     userId: p.userId,
+    groupId: groupId || null,
     photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
   };
 }
@@ -504,6 +507,7 @@ export const mockClient = {
       firstName: String(firstName || "").trim(),
       lastName: String(lastName || "").trim(),
       tgId: null,
+      groupId,
       photoUrl: avatar,
     });
     const p = {
@@ -534,6 +538,9 @@ export const mockClient = {
     }
     const next = {...db.participants[idx]};
     const user = db.users.find(u => u.id === next.userId || u.id === participantId);
+    if (!user?.groupId && !next.groupId) {
+      throw new Error("Forbidden: only unlinked participants can be updated");
+    }
     if (firstName != null) {
       next.firstName = firstName;
       if (user) user.firstName = firstName;
