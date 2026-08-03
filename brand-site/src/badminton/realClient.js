@@ -21,6 +21,10 @@ export const realClient = {
     return api.getMe();
   },
 
+  async updateMe(patch) {
+    return api.updateMe(patch);
+  },
+
   async getMyGroups({ limit, pageToken } = {}) {
     return api.getMyGroups({ limit, pageToken });
   },
@@ -71,12 +75,12 @@ export const realClient = {
     return api.createParticipant(groupId, {name});
   },
 
-  async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl}) {
-    return api.createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl});
+  async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop}) {
+    return api.createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop});
   },
 
-  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
-    return api.updateParticipant(groupId, participantId, {firstName, lastName, photoUrl});
+  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop}) {
+    return api.updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop});
   },
 
   async createPhotoUploadUrl(groupId, {contentType, contentLength}) {

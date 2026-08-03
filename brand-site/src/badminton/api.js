@@ -169,6 +169,18 @@ export async function getMe() {
   return apiRequest("/api/me");
 }
 
+export async function updateMe({firstName, lastName, photoUrl, photoCrop} = {}) {
+  const body = {};
+  if (firstName != null) body.firstName = firstName;
+  if (lastName != null) body.lastName = lastName;
+  if (photoUrl !== undefined) body.photoUrl = photoUrl;
+  if (photoCrop !== undefined) body.photoCrop = photoCrop;
+  return apiRequest("/api/me", {
+    method: "PATCH",
+    body,
+  });
+}
+
 export async function getMyGroups({ limit, pageToken } = {}) {
   const params = new URLSearchParams();
   if (limit) params.append("limit", limit);
@@ -269,20 +281,22 @@ export async function createParticipant(groupId, {name}) {
   });
 }
 
-export async function createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl}) {
+export async function createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop}) {
   const body = {username, firstName, lastName};
   if (photoUrl) body.photoUrl = photoUrl;
+  if (photoCrop) body.photoCrop = photoCrop;
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/unlinked`, {
     method: "POST",
     body,
   });
 }
 
-export async function updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
+export async function updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop}) {
   const body = {};
   if (firstName != null) body.firstName = firstName;
   if (lastName != null) body.lastName = lastName;
   if (photoUrl !== undefined) body.photoUrl = photoUrl;
+  if (photoCrop !== undefined) body.photoCrop = photoCrop;
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "PATCH",
     body,

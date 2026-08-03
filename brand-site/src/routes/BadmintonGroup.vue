@@ -189,6 +189,7 @@
                       <PersonChip
                         :name="p.name"
                         :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
+                        :photo-crop="p.photoCrop"
                         :username="p.username || getParticipantUsername(p.id)"
                       />
                     </td>
@@ -491,28 +492,24 @@
       <!-- Full-page forms (no modals) -->
       <div v-if="groupSection === 'editParticipant'" class="card formPage">
         <div class="cardTitle">{{ $t('badminton.group.editParticipant') }}</div>
-        <div class="formStack">
-          <div class="row">
-            <input
-              class="input"
-              v-model="editParticipantForm.firstName"
-              :placeholder="$t('badminton.group.firstName')"
-            />
-            <input
-              class="input"
-              v-model="editParticipantForm.lastName"
-              :placeholder="$t('badminton.group.lastName')"
-            />
-          </div>
-          <div class="photoPickerRow">
-            <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(editParticipantForm.photoUrl) }">
-              <PhotoHoldPreview
-                v-if="isPreviewablePhotoUrl(editParticipantForm.photoUrl)"
-                :src="editParticipantForm.photoUrl"
-                alt=""
-              />
-              <span v-else>{{ $t('badminton.group.photo') }}</span>
-            </div>
+        <ProfileEditForm
+          v-model:first-name="editParticipantForm.firstName"
+          v-model:last-name="editParticipantForm.lastName"
+          v-model:photo-url="editParticipantForm.photoUrl"
+          v-model:photo-crop="editParticipantForm.photoCrop"
+          :photo-cleared="editParticipantForm.photoCleared"
+          :first-name-placeholder="$t('badminton.group.firstName')"
+          :last-name-placeholder="$t('badminton.group.lastName')"
+          :photo-url-placeholder="$t('badminton.group.photoUrlPlaceholder')"
+          :photo-label="$t('badminton.group.photo')"
+          :clear-photo-label="$t('badminton.group.clearPhoto')"
+          :reset-crop-label="$t('badminton.group.resetCrop')"
+          :crop-hint="$t('badminton.group.cropHint')"
+          @clear-photo="clearEditParticipantPhoto"
+          @photo-url-input="onEditPhotoUrlInput"
+          @update:photo-crop="onEditPhotoCrop"
+        >
+          <template #photo-actions>
             <label class="btn secondary small photoFileLabel">
               {{ uploadingEditPhoto ? $t('badminton.group.uploadingPhoto') : $t('badminton.group.choosePhoto') }}
               <input
@@ -523,26 +520,12 @@
                 @change="onEditPhotoFileChange"
               />
             </label>
-            <input
-              class="input"
-              v-model="editParticipantForm.photoUrl"
-              :placeholder="$t('badminton.group.photoUrlPlaceholder')"
-              @input="onEditPhotoUrlInput"
-            />
-            <button
-              v-if="editParticipantForm.photoUrl || editParticipantForm.photoCleared"
-              type="button"
-              class="btn secondary small"
-              @click="clearEditParticipantPhoto"
-            >
-              {{ $t('badminton.group.clearPhoto') }}
-            </button>
-          </div>
-          <div class="row formActions">
+          </template>
+          <template #actions>
             <button class="btn" :disabled="formSaving" @click="saveParticipantEdit">{{ $t('common.actions.save') }}</button>
             <button class="btn secondary" :disabled="formSaving" @click="cancelToParticipants">{{ $t('common.actions.cancel') }}</button>
-          </div>
-        </div>
+          </template>
+        </ProfileEditForm>
       </div>
 
       <div v-else-if="groupSection === 'linkUser'" class="card formPage">
@@ -800,6 +783,7 @@ import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
+import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
@@ -812,7 +796,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ParticipantSearchSelect },
+  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "participants" },
@@ -875,8 +859,11 @@ export default defineComponent({
         originalFirstName: "",
         originalLastName: "",
         photoUrl: "",
+        photoCrop: null,
+        originalPhotoCrop: null,
         photoTouched: false,
         photoCleared: false,
+        cropTouched: false,
       },
       linkUserForm: { userId: "" },
       matchForm: {
@@ -1283,8 +1270,11 @@ export default defineComponent({
         originalFirstName: firstName,
         originalLastName: lastName,
         photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
+        photoCrop: p.photoCrop || null,
+        originalPhotoCrop: p.photoCrop || null,
         photoTouched: false,
         photoCleared: false,
+        cropTouched: false,
       };
     },
     async findMatchById(matchId, kind) {
@@ -1759,6 +1749,8 @@ export default defineComponent({
           photoUrl: publicUrl,
           photoTouched: true,
           photoCleared: false,
+          cropTouched: true,
+          photoCrop: null,
         };
       } catch (e) {
         this.error = this.photoUploadErrorMessage(e);
@@ -1774,14 +1766,25 @@ export default defineComponent({
         ...this.editParticipantForm,
         photoTouched: true,
         photoCleared: false,
+        cropTouched: true,
+        photoCrop: null,
+      };
+    },
+    onEditPhotoCrop(crop) {
+      this.editParticipantForm = {
+        ...this.editParticipantForm,
+        photoCrop: crop,
+        cropTouched: true,
       };
     },
     clearEditParticipantPhoto() {
       this.editParticipantForm = {
         ...this.editParticipantForm,
         photoUrl: "",
+        photoCrop: null,
         photoTouched: true,
         photoCleared: true,
+        cropTouched: true,
       };
     },
 
@@ -1839,7 +1842,10 @@ export default defineComponent({
         if (this.editParticipantForm.photoTouched) {
           patch.photoUrl = this.editParticipantForm.photoCleared ? "" : (this.editParticipantForm.photoUrl || "");
         }
-        if (patch.firstName == null && patch.lastName == null && patch.photoUrl === undefined) {
+        if (this.editParticipantForm.cropTouched) {
+          patch.photoCrop = this.editParticipantForm.photoCrop;
+        }
+        if (patch.firstName == null && patch.lastName == null && patch.photoUrl === undefined && patch.photoCrop === undefined) {
           this.cancelToParticipants();
           return;
         }

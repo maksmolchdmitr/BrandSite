@@ -4,6 +4,7 @@
       v-if="photoUrl"
       class="avatar"
       :src="photoUrl"
+      :photo-crop="photoCrop"
       :alt="name"
       loading="lazy"
     />
@@ -25,6 +26,7 @@ export default defineComponent({
   props: {
     name: { type: String, default: "—" },
     photoUrl: { type: String, default: "" },
+    photoCrop: { type: Object, default: null },
     username: { type: String, default: "" },
   },
   computed: {
@@ -57,6 +59,20 @@ export default defineComponent({
   object-fit: cover;
   flex: 0 0 auto;
   background: #e8e8f8;
+  overflow: hidden;
+  position: relative;
+  display: inline-block;
+}
+:deep(.avatar .photoCropFrame) {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+:deep(.avatar img:not(.cropped)) {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 .avatarFallback {
   display: inline-flex;

@@ -130,6 +130,32 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [ Users ]
+      summary: Update current user profile
+      operationId: updateCurrentUser
+      description: |
+        Partial update of the authenticated user's firstName / lastName / photoUrl / photoCrop.
+        Same semantics as participant update. Any registered user may edit themselves.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/users/search:
     get:
@@ -875,6 +901,31 @@ components:
         path:
           type: string
 
+    PhotoCrop:
+      type: object
+      additionalProperties: false
+      description: |
+        Normalized crop rectangle on the original photo (0–1 relative to width/height).
+        All four fields required when present. x+width ≤ 1, y+height ≤ 1.
+      properties:
+        x:
+          type: number
+          minimum: 0
+          maximum: 1
+        y:
+          type: number
+          minimum: 0
+          maximum: 1
+        width:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+        height:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+      required: [ x, y, width, height ]
+
     User:
       type: object
       additionalProperties: false
@@ -885,8 +936,31 @@ components:
         lastName: { type: string }
         photoUrl:
           type: string
-          description: Telegram profile photo URL
+          description: Profile photo URL (http/https)
+        photoCrop:
+          $ref: "#/components/schemas/PhotoCrop"
       required: [ id, username ]
+
+    UserUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Partial update: only fields present in the body are applied.
+        `firstName` / `lastName` update the corresponding columns; omitted fields are left unchanged.
+        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop (`null` clears).
+        At least one field must be present.
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 255 }
+        lastName: { type: string, minLength: 1, maxLength: 255 }
+        photoUrl:
+          type: string
+          maxLength: 4096
+          description: Profile photo http/https URL; empty string clears photo
+        photoCrop:
+          allOf:
+            - $ref: "#/components/schemas/PhotoCrop"
+          nullable: true
+          description: Crop rectangle; null clears crop
 
     Group:
       type: object
@@ -953,6 +1027,8 @@ components:
         photoUrl:
           type: string
           description: Profile photo URL (http/https; Telegram or external)
+        photoCrop:
+          $ref: "#/components/schemas/PhotoCrop"
       required: [ id, name, username ]
 
     ParticipantCreateRequest:
@@ -1014,6 +1090,10 @@ components:
           type: string
           maxLength: 4096
           description: Optional profile photo http/https URL (Telegram, VK, etc.)
+        photoCrop:
+          allOf:
+            - $ref: "#/components/schemas/PhotoCrop"
+          description: Optional crop rectangle on photoUrl
       required: [ username, firstName, lastName ]
 
     ParticipantUpdateRequest:
@@ -1022,7 +1102,8 @@ components:
       description: |
         Partial update: only fields present in the body are applied.
         `firstName` / `lastName` update the corresponding columns; omitted fields are left unchanged.
-        `photoUrl` sets photo (empty string clears). At least one field must be present.
+        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop (`null` clears).
+        At least one field must be present.
       properties:
         firstName: { type: string, minLength: 1, maxLength: 255 }
         lastName: { type: string, minLength: 1, maxLength: 255 }
@@ -1030,6 +1111,11 @@ components:
           type: string
           maxLength: 4096
           description: Profile photo http/https URL; empty string clears photo
+        photoCrop:
+          allOf:
+            - $ref: "#/components/schemas/PhotoCrop"
+          nullable: true
+          description: Crop rectangle; null clears crop
 
     LinkUserRequest:
       type: object

@@ -60,6 +60,7 @@ function participantToClientDto(p, db) {
     userId: p.userId,
     groupId: groupId || null,
     photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
+    photoCrop: linkedUser?.photoCrop || p.photoCrop || undefined,
   };
 }
 
@@ -257,6 +258,7 @@ export const mockClient = {
         firstName: firstName || "",
         lastName: lastName || "",
         photoUrl: u.photoUrl || undefined,
+        photoCrop: u.photoCrop || undefined,
       };
     };
 
@@ -274,6 +276,26 @@ export const mockClient = {
 
     const result = toUserDto(raw);
     logResponse("GET", "/api/me", result);
+    return result;
+  },
+
+  async updateMe({firstName, lastName, photoUrl, photoCrop} = {}) {
+    logRequest("PATCH", "/api/me", {firstName, lastName, photoUrl, photoCrop});
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const user = db.users.find(u => u.id === userId) || db.users[0];
+    if (!user) throw new Error("Not found");
+    if (firstName == null && lastName == null && photoUrl === undefined && photoCrop === undefined) {
+      throw new Error("firstName, lastName, photoUrl or photoCrop is required");
+    }
+    if (firstName != null) user.firstName = firstName;
+    if (lastName != null) user.lastName = lastName;
+    if (photoUrl !== undefined) user.photoUrl = photoUrl || undefined;
+    if (photoCrop !== undefined) user.photoCrop = photoCrop || undefined;
+    saveDb(db);
+    const result = await this.getMe();
+    logResponse("PATCH", "/api/me", result);
     return result;
   },
 
@@ -490,8 +512,8 @@ export const mockClient = {
     return participantToClientDto(p, db);
   },
 
-  async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl}) {
-    logRequest("POST", `/api/groups/${groupId}/participants/unlinked`, {username, firstName, lastName, photoUrl});
+  async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop}) {
+    logRequest("POST", `/api/groups/${groupId}/participants/unlinked`, {username, firstName, lastName, photoUrl, photoCrop});
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -509,6 +531,7 @@ export const mockClient = {
       tgId: null,
       groupId,
       photoUrl: avatar,
+      photoCrop: photoCrop || undefined,
     });
     const p = {
       id: userId,
@@ -516,6 +539,7 @@ export const mockClient = {
       name: displayName,
       userId,
       photoUrl: avatar,
+      photoCrop: photoCrop || undefined,
       createdAt: nowIso(),
     };
     db.participants.unshift(p);
@@ -525,16 +549,16 @@ export const mockClient = {
     return dto;
   },
 
-  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
-    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}`, {firstName, lastName, photoUrl});
+  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop}) {
+    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}`, {firstName, lastName, photoUrl, photoCrop});
     await delay();
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
     const idx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
     if (idx < 0) throw new Error("Not found");
-    if (firstName == null && lastName == null && photoUrl === undefined) {
-      throw new Error("firstName, lastName or photoUrl is required");
+    if (firstName == null && lastName == null && photoUrl === undefined && photoCrop === undefined) {
+      throw new Error("firstName, lastName, photoUrl or photoCrop is required");
     }
     const next = {...db.participants[idx]};
     const user = db.users.find(u => u.id === next.userId || u.id === participantId);
@@ -555,6 +579,10 @@ export const mockClient = {
     if (photoUrl !== undefined) {
       next.photoUrl = photoUrl || undefined;
       if (user) user.photoUrl = photoUrl || undefined;
+    }
+    if (photoCrop !== undefined) {
+      next.photoCrop = photoCrop || undefined;
+      if (user) user.photoCrop = photoCrop || undefined;
     }
     db.participants[idx] = next;
     saveDb(db);

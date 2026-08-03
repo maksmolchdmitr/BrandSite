@@ -135,6 +135,12 @@ const messages = {
         errLoad: "Failed to load ratings",
         errNext: "Failed to load next page",
       },
+      profile: {
+        title: "Profile",
+        edit: "Edit profile",
+        errLoad: "Failed to load profile",
+        errSave: "Failed to save profile",
+      },
       singles: {
         title: "Singles Games",
         linkDoubles: "Doubles matches",
@@ -190,6 +196,8 @@ const messages = {
         choosePhoto: "Choose file",
         uploadingPhoto: "Uploading…",
         clearPhoto: "Remove photo",
+        resetCrop: "Reset crop",
+        cropHint: "Drag on the photo to zoom on a face",
         adding: "Adding...",
         actions: "Actions",
         noParticipants: "No participants yet.",
@@ -367,6 +375,12 @@ const messages = {
         errLoad: "Не удалось загрузить рейтинги",
         errNext: "Не удалось загрузить следующую страницу",
       },
+      profile: {
+        title: "Профиль",
+        edit: "Редактировать профиль",
+        errLoad: "Не удалось загрузить профиль",
+        errSave: "Не удалось сохранить профиль",
+      },
       singles: {
         title: "Одиночные игры",
         linkDoubles: "Парные матчи",
@@ -422,6 +436,8 @@ const messages = {
         choosePhoto: "Выбрать файл",
         uploadingPhoto: "Загрузка…",
         clearPhoto: "Убрать фото",
+        resetCrop: "Сбросить кроп",
+        cropHint: "Потяните рамку на фото, чтобы приблизить лицо",
         adding: "Добавление...",
         actions: "Действия",
         noParticipants: "Пока нет участников.",

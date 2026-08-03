@@ -11,6 +11,9 @@
         <RouterLink class="cta secondary cta-games-hub" to="/?page=badminton&section=games&tab=singles">
           <span class="ctaText">{{ $t('badminton.ratings.myMatches') }}</span>
         </RouterLink>
+        <RouterLink class="cta secondary cta-profile" to="/?page=badminton&section=profile">
+          <span class="ctaText">{{ $t('badminton.profile.title') }}</span>
+        </RouterLink>
         <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
           <span class="ctaText">{{ $t('badminton.ratings.myGroups') }}</span>
         </RouterLink>
@@ -41,6 +44,7 @@
                   <PersonChip
                     :name="([me?.firstName, me?.lastName].filter(Boolean).join(' ') || me?.username || me?.id || $t('common.misc.noData'))"
                     :photo-url="me?.photoUrl"
+                    :photo-crop="me?.photoCrop"
                     :username="me?.username"
                   />
                 </td>
