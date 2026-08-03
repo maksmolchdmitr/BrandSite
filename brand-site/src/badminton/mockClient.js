@@ -42,9 +42,18 @@ function participantNameMap(db, groupId) {
 function participantToClientDto(p, db) {
   if (!p) return p;
   const linkedUser = p.userId && db ? db.users.find(u => u.id === p.userId) : null;
+  const firstName = linkedUser?.firstName || p.firstName || undefined;
+  const lastName = linkedUser?.lastName || p.lastName || undefined;
+  const displayName = p.name
+    || [firstName, lastName].filter(Boolean).join(" ")
+    || linkedUser?.username
+    || p.username
+    || undefined;
   return {
     id: p.id,
-    name: p.name,
+    name: displayName,
+    firstName,
+    lastName,
     username: linkedUser?.username || p.username || undefined,
     userId: p.userId,
     photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
@@ -512,20 +521,32 @@ export const mockClient = {
     return dto;
   },
 
-  async updateParticipant(groupId, participantId, {name, photoUrl}) {
-    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}`, {name, photoUrl});
+  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
+    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}`, {firstName, lastName, photoUrl});
     await delay();
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
     const idx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
     if (idx < 0) throw new Error("Not found");
-    if (name == null && photoUrl === undefined) throw new Error("name or photoUrl is required");
+    if (firstName == null && lastName == null && photoUrl === undefined) {
+      throw new Error("firstName, lastName or photoUrl is required");
+    }
     const next = {...db.participants[idx]};
-    if (name != null) next.name = name;
+    const user = db.users.find(u => u.id === next.userId || u.id === participantId);
+    if (firstName != null) {
+      next.firstName = firstName;
+      if (user) user.firstName = firstName;
+    }
+    if (lastName != null) {
+      next.lastName = lastName;
+      if (user) user.lastName = lastName;
+    }
+    const resolvedFirst = next.firstName || user?.firstName || "";
+    const resolvedLast = next.lastName || user?.lastName || "";
+    next.name = [resolvedFirst, resolvedLast].filter(Boolean).join(" ") || next.name;
     if (photoUrl !== undefined) {
       next.photoUrl = photoUrl || undefined;
-      const user = db.users.find(u => u.id === next.userId || u.id === participantId);
       if (user) user.photoUrl = photoUrl || undefined;
     }
     db.participants[idx] = next;

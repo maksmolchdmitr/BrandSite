@@ -278,9 +278,10 @@ export async function createUnlinkedParticipant(groupId, {username, firstName, l
   });
 }
 
-export async function updateParticipant(groupId, participantId, {name, photoUrl}) {
+export async function updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
   const body = {};
-  if (name != null) body.name = name;
+  if (firstName != null) body.firstName = firstName;
+  if (lastName != null) body.lastName = lastName;
   if (photoUrl !== undefined) body.photoUrl = photoUrl;
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "PATCH",

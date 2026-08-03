@@ -900,7 +900,9 @@ components:
       additionalProperties: false
       properties:
         id: { type: string }
-        name: { type: string, example: Maks }
+        name: { type: string, example: Maks, description: Display name (firstName + lastName) }
+        firstName: { type: string }
+        lastName: { type: string }
         username:
           type: string
           description: Login / handle
@@ -939,11 +941,12 @@ components:
       type: object
       additionalProperties: false
       description: |
-        Update participant. `name` is the full display name (same as Participant.name):
-        stored as firstName + optional lastName split on the first space.
+        Partial update: only fields present in the body are applied.
+        `firstName` / `lastName` update the corresponding columns; omitted fields are left unchanged.
         `photoUrl` sets photo (empty string clears). At least one field must be present.
       properties:
-        name: { type: string, minLength: 1, maxLength: 120 }
+        firstName: { type: string, minLength: 1, maxLength: 255 }
+        lastName: { type: string, minLength: 1, maxLength: 255 }
         photoUrl:
           type: string
           maxLength: 4096

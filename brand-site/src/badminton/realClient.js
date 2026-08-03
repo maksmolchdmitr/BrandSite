@@ -75,8 +75,8 @@ export const realClient = {
     return api.createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl});
   },
 
-  async updateParticipant(groupId, participantId, {name, photoUrl}) {
-    return api.updateParticipant(groupId, participantId, {name, photoUrl});
+  async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl}) {
+    return api.updateParticipant(groupId, participantId, {firstName, lastName, photoUrl});
   },
 
   async deleteParticipant(groupId, participantId) {

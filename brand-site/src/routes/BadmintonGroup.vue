@@ -473,11 +473,18 @@
 
           <!-- Edit participant -->
           <div v-if="modal.type === 'editParticipant'" class="modalBody">
-            <input
-              class="input modalFullWidthInput"
-              v-model="modal.payload.name"
-              :placeholder="$t('badminton.group.name')"
-            />
+            <div class="row">
+              <input
+                class="input"
+                v-model="modal.payload.firstName"
+                :placeholder="$t('badminton.group.firstName')"
+              />
+              <input
+                class="input"
+                v-model="modal.payload.lastName"
+                :placeholder="$t('badminton.group.lastName')"
+              />
+            </div>
             <div class="photoPickerRow">
               <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(modal.payload.photoUrl) }">
                 <PhotoHoldPreview
@@ -1536,11 +1543,20 @@ export default defineComponent({
     },
 
     startEditParticipant(p) {
+      const displayName = p.name || this.getParticipantName(p.id) || "";
+      const fromName = String(displayName).trim().split(/\s+/);
+      const firstName = String(p.firstName ?? fromName[0] ?? "").trim();
+      const lastName = String(
+        p.lastName ?? (fromName.length > 1 ? fromName.slice(1).join(" ") : "")
+      ).trim();
       this.modal = {
         type: "editParticipant",
         payload: {
           participantId: p.id,
-          name: p.name || this.getParticipantName(p.id) || "",
+          firstName,
+          lastName,
+          originalFirstName: firstName,
+          originalLastName: lastName,
           photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
           photoTouched: false,
           photoCleared: false,
@@ -1551,14 +1567,29 @@ export default defineComponent({
       this.modalLoading = true;
       this.error = "";
       try {
-        const name = String(this.modal.payload.name || "").trim();
-        if (!name) {
-          this.error = this.$t("badminton.group.errUpdateParticipant");
-          return;
+        const firstName = String(this.modal.payload.firstName || "").trim();
+        const lastName = String(this.modal.payload.lastName || "").trim();
+        const patch = {};
+        if (firstName !== this.modal.payload.originalFirstName) {
+          if (!firstName) {
+            this.error = this.$t("badminton.group.errUpdateParticipant");
+            return;
+          }
+          patch.firstName = firstName;
         }
-        const patch = {name};
+        if (lastName !== this.modal.payload.originalLastName) {
+          if (!lastName) {
+            this.error = this.$t("badminton.group.errUpdateParticipant");
+            return;
+          }
+          patch.lastName = lastName;
+        }
         if (this.modal.payload.photoTouched) {
           patch.photoUrl = this.modal.payload.photoCleared ? "" : (this.modal.payload.photoUrl || "");
+        }
+        if (patch.firstName == null && patch.lastName == null && patch.photoUrl === undefined) {
+          this.closeModal();
+          return;
         }
         const upd = await badmintonClient.updateParticipant(
           this.groupId,
