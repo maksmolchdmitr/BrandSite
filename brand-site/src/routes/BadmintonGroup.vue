@@ -24,14 +24,14 @@
       <nav class="groupNav">
         <RouterLink
           class="groupNavLink"
-          :class="{ active: groupSection === 'participants' }"
+          :class="{ active: isParticipantsNavActive }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=participants`"
         >
           {{ $t('badminton.group.participants') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
-          :class="{ active: groupSection === 'matches' }"
+          :class="{ active: isMatchesNavActive }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=singles`"
         >
           {{ $t('badminton.group.matches') }}
@@ -182,8 +182,14 @@
                       />
                     </td>
                     <td v-if="isAdmin" class="actionsCell">
-                      <button class="btn secondary small" @click="startEditParticipant(p)">{{ $t('common.actions.edit') }}</button>
-                      <button class="btn secondary small" @click="startLinkUser(p)">{{ $t('common.actions.link') }}</button>
+                      <RouterLink
+                        class="btn secondary small"
+                        :to="editParticipantTo(p.id)"
+                      >{{ $t('common.actions.edit') }}</RouterLink>
+                      <RouterLink
+                        class="btn secondary small"
+                        :to="linkUserTo(p.id)"
+                      >{{ $t('common.actions.link') }}</RouterLink>
                       <button class="btn danger small" @click="removeParticipant(p)">{{ $t('common.actions.delete') }}</button>
                     </td>
                   </tr>
@@ -218,8 +224,8 @@
       <div v-if="groupSection === 'matches'" class="card">
         <div class="cardTitle">{{ $t('badminton.group.matches') }}</div>
         <div v-if="isAdmin" class="row">
-          <button class="btn" @click="openCreateMatch('singles')">+ {{ $t('badminton.group.singlesMatch') }}</button>
-          <button class="btn" @click="openCreateMatch('doubles')">+ {{ $t('badminton.group.doublesMatch') }}</button>
+          <RouterLink class="btn" :to="createMatchTo('singles')">+ {{ $t('badminton.group.singlesMatch') }}</RouterLink>
+          <RouterLink class="btn" :to="createMatchTo('doubles')">+ {{ $t('badminton.group.doublesMatch') }}</RouterLink>
         </div>
         <div v-if="noMatchesForCurrentTab" class="empty">{{ $t('badminton.group.noMatches') }}</div>
         <div v-if="singlesMatches.length > 0 && effectiveMatchTab === 'singles'" class="matchSection">
@@ -256,7 +262,7 @@
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
-                    <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
+                    <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
                     <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
@@ -326,7 +332,7 @@
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isAdmin" class="actionsCell">
-                    <button class="btn secondary small" @click="openEditMatch(m)">{{ $t('common.actions.edit') }}</button>
+                    <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
                     <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
@@ -466,294 +472,294 @@
         </div>
       </div>
 
-      <!-- Modals (participants: edit/link; matches: create/edit match) -->
-      <div v-if="modal.type" class="modalOverlay" @click.self="closeModal">
-        <div class="modal">
-          <div class="modalTitle">{{ modalTitle }}</div>
+      <!-- Full-page forms (no modals) -->
+      <div v-if="groupSection === 'editParticipant'" class="card formPage">
+        <div class="cardTitle">{{ $t('badminton.group.editParticipant') }}</div>
+        <div class="formStack">
+          <div class="row">
+            <input
+              class="input"
+              v-model="editParticipantForm.firstName"
+              :placeholder="$t('badminton.group.firstName')"
+            />
+            <input
+              class="input"
+              v-model="editParticipantForm.lastName"
+              :placeholder="$t('badminton.group.lastName')"
+            />
+          </div>
+          <div class="photoPickerRow">
+            <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(editParticipantForm.photoUrl) }">
+              <PhotoHoldPreview
+                v-if="isPreviewablePhotoUrl(editParticipantForm.photoUrl)"
+                :src="editParticipantForm.photoUrl"
+                alt=""
+              />
+              <span v-else>{{ $t('badminton.group.photo') }}</span>
+            </div>
+            <input
+              class="input"
+              v-model="editParticipantForm.photoUrl"
+              :placeholder="$t('badminton.group.photoUrlPlaceholder')"
+              @input="onEditPhotoUrlInput"
+            />
+            <button
+              v-if="editParticipantForm.photoUrl || editParticipantForm.photoCleared"
+              type="button"
+              class="btn secondary small"
+              @click="clearEditParticipantPhoto"
+            >
+              {{ $t('badminton.group.clearPhoto') }}
+            </button>
+          </div>
+          <div class="row formActions">
+            <button class="btn" :disabled="formSaving" @click="saveParticipantEdit">{{ $t('common.actions.save') }}</button>
+            <button class="btn secondary" :disabled="formSaving" @click="cancelToParticipants">{{ $t('common.actions.cancel') }}</button>
+          </div>
+        </div>
+      </div>
 
-          <!-- Edit participant -->
-          <div v-if="modal.type === 'editParticipant'" class="modalBody">
-            <div class="row">
-              <input
-                class="input"
-                v-model="modal.payload.firstName"
-                :placeholder="$t('badminton.group.firstName')"
+      <div v-else-if="groupSection === 'linkUser'" class="card formPage">
+        <div class="cardTitle">{{ $t('badminton.group.linkUser') }}</div>
+        <div class="formStack">
+          <input class="input formFullWidthInput" v-model="linkUserForm.userId" :placeholder="$t('badminton.group.userId')" />
+          <div class="row formActions">
+            <button class="btn" :disabled="formSaving || !linkUserForm.userId" @click="confirmLinkUser">{{ $t('common.actions.link') }}</button>
+            <button class="btn secondary" :disabled="formSaving" @click="cancelToParticipants">{{ $t('common.actions.cancel') }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="groupSection === 'createMatch' || groupSection === 'editMatch'" class="card formPage">
+        <div class="cardTitle">{{ matchFormTitle }}</div>
+        <div class="formStack">
+          <!-- Singles match form -->
+          <div v-if="matchForm.kind === 'singles'" class="matchForm">
+            <div class="formSection">
+              <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
+              <ParticipantSearchSelect
+                v-if="!matchForm.team1P1"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant')"
+                @select="selectParticipant('team1P1', $event)"
               />
-              <input
-                class="input"
-                v-model="modal.payload.lastName"
-                :placeholder="$t('badminton.group.lastName')"
-              />
-            </div>
-            <div class="photoPickerRow">
-              <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(modal.payload.photoUrl) }">
-                <PhotoHoldPreview
-                  v-if="isPreviewablePhotoUrl(modal.payload.photoUrl)"
-                  :src="modal.payload.photoUrl"
-                  alt=""
+              <div v-if="matchForm.team1P1" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team1P1)"
+                  :photo-url="getParticipantPhoto(matchForm.team1P1)"
+                  :username="getParticipantUsername(matchForm.team1P1)"
                 />
-                <span v-else>{{ $t('badminton.group.photo') }}</span>
+                <button class="btn small danger" @click="matchForm.team1P1 = null">×</button>
               </div>
-              <input
-                class="input"
-                v-model="modal.payload.photoUrl"
-                :placeholder="$t('badminton.group.photoUrlPlaceholder')"
-                @input="onEditPhotoUrlInput"
-              />
-              <button
-                v-if="modal.payload.photoUrl || modal.payload.photoCleared"
-                type="button"
-                class="btn secondary small"
-                @click="clearEditParticipantPhoto"
-              >
-                {{ $t('badminton.group.clearPhoto') }}
-              </button>
+
+              <div class="scoresRow">
+                <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
+                <div class="scoresInputs">
+                  <div v-for="(score, idx) in matchForm.team1Scores" :key="'t1-' + idx" class="scoreInputWrapper">
+                    <input
+                      type="number"
+                      class="scoreInput"
+                      v-model.number="matchForm.team1Scores[idx]"
+                      :placeholder="$t('badminton.group.scorePlaceholder')"
+                      min="0"
+                      max="30"
+                    />
+                    <button
+                      v-if="matchForm.team1Scores.length > 1"
+                      class="btn small danger scoreRemoveBtn"
+                      @click="removeScore('team1', idx)"
+                      :title="$t('badminton.group.removeScore')"
+                    >×</button>
+                  </div>
+                  <button
+                    v-if="groupSection === 'createMatch'"
+                    class="btn small secondary"
+                    @click="addScore('team1')"
+                  >+</button>
+                </div>
+              </div>
             </div>
-            <div class="row">
-              <button class="btn" :disabled="modalLoading" @click="saveParticipantEdit">{{ $t('common.actions.save') }}</button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
+
+            <div class="formSection">
+              <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
+              <ParticipantSearchSelect
+                v-if="!matchForm.team2P1"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant')"
+                @select="selectParticipant('team2P1', $event)"
+              />
+              <div v-if="matchForm.team2P1" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team2P1)"
+                  :photo-url="getParticipantPhoto(matchForm.team2P1)"
+                  :username="getParticipantUsername(matchForm.team2P1)"
+                />
+                <button class="btn small danger" @click="matchForm.team2P1 = null">×</button>
+              </div>
+
+              <div class="scoresRow">
+                <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
+                <div class="scoresInputs">
+                  <div v-for="(score, idx) in matchForm.team2Scores" :key="'t2-' + idx" class="scoreInputWrapper">
+                    <input
+                      type="number"
+                      class="scoreInput"
+                      v-model.number="matchForm.team2Scores[idx]"
+                      :placeholder="$t('badminton.group.scorePlaceholder')"
+                      min="0"
+                      max="30"
+                    />
+                    <button
+                      v-if="matchForm.team2Scores.length > 1"
+                      class="btn small danger scoreRemoveBtn"
+                      @click="removeScore('team2', idx)"
+                      :title="$t('badminton.group.removeScore')"
+                    >×</button>
+                  </div>
+                  <button
+                    v-if="groupSection === 'createMatch'"
+                    class="btn small secondary"
+                    @click="addScore('team2')"
+                  >+</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Link user -->
-          <div v-else-if="modal.type === 'linkUser'" class="modalBody">
-            <input class="input modalFullWidthInput" v-model="modal.payload.userId" :placeholder="$t('badminton.group.userId')" />
-            <div class="row">
-              <button class="btn" :disabled="modalLoading || !modal.payload.userId" @click="confirmLinkUser">{{ $t('common.actions.link') }}</button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
+          <!-- Doubles match form -->
+          <div v-else class="matchForm">
+            <div class="formSection">
+              <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
+              <ParticipantSearchSelect
+                v-if="!matchForm.team1P1"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant1')"
+                @select="selectParticipant('team1P1', $event)"
+              />
+              <div v-if="matchForm.team1P1" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team1P1)"
+                  :photo-url="getParticipantPhoto(matchForm.team1P1)"
+                  :username="getParticipantUsername(matchForm.team1P1)"
+                />
+                <button class="btn small danger" @click="matchForm.team1P1 = null">×</button>
+              </div>
+
+              <ParticipantSearchSelect
+                v-if="!matchForm.team1P2"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant2')"
+                @select="selectParticipant('team1P2', $event)"
+              />
+              <div v-if="matchForm.team1P2" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team1P2)"
+                  :photo-url="getParticipantPhoto(matchForm.team1P2)"
+                  :username="getParticipantUsername(matchForm.team1P2)"
+                />
+                <button class="btn small danger" @click="matchForm.team1P2 = null">×</button>
+              </div>
+
+              <div class="scoresRow">
+                <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
+                <div class="scoresInputs">
+                  <div v-for="(score, idx) in matchForm.team1Scores" :key="'dt1-' + idx" class="scoreInputWrapper">
+                    <input
+                      type="number"
+                      class="scoreInput"
+                      v-model.number="matchForm.team1Scores[idx]"
+                      :placeholder="$t('badminton.group.scorePlaceholder')"
+                      min="0"
+                      max="30"
+                    />
+                    <button
+                      v-if="matchForm.team1Scores.length > 1"
+                      class="btn small danger scoreRemoveBtn"
+                      @click="removeScore('team1', idx)"
+                      :title="$t('badminton.group.removeScore')"
+                    >×</button>
+                  </div>
+                  <button
+                    v-if="groupSection === 'createMatch'"
+                    class="btn small secondary"
+                    @click="addScore('team1')"
+                  >+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="formSection">
+              <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
+              <ParticipantSearchSelect
+                v-if="!matchForm.team2P1"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant1')"
+                @select="selectParticipant('team2P1', $event)"
+              />
+              <div v-if="matchForm.team2P1" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team2P1)"
+                  :photo-url="getParticipantPhoto(matchForm.team2P1)"
+                  :username="getParticipantUsername(matchForm.team2P1)"
+                />
+                <button class="btn small danger" @click="matchForm.team2P1 = null">×</button>
+              </div>
+
+              <ParticipantSearchSelect
+                v-if="!matchForm.team2P2"
+                :group-id="groupId"
+                :exclude-ids="matchSelectedParticipantIds"
+                :placeholder="$t('common.placeholders.searchParticipant2')"
+                @select="selectParticipant('team2P2', $event)"
+              />
+              <div v-if="matchForm.team2P2" class="selectedParticipant">
+                <PersonChip
+                  :name="getParticipantName(matchForm.team2P2)"
+                  :photo-url="getParticipantPhoto(matchForm.team2P2)"
+                  :username="getParticipantUsername(matchForm.team2P2)"
+                />
+                <button class="btn small danger" @click="matchForm.team2P2 = null">×</button>
+              </div>
+
+              <div class="scoresRow">
+                <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
+                <div class="scoresInputs">
+                  <div v-for="(score, idx) in matchForm.team2Scores" :key="'dt2-' + idx" class="scoreInputWrapper">
+                    <input
+                      type="number"
+                      class="scoreInput"
+                      v-model.number="matchForm.team2Scores[idx]"
+                      :placeholder="$t('badminton.group.scorePlaceholder')"
+                      min="0"
+                      max="30"
+                    />
+                    <button
+                      v-if="matchForm.team2Scores.length > 1"
+                      class="btn small danger scoreRemoveBtn"
+                      @click="removeScore('team2', idx)"
+                      :title="$t('badminton.group.removeScore')"
+                    >×</button>
+                  </div>
+                  <button
+                    v-if="groupSection === 'createMatch'"
+                    class="btn small secondary"
+                    @click="addScore('team2')"
+                  >+</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Create/Edit match -->
-          <div v-else-if="modal.type === 'match'" class="modalBody">
-            <!-- Singles match form -->
-            <div v-if="modal.payload.kind === 'singles'" class="matchForm">
-              <div class="formSection">
-                <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team1P1"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant')"
-                  @select="selectParticipant('team1P1', $event)"
-                />
-                <div v-if="modal.payload.team1P1" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team1P1)"
-                    :photo-url="getParticipantPhoto(modal.payload.team1P1)"
-                    :username="getParticipantUsername(modal.payload.team1P1)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team1P1 = null">×</button>
-                </div>
-
-                <div class="scoresRow">
-                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
-                  <div class="scoresInputs">
-                    <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
-                      <input
-                        type="number"
-                        class="scoreInput"
-                        v-model.number="modal.payload.team1Scores[idx]"
-                        :placeholder="$t('badminton.group.scorePlaceholder')"
-                        min="0"
-                        max="30"
-                      />
-                      <button
-                        v-if="modal.payload.team1Scores.length > 1"
-                        class="btn small danger scoreRemoveBtn"
-                        @click="removeScore('team1', idx)"
-                        :title="$t('badminton.group.removeScore')"
-                      >×</button>
-                    </div>
-                    <button
-                      v-if="!modal.payload.matchId"
-                      class="btn small secondary"
-                      @click="addScore('team1')"
-                    >+</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="formSection">
-                <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team2P1"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant')"
-                  @select="selectParticipant('team2P1', $event)"
-                />
-                <div v-if="modal.payload.team2P1" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team2P1)"
-                    :photo-url="getParticipantPhoto(modal.payload.team2P1)"
-                    :username="getParticipantUsername(modal.payload.team2P1)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team2P1 = null">×</button>
-                </div>
-
-                <div class="scoresRow">
-                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
-                  <div class="scoresInputs">
-                    <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
-                      <input
-                        type="number"
-                        class="scoreInput"
-                        v-model.number="modal.payload.team2Scores[idx]"
-                        :placeholder="$t('badminton.group.scorePlaceholder')"
-                        min="0"
-                        max="30"
-                      />
-                      <button
-                        v-if="modal.payload.team2Scores.length > 1"
-                        class="btn small danger scoreRemoveBtn"
-                        @click="removeScore('team2', idx)"
-                        :title="$t('badminton.group.removeScore')"
-                      >×</button>
-                    </div>
-                    <button
-                      v-if="!modal.payload.matchId"
-                      class="btn small secondary"
-                      @click="addScore('team2')"
-                    >+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Doubles match form -->
-            <div v-else class="matchForm">
-              <div class="formSection">
-                <div class="sectionTitle">{{ $t('badminton.group.team1') }}</div>
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team1P1"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant1')"
-                  @select="selectParticipant('team1P1', $event)"
-                />
-                <div v-if="modal.payload.team1P1" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team1P1)"
-                    :photo-url="getParticipantPhoto(modal.payload.team1P1)"
-                    :username="getParticipantUsername(modal.payload.team1P1)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team1P1 = null">×</button>
-                </div>
-
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team1P2"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant2')"
-                  @select="selectParticipant('team1P2', $event)"
-                />
-                <div v-if="modal.payload.team1P2" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team1P2)"
-                    :photo-url="getParticipantPhoto(modal.payload.team1P2)"
-                    :username="getParticipantUsername(modal.payload.team1P2)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team1P2 = null">×</button>
-                </div>
-
-                <div class="scoresRow">
-                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
-                  <div class="scoresInputs">
-                    <div v-for="(score, idx) in modal.payload.team1Scores" :key="idx" class="scoreInputWrapper">
-                      <input
-                        type="number"
-                        class="scoreInput"
-                        v-model.number="modal.payload.team1Scores[idx]"
-                        :placeholder="$t('badminton.group.scorePlaceholder')"
-                        min="0"
-                        max="30"
-                      />
-                      <button
-                        v-if="modal.payload.team1Scores.length > 1"
-                        class="btn small danger scoreRemoveBtn"
-                        @click="removeScore('team1', idx)"
-                        :title="$t('badminton.group.removeScore')"
-                      >×</button>
-                    </div>
-                    <button
-                      v-if="!modal.payload.matchId"
-                      class="btn small secondary"
-                      @click="addScore('team1')"
-                    >+</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="formSection">
-                <div class="sectionTitle">{{ $t('badminton.group.team2') }}</div>
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team2P1"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant1')"
-                  @select="selectParticipant('team2P1', $event)"
-                />
-                <div v-if="modal.payload.team2P1" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team2P1)"
-                    :photo-url="getParticipantPhoto(modal.payload.team2P1)"
-                    :username="getParticipantUsername(modal.payload.team2P1)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team2P1 = null">×</button>
-                </div>
-
-                <ParticipantSearchSelect
-                  v-if="!modal.payload.team2P2"
-                  :group-id="groupId"
-                  :exclude-ids="matchSelectedParticipantIds"
-                  :placeholder="$t('common.placeholders.searchParticipant2')"
-                  @select="selectParticipant('team2P2', $event)"
-                />
-                <div v-if="modal.payload.team2P2" class="selectedParticipant">
-                  <PersonChip
-                    :name="getParticipantName(modal.payload.team2P2)"
-                    :photo-url="getParticipantPhoto(modal.payload.team2P2)"
-                    :username="getParticipantUsername(modal.payload.team2P2)"
-                  />
-                  <button class="btn small danger" @click="modal.payload.team2P2 = null">×</button>
-                </div>
-
-                <div class="scoresRow">
-                  <div class="scoresLabel">{{ $t('badminton.group.scores') }}:</div>
-                  <div class="scoresInputs">
-                    <div v-for="(score, idx) in modal.payload.team2Scores" :key="idx" class="scoreInputWrapper">
-                      <input
-                        type="number"
-                        class="scoreInput"
-                        v-model.number="modal.payload.team2Scores[idx]"
-                        :placeholder="$t('badminton.group.scorePlaceholder')"
-                        min="0"
-                        max="30"
-                      />
-                      <button
-                        v-if="modal.payload.team2Scores.length > 1"
-                        class="btn small danger scoreRemoveBtn"
-                        @click="removeScore('team2', idx)"
-                        :title="$t('badminton.group.removeScore')"
-                      >×</button>
-                    </div>
-                    <button
-                      v-if="!modal.payload.matchId"
-                      class="btn small secondary"
-                      @click="addScore('team2')"
-                    >+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <button class="btn" :disabled="modalLoading || !canSaveMatch" @click="saveMatch">
-                {{ modal.payload.matchId ? $t('common.actions.save') : $t('common.actions.create') }}
-              </button>
-              <button class="btn secondary" :disabled="modalLoading" @click="closeModal">{{ $t('common.actions.cancel') }}</button>
-            </div>
+          <div class="row formActions">
+            <button class="btn" :disabled="formSaving || !canSaveMatch" @click="saveMatch">
+              {{ groupSection === 'editMatch' ? $t('common.actions.save') : $t('common.actions.create') }}
+            </button>
+            <button class="btn secondary" :disabled="formSaving" @click="cancelToMatches">{{ $t('common.actions.cancel') }}</button>
           </div>
         </div>
       </div>
@@ -786,6 +792,8 @@ export default defineComponent({
     groupSection: { type: String, default: "participants" },
     /** 'singles' | 'doubles' — внутри «Матчи» всегда один из двух */
     matchTab: { type: String, default: "singles" },
+    participantId: { type: String, default: null },
+    matchId: { type: String, default: null },
   },
   data() {
     return {
@@ -833,8 +841,27 @@ export default defineComponent({
       newUnlinkedPhotoUrl: "",
       loadingAddUnlinked: false,
 
-      modal: {type: "", payload: {}},
-      modalLoading: false,
+      editParticipantForm: {
+        firstName: "",
+        lastName: "",
+        originalFirstName: "",
+        originalLastName: "",
+        photoUrl: "",
+        photoTouched: false,
+        photoCleared: false,
+      },
+      linkUserForm: { userId: "" },
+      matchForm: {
+        matchId: "",
+        kind: "singles",
+        team1P1: null,
+        team1P2: null,
+        team2P1: null,
+        team2P2: null,
+        team1Scores: [21],
+        team2Scores: [21],
+      },
+      formSaving: false,
     };
   },
   computed: {
@@ -845,7 +872,7 @@ export default defineComponent({
       return this.group?.myRole === "admin";
     },
     matchSelectedParticipantIds() {
-      const p = this.modal?.payload || {};
+      const p = this.matchForm || {};
       return [p.team1P1, p.team1P2, p.team2P1, p.team2P2].filter(Boolean);
     },
     showInviteUserDropdown() {
@@ -862,24 +889,29 @@ export default defineComponent({
         && String(this.newUnlinkedUsername || "").trim()
       );
     },
-    modalTitle() {
-      if (this.modal.type === "editParticipant") return this.$t("badminton.group.editParticipant");
-      if (this.modal.type === "linkUser") return this.$t("badminton.group.linkUser");
-      if (this.modal.type === "match") {
-        const kind = this.modal.payload.kind === "singles" ? this.$t("badminton.group.singles") : this.$t("badminton.group.doubles");
-        return this.modal.payload.matchId ? this.$t("badminton.group.editMatch", { kind }) : this.$t("badminton.group.createMatch", { kind });
-      }
-      return "";
+    isParticipantsNavActive() {
+      return ["participants", "editParticipant", "linkUser"].includes(this.groupSection);
+    },
+    isMatchesNavActive() {
+      return ["matches", "createMatch", "editMatch"].includes(this.groupSection);
+    },
+    matchFormTitle() {
+      const kind = this.matchForm.kind === "singles"
+        ? this.$t("badminton.group.singles")
+        : this.$t("badminton.group.doubles");
+      return this.groupSection === "editMatch"
+        ? this.$t("badminton.group.editMatch", { kind })
+        : this.$t("badminton.group.createMatch", { kind });
     },
     canSaveMatch() {
-      const p = this.modal.payload;
+      const p = this.matchForm;
       if (p.kind === "singles") {
-        return p.team1P1 && p.team2P1 && 
-               p.team1Scores.some(s => s > 0) && 
+        return p.team1P1 && p.team2P1 &&
+               p.team1Scores.some(s => s > 0) &&
                p.team2Scores.some(s => s > 0);
       } else {
         return p.team1P1 && p.team1P2 && p.team2P1 && p.team2P2 &&
-               p.team1Scores.some(s => s > 0) && 
+               p.team1Scores.some(s => s > 0) &&
                p.team2Scores.some(s => s > 0);
       }
     },
@@ -992,7 +1024,17 @@ export default defineComponent({
       this.normalizeMatchesQueryThenLoad();
     },
     matchTab() {
-      if (this.groupSection === "matches") this.loadSection();
+      if (this.groupSection === "matches" || this.groupSection === "createMatch" || this.groupSection === "editMatch") {
+        this.loadSection();
+      }
+    },
+    participantId() {
+      if (this.groupSection === "editParticipant" || this.groupSection === "linkUser") {
+        this.loadSection();
+      }
+    },
+    matchId() {
+      if (this.groupSection === "editMatch") this.loadSection();
     },
     groupId() {
       this.loadGroup();
@@ -1022,16 +1064,92 @@ export default defineComponent({
       if (role === "member") return this.$t("badminton.roles.member");
       return role;
     },
+    participantsListTo() {
+      const gid = encodeURIComponent(this.groupId);
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=participants`;
+    },
+    matchesListTo(tab = this.effectiveMatchTab) {
+      const gid = encodeURIComponent(this.groupId);
+      const t = tab === "doubles" ? "doubles" : "singles";
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${t}`;
+    },
+    editParticipantTo(participantId) {
+      const gid = encodeURIComponent(this.groupId);
+      const pid = encodeURIComponent(participantId);
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=editParticipant&participantId=${pid}`;
+    },
+    linkUserTo(participantId) {
+      const gid = encodeURIComponent(this.groupId);
+      const pid = encodeURIComponent(participantId);
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=linkUser&participantId=${pid}`;
+    },
+    createMatchTo(kind) {
+      const gid = encodeURIComponent(this.groupId);
+      const tab = kind === "doubles" ? "doubles" : "singles";
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=createMatch&matchTab=${tab}`;
+    },
+    editMatchTo(m) {
+      const gid = encodeURIComponent(this.groupId);
+      const mid = encodeURIComponent(m.id);
+      const tab = m.kind === "doubles" ? "doubles" : "singles";
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=editMatch&matchId=${mid}&matchTab=${tab}`;
+    },
     matchesSubNavTo(tab) {
       const gid = encodeURIComponent(this.groupId);
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${tab}`;
     },
+    cancelToParticipants() {
+      this.$router.push(this.participantsListTo());
+    },
+    cancelToMatches() {
+      this.$router.push(this.matchesListTo(this.matchForm.kind || this.effectiveMatchTab));
+    },
+    emptyMatchForm(kind, matchId = "") {
+      return {
+        matchId: matchId || "",
+        kind: kind === "doubles" ? "doubles" : "singles",
+        team1P1: null,
+        team1P2: null,
+        team2P1: null,
+        team2P2: null,
+        team1Scores: [21],
+        team2Scores: [21],
+      };
+    },
+    matchFormFromMatch(m) {
+      const games = m.score?.games || [];
+      const team1Scores = games.length > 0 ? [games[0].pointsA] : [null];
+      const team2Scores = games.length > 0 ? [games[0].pointsB] : [null];
+      if (m.kind === "singles") {
+        return {
+          matchId: m.id,
+          kind: "singles",
+          team1P1: m.teamA?.[0] || null,
+          team1P2: null,
+          team1Scores,
+          team2P1: m.teamB?.[0] || null,
+          team2P2: null,
+          team2Scores,
+        };
+      }
+      return {
+        matchId: m.id,
+        kind: "doubles",
+        team1P1: m.teamA?.[0] || null,
+        team1P2: m.teamA?.[1] || null,
+        team1Scores,
+        team2P1: m.teamB?.[0] || null,
+        team2P2: m.teamB?.[1] || null,
+        team2Scores,
+      };
+    },
     async normalizeMatchesQueryThenLoad() {
-      if (this.groupSection === "matches") {
+      if (this.groupSection === "matches" || this.groupSection === "createMatch" || this.groupSection === "editMatch") {
         const q = this.$route.query;
         const mt = String(q.matchTab || "").toLowerCase();
         if (mt !== "singles" && mt !== "doubles") {
           await this.$router.replace({ query: { ...q, matchTab: "singles" } });
+          return;
         }
       }
       this.loadSection();
@@ -1058,6 +1176,20 @@ export default defineComponent({
           this.participantsPages = [{ items: pItems, pageToken: res?.pageToken || null }];
           this.participantsPageIndex = 0;
           this.mergeParticipantNames(pItems);
+        } else if (this.groupSection === "editParticipant") {
+          await this.loadEditParticipantForm();
+        } else if (this.groupSection === "linkUser") {
+          this.linkUserForm = { userId: "" };
+          if (!this.participantId) {
+            this.error = this.$t("badminton.group.errUpdateParticipant");
+          }
+        } else if (this.groupSection === "createMatch") {
+          const kind = this.effectiveMatchTab;
+          this.matchForm = this.emptyMatchForm(kind);
+          const participantsRes = await badmintonClient.listAllParticipants(this.groupId);
+          this.mergeParticipantNames(participantsRes?.items || []);
+        } else if (this.groupSection === "editMatch") {
+          await this.loadEditMatchForm();
         } else if (this.groupSection === "matches") {
           const tab = this.effectiveMatchTab;
           const needSingles = tab === "singles";
@@ -1094,6 +1226,67 @@ export default defineComponent({
       } finally {
         this.loading = false;
       }
+    },
+    async loadEditParticipantForm() {
+      if (!this.participantId) {
+        this.error = this.$t("badminton.group.errUpdateParticipant");
+        return;
+      }
+      const res = await badmintonClient.listAllParticipants(this.groupId);
+      const items = res?.items || [];
+      this.mergeParticipantNames(items);
+      const p = items.find(x => x.id === this.participantId);
+      if (!p) {
+        this.error = this.$t("badminton.group.errUpdateParticipant");
+        return;
+      }
+      const firstName = String(p.firstName ?? "").trim();
+      const lastName = String(p.lastName ?? "").trim();
+      this.editParticipantForm = {
+        firstName,
+        lastName,
+        originalFirstName: firstName,
+        originalLastName: lastName,
+        photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
+        photoTouched: false,
+        photoCleared: false,
+      };
+    },
+    async findMatchById(matchId, kind) {
+      const pages = kind === "doubles" ? this.doublesPages : this.singlesPages;
+      for (const page of pages || []) {
+        const found = (page.items || []).find(m => m.id === matchId);
+        if (found) return found;
+      }
+      const fetcher = kind === "doubles"
+        ? (opts) => badmintonClient.getMyDoublesMatches(opts)
+        : (opts) => badmintonClient.getMySinglesMatches(opts);
+      let pageToken = null;
+      for (let i = 0; i < 20; i++) {
+        const res = await fetcher({ groupId: this.groupId, limit: 50, pageToken });
+        const found = (res?.items || []).find(m => m.id === matchId);
+        if (found) return found;
+        pageToken = res?.pageToken || null;
+        if (!pageToken) break;
+      }
+      return null;
+    },
+    async loadEditMatchForm() {
+      const kind = this.effectiveMatchTab;
+      const participantsRes = await badmintonClient.listAllParticipants(this.groupId);
+      this.mergeParticipantNames(participantsRes?.items || []);
+      if (!this.matchId) {
+        this.error = this.$t("badminton.group.errSaveMatch");
+        this.matchForm = this.emptyMatchForm(kind);
+        return;
+      }
+      const m = await this.findMatchById(this.matchId, kind);
+      if (!m) {
+        this.error = this.$t("badminton.group.errSaveMatch");
+        this.matchForm = this.emptyMatchForm(kind, this.matchId);
+        return;
+      }
+      this.matchForm = this.matchFormFromMatch(m);
     },
     async goPrevParticipants() {
       if (!this.canGoPrevParticipants) return;
@@ -1499,17 +1692,18 @@ export default defineComponent({
       this.newUnlinkedPhotoUrl = "";
     },
     onEditPhotoUrlInput() {
-      if (this.modal.type !== "editParticipant") return;
-      this.modal = {
-        ...this.modal,
-        payload: {...this.modal.payload, photoTouched: true, photoCleared: false},
+      this.editParticipantForm = {
+        ...this.editParticipantForm,
+        photoTouched: true,
+        photoCleared: false,
       };
     },
     clearEditParticipantPhoto() {
-      if (this.modal.type !== "editParticipant") return;
-      this.modal = {
-        ...this.modal,
-        payload: {...this.modal.payload, photoUrl: "", photoTouched: true, photoCleared: true},
+      this.editParticipantForm = {
+        ...this.editParticipantForm,
+        photoUrl: "",
+        photoTouched: true,
+        photoCleared: true,
       };
     },
 
@@ -1542,95 +1736,55 @@ export default defineComponent({
       }
     },
 
-    startEditParticipant(p) {
-      const displayName = p.name || this.getParticipantName(p.id) || "";
-      const fromName = String(displayName).trim().split(/\s+/);
-      const firstName = String(p.firstName ?? fromName[0] ?? "").trim();
-      const lastName = String(
-        p.lastName ?? (fromName.length > 1 ? fromName.slice(1).join(" ") : "")
-      ).trim();
-      this.modal = {
-        type: "editParticipant",
-        payload: {
-          participantId: p.id,
-          firstName,
-          lastName,
-          originalFirstName: firstName,
-          originalLastName: lastName,
-          photoUrl: p.photoUrl || this.getParticipantPhoto(p.id) || "",
-          photoTouched: false,
-          photoCleared: false,
-        },
-      };
-    },
     async saveParticipantEdit() {
-      this.modalLoading = true;
+      if (!this.participantId) return;
+      this.formSaving = true;
       this.error = "";
       try {
-        const firstName = String(this.modal.payload.firstName || "").trim();
-        const lastName = String(this.modal.payload.lastName || "").trim();
+        const firstName = String(this.editParticipantForm.firstName || "").trim();
+        const lastName = String(this.editParticipantForm.lastName || "").trim();
         const patch = {};
-        if (firstName !== this.modal.payload.originalFirstName) {
+        if (firstName !== this.editParticipantForm.originalFirstName) {
           if (!firstName) {
             this.error = this.$t("badminton.group.errUpdateParticipant");
             return;
           }
           patch.firstName = firstName;
         }
-        if (lastName !== this.modal.payload.originalLastName) {
+        if (lastName !== this.editParticipantForm.originalLastName) {
           if (!lastName) {
             this.error = this.$t("badminton.group.errUpdateParticipant");
             return;
           }
           patch.lastName = lastName;
         }
-        if (this.modal.payload.photoTouched) {
-          patch.photoUrl = this.modal.payload.photoCleared ? "" : (this.modal.payload.photoUrl || "");
+        if (this.editParticipantForm.photoTouched) {
+          patch.photoUrl = this.editParticipantForm.photoCleared ? "" : (this.editParticipantForm.photoUrl || "");
         }
         if (patch.firstName == null && patch.lastName == null && patch.photoUrl === undefined) {
-          this.closeModal();
+          this.cancelToParticipants();
           return;
         }
-        const upd = await badmintonClient.updateParticipant(
-          this.groupId,
-          this.modal.payload.participantId,
-          patch
-        );
-        this.mergeParticipantNames([upd]);
-        const idx = this.participantsPageIndex;
-        if (this.participantsPages[idx]) {
-          const items = this.participantsPages[idx].items.map(p => (p.id === upd.id ? upd : p));
-          this.participantsPages = this.participantsPages.slice();
-          this.participantsPages[idx] = { ...this.participantsPages[idx], items };
-        }
-        this.closeModal();
+        await badmintonClient.updateParticipant(this.groupId, this.participantId, patch);
+        this.cancelToParticipants();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
       } finally {
-        this.modalLoading = false;
+        this.formSaving = false;
       }
     },
 
-    startLinkUser(p) {
-      this.modal = {type: "linkUser", payload: {participantId: p.id, userId: ""}};
-    },
     async confirmLinkUser() {
-      this.modalLoading = true;
+      if (!this.participantId) return;
+      this.formSaving = true;
       this.error = "";
       try {
-        const upd = await badmintonClient.linkUserToParticipant(this.groupId, this.modal.payload.participantId, {userId: this.modal.payload.userId});
-        this.mergeParticipantNames([upd]);
-        const idx = this.participantsPageIndex;
-        if (this.participantsPages[idx]) {
-          const items = this.participantsPages[idx].items.map(p => (p.id === upd.id ? upd : p));
-          this.participantsPages = this.participantsPages.slice();
-          this.participantsPages[idx] = { ...this.participantsPages[idx], items };
-        }
-        this.closeModal();
+        await badmintonClient.linkUserToParticipant(this.groupId, this.participantId, { userId: this.linkUserForm.userId });
+        this.cancelToParticipants();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errLinkUser");
       } finally {
-        this.modalLoading = false;
+        this.formSaving = false;
       }
     },
 
@@ -1656,157 +1810,93 @@ export default defineComponent({
       }
     },
 
-    openCreateMatch(kind) {
-      this.modal = {
-        type: "match",
-        payload: {
-          matchId: "",
-          kind,
-          team1P1: null,
-          team1Scores: [21],
-          team2P1: null,
-          team2Scores: [21],
-          team1P2: null,
-          team2P2: null,
-        },
-      };
-    },
-    openEditMatch(m) {
-      const games = m.score?.games || [];
-      const team1Scores = games.length > 0 ? [games[0].pointsA] : [null];
-      const team2Scores = games.length > 0 ? [games[0].pointsB] : [null];
-
-      if (m.kind === "singles") {
-        this.modal = {
-          type: "match",
-          payload: {
-            matchId: m.id,
-            kind: m.kind,
-            team1P1: m.teamA?.[0] || null,
-            team1Scores,
-            team2P1: m.teamB?.[0] || null,
-            team2Scores,
-          },
-        };
-      } else {
-        this.modal = {
-          type: "match",
-          payload: {
-            matchId: m.id,
-            kind: m.kind,
-            team1P1: m.teamA?.[0] || null,
-            team1P2: m.teamA?.[1] || null,
-            team1Scores,
-            team2P1: m.teamB?.[0] || null,
-            team2P2: m.teamB?.[1] || null,
-            team2Scores,
-          },
-        };
-      }
-    },
     selectParticipant(field, participant) {
-      this.modal.payload[field] = participant.id;
+      this.matchForm[field] = participant.id;
       this.mergeParticipantNames([participant]);
     },
     addScore(team) {
       const field = `${team}Scores`;
       const otherTeam = team === "team1" ? "team2" : "team1";
       const otherField = `${otherTeam}Scores`;
-      
-      if (!this.modal.payload[field]) {
-        this.modal.payload[field] = [21];
+
+      if (!this.matchForm[field]) {
+        this.matchForm[field] = [21];
       }
-      if (!this.modal.payload[otherField]) {
-        this.modal.payload[otherField] = [21];
+      if (!this.matchForm[otherField]) {
+        this.matchForm[otherField] = [21];
       }
-      
-      // Add score to both teams simultaneously (default 21)
-      this.modal.payload[field].push(21);
-      this.modal.payload[otherField].push(21);
+
+      this.matchForm[field].push(21);
+      this.matchForm[otherField].push(21);
     },
     removeScore(team, idx) {
       const field = `${team}Scores`;
       const otherTeam = team === "team1" ? "team2" : "team1";
       const otherField = `${otherTeam}Scores`;
-      
-      // Remove score from both teams simultaneously
-      if (this.modal.payload[field] && this.modal.payload[field].length > idx) {
-        this.modal.payload[field].splice(idx, 1);
+
+      if (this.matchForm[field] && this.matchForm[field].length > idx) {
+        this.matchForm[field].splice(idx, 1);
       }
-      if (this.modal.payload[otherField] && this.modal.payload[otherField].length > idx) {
-        this.modal.payload[otherField].splice(idx, 1);
+      if (this.matchForm[otherField] && this.matchForm[otherField].length > idx) {
+        this.matchForm[otherField].splice(idx, 1);
       }
-      
-      // Ensure at least one score field exists
-      if (this.modal.payload[field].length === 0) {
-        this.modal.payload[field] = [21];
+
+      if (this.matchForm[field].length === 0) {
+        this.matchForm[field] = [21];
       }
-      if (this.modal.payload[otherField].length === 0) {
-        this.modal.payload[otherField] = [21];
+      if (this.matchForm[otherField].length === 0) {
+        this.matchForm[otherField] = [21];
       }
     },
     async saveMatch() {
-      this.modalLoading = true;
+      this.formSaving = true;
       this.error = "";
       try {
-        const payload = {kind: this.modal.payload.kind};
-        
-        // Build teams
-        if (this.modal.payload.kind === "singles") {
-          payload.teamA = this.modal.payload.team1P1 ? [this.modal.payload.team1P1] : [];
-          payload.teamB = this.modal.payload.team2P1 ? [this.modal.payload.team2P1] : [];
+        const payload = { kind: this.matchForm.kind };
+
+        if (this.matchForm.kind === "singles") {
+          payload.teamA = this.matchForm.team1P1 ? [this.matchForm.team1P1] : [];
+          payload.teamB = this.matchForm.team2P1 ? [this.matchForm.team2P1] : [];
         } else {
           payload.teamA = [
-            this.modal.payload.team1P1,
-            this.modal.payload.team1P2,
+            this.matchForm.team1P1,
+            this.matchForm.team1P2,
           ].filter(Boolean);
           payload.teamB = [
-            this.modal.payload.team2P1,
-            this.modal.payload.team2P2,
+            this.matchForm.team2P1,
+            this.matchForm.team2P2,
           ].filter(Boolean);
         }
-        
-        // Build games from scores
-        const team1Scores = (this.modal.payload.team1Scores || []).filter(s => s !== null && s !== undefined);
-        const team2Scores = (this.modal.payload.team2Scores || []).filter(s => s !== null && s !== undefined);
+
+        const team1Scores = (this.matchForm.team1Scores || []).filter(s => s !== null && s !== undefined);
+        const team2Scores = (this.matchForm.team2Scores || []).filter(s => s !== null && s !== undefined);
         const maxGames = Math.max(team1Scores.length, team2Scores.length);
         const games = [];
         for (let i = 0; i < maxGames; i++) {
           const score1 = team1Scores[i] || 0;
           const score2 = team2Scores[i] || 0;
           if (score1 > 0 || score2 > 0) {
-            games.push({pointsA: score1, pointsB: score2});
+            games.push({ pointsA: score1, pointsB: score2 });
           }
         }
 
-        let m;
         const kind = payload.kind;
-        if (this.modal.payload.matchId) {
-          // Update: one match row → GameScore (not MatchScore.games)
+        if (this.matchForm.matchId) {
           const updateBody = {
             teamA: payload.teamA,
             teamB: payload.teamB,
             score: games[0],
           };
-          m = await badmintonClient.updateMatch(this.groupId, this.modal.payload.matchId, updateBody);
-          if (kind === "singles" && this.singlesPages.length && this.singlesPageIndex === 0) {
-            const first = this.singlesPages[0];
-            this.singlesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
-          } else if (kind === "doubles" && this.doublesPages.length && this.doublesPageIndex === 0) {
-            const first = this.doublesPages[0];
-            this.doublesPages = [{ ...first, items: (first.items || []).map(x => (x.id === m.id ? m : x)) }];
-          }
+          await badmintonClient.updateMatch(this.groupId, this.matchForm.matchId, updateBody);
         } else {
-          payload.score = {games};
+          payload.score = { games };
           await badmintonClient.createMatch(this.groupId, payload);
-          await this.loadSection();
         }
-        this.closeModal();
-        if (this.groupSection === "leaderboards") this.loadLeaderboards();
+        await this.$router.push(this.matchesListTo(kind));
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errSaveMatch");
       } finally {
-        this.modalLoading = false;
+        this.formSaving = false;
       }
     },
     async removeMatch(m) {
@@ -1827,11 +1917,6 @@ export default defineComponent({
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errDeleteMatch");
       }
-    },
-
-    closeModal() {
-      this.modal = {type: "", payload: {}};
-      this.modalLoading = false;
     },
   },
 });
@@ -1897,8 +1982,11 @@ export default defineComponent({
 .photoPreview.empty { border-style: dashed; }
 .photoPreview :deep(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photoPickerRow .input { flex: 1 1 180px; width: auto; min-width: 160px; }
-/* .input defaults to width:0 for row flex; standalone modal fields need full width */
-.modalFullWidthInput { width: 100%; flex: 0 0 auto; }
+.formFullWidthInput { width: 100%; flex: 0 0 auto; }
+.formPage { max-width: 640px; }
+.formStack { display: flex; flex-direction: column; gap: 16px; }
+.formActions { margin-top: 4px; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .inviteSearchRow { align-items: flex-start; }
 .inviteSearch { flex: 1 1 0; min-width: 0; max-width: 100%; }
 .inviteSearch .input { width: 100%; max-width: 100%; }
@@ -2014,11 +2102,6 @@ export default defineComponent({
 .pagerLimitOption:hover { background-color: #f6f6ff; }
 .pagerLimitOption.active { font-weight: 700; color: #4F3DFF; }
 
-.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 1000; }
-.modal { width: min(600px, 100%); max-width: 100%; box-sizing: border-box; background: white; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-.modalTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin-bottom: 16px; color: #4F3DFF; }
-.modalBody { display: flex; flex-direction: column; gap: 16px; }
-
 .matchForm { display: flex; flex-direction: column; gap: 24px; }
 .formSection { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #fafaff; border-radius: 12px; }
 .sectionTitle { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 8px; }
@@ -2066,8 +2149,7 @@ export default defineComponent({
 
   .groupNavLink,
   .card,
-  .lbCard,
-  .modal {
+  .lbCard {
     background: #2d2d2d;
     border-color: #4a4a4a;
   }

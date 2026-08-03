@@ -140,6 +140,8 @@ export default defineComponent({
         props.groupSection = this.route?.query?.groupSection || 'participants';
         const mt = this.route?.query?.matchTab;
         props.matchTab = mt === "doubles" || mt === "singles" ? mt : "singles";
+        props.participantId = this.route?.query?.participantId || null;
+        props.matchId = this.route?.query?.matchId || null;
       }
       if (this.page === 'badminton' && this.section === 'games') {
         const tab = this.route?.query?.tab;
