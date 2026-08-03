@@ -563,6 +563,31 @@ export const mockClient = {
     return dto;
   },
 
+  async createPhotoUploadUrl(groupId, {contentType, contentLength}) {
+    logRequest("POST", `/api/groups/${groupId}/photo-upload-url`, {contentType, contentLength});
+    await delay();
+    const db = loadDb();
+    requireAuth(db);
+    requireAdmin(db, groupId);
+    const objectKey = `participants/${groupId}/mock-${Date.now()}.jpg`;
+    const publicUrl = `https://picsum.photos/seed/${encodeURIComponent(objectKey)}/200`;
+    const response = {
+      uploadUrl: publicUrl,
+      publicUrl,
+      objectKey,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    };
+    logResponse("POST", `/api/groups/${groupId}/photo-upload-url`, response, 200);
+    return response;
+  },
+
+  async uploadParticipantPhoto(groupId, file) {
+    const {assertParticipantPhotoFile} = await import("./photoUpload.js");
+    assertParticipantPhotoFile(file);
+    // Mock: skip Object Storage PUT; local object URL for preview.
+    return URL.createObjectURL(file);
+  },
+
   async deleteParticipant(groupId, participantId) {
     logRequest("DELETE", `/api/groups/${groupId}/participants/${participantId}`);
     await delay();

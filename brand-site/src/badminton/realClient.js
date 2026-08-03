@@ -79,6 +79,17 @@ export const realClient = {
     return api.updateParticipant(groupId, participantId, {firstName, lastName, photoUrl});
   },
 
+  async createPhotoUploadUrl(groupId, {contentType, contentLength}) {
+    return api.createPhotoUploadUrl(groupId, {contentType, contentLength});
+  },
+
+  async uploadParticipantPhoto(groupId, file) {
+    const {uploadParticipantPhotoViaPresign} = await import("./photoUpload.js");
+    return uploadParticipantPhotoViaPresign(file, (body) =>
+      api.createPhotoUploadUrl(groupId, body)
+    );
+  },
+
   async deleteParticipant(groupId, participantId) {
     return api.deleteParticipant(groupId, participantId);
   },

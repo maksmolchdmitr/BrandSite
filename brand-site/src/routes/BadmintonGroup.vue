@@ -145,6 +145,16 @@
                   />
                   <span v-else>{{ $t('badminton.group.photo') }}</span>
                 </div>
+                <label class="btn secondary small photoFileLabel">
+                  {{ uploadingUnlinkedPhoto ? $t('badminton.group.uploadingPhoto') : $t('badminton.group.choosePhoto') }}
+                  <input
+                    class="photoFileInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    :disabled="uploadingUnlinkedPhoto || loadingAddUnlinked"
+                    @change="onUnlinkedPhotoFileChange"
+                  />
+                </label>
                 <input
                   class="input"
                   v-model="newUnlinkedPhotoUrl"
@@ -503,6 +513,16 @@
               />
               <span v-else>{{ $t('badminton.group.photo') }}</span>
             </div>
+            <label class="btn secondary small photoFileLabel">
+              {{ uploadingEditPhoto ? $t('badminton.group.uploadingPhoto') : $t('badminton.group.choosePhoto') }}
+              <input
+                class="photoFileInput"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                :disabled="uploadingEditPhoto || formSaving"
+                @change="onEditPhotoFileChange"
+              />
+            </label>
             <input
               class="input"
               v-model="editParticipantForm.photoUrl"
@@ -846,6 +866,8 @@ export default defineComponent({
       newUnlinkedUsernameTouched: false,
       newUnlinkedPhotoUrl: "",
       loadingAddUnlinked: false,
+      uploadingUnlinkedPhoto: false,
+      uploadingEditPhoto: false,
 
       editParticipantForm: {
         firstName: "",
@@ -1699,7 +1721,50 @@ export default defineComponent({
 
     isPreviewablePhotoUrl(url) {
       const value = String(url || "").trim();
-      return value.startsWith("http://") || value.startsWith("https://");
+      return value.startsWith("http://")
+        || value.startsWith("https://")
+        || value.startsWith("blob:");
+    },
+    photoUploadErrorMessage(error) {
+      const code = error?.message;
+      if (code === "photoTypeUnsupported") return this.$t("badminton.group.errPhotoType");
+      if (code === "photoTooLarge") return this.$t("badminton.group.errPhotoTooLarge");
+      if (code === "photoUploadFailed") return this.$t("badminton.group.errPhotoUpload");
+      return error?.message || this.$t("badminton.group.errPhotoUpload");
+    },
+    async onUnlinkedPhotoFileChange(event) {
+      const file = event?.target?.files?.[0];
+      if (event?.target) event.target.value = "";
+      if (!file) return;
+      this.uploadingUnlinkedPhoto = true;
+      this.error = "";
+      try {
+        this.newUnlinkedPhotoUrl = await badmintonClient.uploadParticipantPhoto(this.groupId, file);
+      } catch (e) {
+        this.error = this.photoUploadErrorMessage(e);
+      } finally {
+        this.uploadingUnlinkedPhoto = false;
+      }
+    },
+    async onEditPhotoFileChange(event) {
+      const file = event?.target?.files?.[0];
+      if (event?.target) event.target.value = "";
+      if (!file) return;
+      this.uploadingEditPhoto = true;
+      this.error = "";
+      try {
+        const publicUrl = await badmintonClient.uploadParticipantPhoto(this.groupId, file);
+        this.editParticipantForm = {
+          ...this.editParticipantForm,
+          photoUrl: publicUrl,
+          photoTouched: true,
+          photoCleared: false,
+        };
+      } catch (e) {
+        this.error = this.photoUploadErrorMessage(e);
+      } finally {
+        this.uploadingEditPhoto = false;
+      }
     },
     clearUnlinkedPhoto() {
       this.newUnlinkedPhotoUrl = "";
@@ -1994,6 +2059,13 @@ export default defineComponent({
 }
 .photoPreview.empty { border-style: dashed; }
 .photoPreview :deep(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photoFileLabel { position: relative; overflow: hidden; cursor: pointer; }
+.photoFileInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 .photoPickerRow .input { flex: 1 1 180px; width: auto; min-width: 160px; }
 .formFullWidthInput { width: 100%; flex: 0 0 auto; }
 .formPage { max-width: 640px; }

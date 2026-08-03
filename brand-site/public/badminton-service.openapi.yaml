@@ -325,6 +325,39 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/groups/{groupId}/photo-upload-url:
+    post:
+      tags: [ Participants ]
+      summary: Create presigned URL for participant photo upload (admin-only)
+      operationId: createPhotoUploadUrl
+      description: |
+        Returns a short-lived presigned PUT URL for Yandex Object Storage.
+        The client uploads the image directly to the bucket (CORS), then passes
+        `publicUrl` as `photoUrl` on create/patch participant.
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUploadUrlResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/groups/{groupId}/participants/unlinked:
     post:
       tags: [ Participants ]
@@ -928,6 +961,44 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
       required: [ name ]
+
+    PhotoUploadUrlRequest:
+      type: object
+      additionalProperties: false
+      description: Request a presigned PUT URL for a participant profile photo.
+      properties:
+        contentType:
+          type: string
+          enum: [ image/jpeg, image/png, image/webp ]
+          description: MIME type of the file that will be uploaded
+        contentLength:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 5242880
+          description: Optional file size in bytes (max 5 MiB); validated when present
+      required: [ contentType ]
+
+    PhotoUploadUrlResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        uploadUrl:
+          type: string
+          format: uri
+          description: Presigned PUT URL for the browser upload
+        publicUrl:
+          type: string
+          format: uri
+          description: Public https URL to store as participant photoUrl after upload
+        objectKey:
+          type: string
+          description: Object key inside the bucket
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the presigned uploadUrl expires
+      required: [ uploadUrl, publicUrl, objectKey, expiresAt ]
 
     ParticipantUnlinkedCreateRequest:
       type: object

@@ -289,6 +289,15 @@ export async function updateParticipant(groupId, participantId, {firstName, last
   });
 }
 
+export async function createPhotoUploadUrl(groupId, {contentType, contentLength}) {
+  const body = {contentType};
+  if (contentLength != null) body.contentLength = contentLength;
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/photo-upload-url`, {
+    method: "POST",
+    body,
+  });
+}
+
 export async function deleteParticipant(groupId, participantId) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}`, {
     method: "DELETE",
