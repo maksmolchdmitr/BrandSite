@@ -199,6 +199,7 @@
                         :to="editParticipantTo(p.id)"
                       >{{ $t('common.actions.edit') }}</RouterLink>
                       <RouterLink
+                        v-if="isUnlinkedParticipant(p)"
                         class="btn secondary small"
                         :to="linkUserTo(p.id)"
                       >{{ $t('common.actions.link') }}</RouterLink>
