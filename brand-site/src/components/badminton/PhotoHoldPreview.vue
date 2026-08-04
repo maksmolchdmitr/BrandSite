@@ -34,7 +34,7 @@ export default defineComponent({
       return photoCropImgStyle(this.photoCrop);
     },
     frameStyle() {
-      return this.imgStyle ? { position: "relative", overflow: "hidden", display: "inline-block" } : null;
+      return this.imgStyle ? { position: "relative", overflow: "hidden" } : null;
     },
   },
   methods: {

@@ -179,7 +179,6 @@
                 <thead>
                   <tr>
                     <th>{{ $t('badminton.group.name') }}</th>
-                    <th>{{ $t('badminton.group.boundGroupId') }}</th>
                     <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
                   </tr>
                 </thead>
@@ -192,10 +191,6 @@
                         :photo-crop="p.photoCrop"
                         :username="p.username || getParticipantUsername(p.id)"
                       />
-                    </td>
-                    <td class="groupIdCell">
-                      <code v-if="p.groupId" class="groupIdValue">{{ p.groupId }}</code>
-                      <span v-else class="groupIdEmpty">—</span>
                     </td>
                     <td v-if="isAdmin" class="actionsCell">
                       <RouterLink
@@ -2101,17 +2096,6 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .table tbody tr:hover { background: #fafaff; }
 .table tbody tr:last-child td { border-bottom: none; }
 .nameCell { font-weight: 600; }
-.groupIdCell { font-size: 12px; max-width: 220px; }
-.groupIdValue {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  opacity: 0.75;
-}
-.groupIdEmpty { opacity: 0.45; }
 .personChipRow { display: flex; flex-direction: column; gap: 6px; }
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
 .scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }
