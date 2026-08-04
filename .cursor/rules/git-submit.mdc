@@ -1,5 +1,5 @@
 ---
-description: «Засабмитить» = git submit (add + commit + push); не спрашивать — сразу submit
+description: «Засабмитить» = git submit (add + commit + push + PR на ветках); не спрашивать — сразу submit
 alwaysApply: true
 ---
 
@@ -7,23 +7,28 @@ alwaysApply: true
 
 Когда пользователь говорит **засабмитить / submit / засабмить** — это не «только commit».
 
-Выполняй alias пользователя:
+Выполняй alias:
 
 ```bash
 git submit "commit message"
+git submit "commit message" --PR -m "PR title"
 ```
 
-Эквивалент:
-
-```bash
-git add .
-git commit -m "commit message"
-git push
-```
+Эквивалент: `git add .` → `git commit -m "…"` → `git push` → при `--PR` ещё `gh pr create`.
 
 ## Правила
 
-- Сообщение коммита передавай аргументом `git submit "…"`.
+- Сообщение коммита — аргумент `git submit "…"`.
 - Не останавливайся на локальном `git commit` без `git push`, если просили засабмитить.
 - **Не спрашивай** «запушить?» / «засабмитить?» — после готовых правок по задаче сразу делай `git submit`, если изменения есть.
-- Не делай пустой submit, если working tree чистый.
+- Не делай пустой submit, если working tree чистый (кроме создания PR на уже запушенной ветке).
+
+## PR после работы на ветках
+
+Если текущая ветка **не** `master`/`main` — после submit **всегда** создавай PR:
+
+```bash
+git submit "commit message" --PR -m "PR title"
+```
+
+На `master`/`main` — обычный `git submit "…"` без `--PR`. Если PR уже есть — не создавать второй, вернуть URL.
