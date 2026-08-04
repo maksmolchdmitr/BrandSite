@@ -59,6 +59,17 @@ export default defineComponent({
 <style scoped>
 .photoCropFrame {
   line-height: 0;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.photoHoldSource:not(.cropped) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .photoHoldSource {
   -webkit-touch-callout: none;

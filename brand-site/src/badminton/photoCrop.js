@@ -1,7 +1,10 @@
 export function isValidPhotoCrop(crop) {
   if (!crop || typeof crop !== "object") return false;
-  const { x, y, width, height } = crop;
-  if (![x, y, width, height].every((n) => typeof n === "number" && Number.isFinite(n))) {
+  const x = Number(crop.x);
+  const y = Number(crop.y);
+  const width = Number(crop.width);
+  const height = Number(crop.height);
+  if (![x, y, width, height].every((n) => Number.isFinite(n))) {
     return false;
   }
   if (x < 0 || y < 0 || width <= 0 || height <= 0) return false;
@@ -13,7 +16,10 @@ export function isValidPhotoCrop(crop) {
 /** CSS for an absolutely positioned <img> inside overflow:hidden box to show crop region. */
 export function photoCropImgStyle(crop) {
   if (!isValidPhotoCrop(crop)) return null;
-  const { x, y, width, height } = crop;
+  const x = Number(crop.x);
+  const y = Number(crop.y);
+  const width = Number(crop.width);
+  const height = Number(crop.height);
   return {
     position: "absolute",
     width: `${100 / width}%`,

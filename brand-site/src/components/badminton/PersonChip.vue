@@ -1,13 +1,13 @@
 <template>
   <span class="personChip">
-    <PhotoHoldPreview
-      v-if="photoUrl"
-      class="avatar"
-      :src="photoUrl"
-      :photo-crop="photoCrop"
-      :alt="name"
-      loading="lazy"
-    />
+    <span v-if="photoUrl" class="avatar">
+      <PhotoHoldPreview
+        :src="photoUrl"
+        :photo-crop="photoCrop"
+        :alt="name"
+        loading="lazy"
+      />
+    </span>
     <span v-else class="avatar avatarFallback" aria-hidden="true">{{ initials }}</span>
     <span class="personText">
       <span class="personName">{{ name }}</span>
@@ -51,12 +51,11 @@ export default defineComponent({
   min-width: 0;
   max-width: 100%;
 }
-:deep(.avatar),
+.avatar,
 .avatarFallback {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  object-fit: cover;
   flex: 0 0 auto;
   background: #e8e8f8;
   overflow: hidden;
@@ -64,13 +63,13 @@ export default defineComponent({
   display: inline-block;
 }
 :deep(.avatar .photoCropFrame) {
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
 }
 :deep(.avatar img:not(.cropped)) {
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: 50%;
 }
