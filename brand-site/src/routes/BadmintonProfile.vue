@@ -159,7 +159,7 @@ export default defineComponent({
         if (this.form.photoTouched) {
           patch.photoUrl = this.form.photoCleared ? "" : (this.form.photoUrl || "");
         }
-        if (this.form.cropTouched) {
+        if (this.form.cropTouched && this.form.photoCrop) {
           patch.photoCrop = this.form.photoCrop;
         }
         if (patch.firstName == null && patch.lastName == null
