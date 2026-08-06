@@ -45,6 +45,7 @@
       :src="photoUrl"
       :model-value="photoCrop"
       :reset-label="resetCropLabel"
+      :square-label="squareCropLabel"
       :hint="cropHint"
       @update:model-value="$emit('update:photoCrop', $event)"
     />
@@ -74,6 +75,7 @@ export default defineComponent({
     photoLabel: { type: String, default: "Photo" },
     clearPhotoLabel: { type: String, default: "Clear" },
     resetCropLabel: { type: String, default: "Reset crop" },
+    squareCropLabel: { type: String, default: "1:1" },
     cropHint: { type: String, default: "" },
   },
   emits: [

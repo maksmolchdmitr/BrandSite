@@ -500,6 +500,7 @@
           :photo-label="$t('badminton.group.photo')"
           :clear-photo-label="$t('badminton.group.clearPhoto')"
           :reset-crop-label="$t('badminton.group.resetCrop')"
+          :square-crop-label="$t('badminton.group.cropSquare')"
           :crop-hint="$t('badminton.group.cropHint')"
           @clear-photo="clearEditParticipantPhoto"
           @photo-url-input="onEditPhotoUrlInput"
