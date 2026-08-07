@@ -399,7 +399,7 @@
                           :username="getParticipantUsername(r.participantId)"
                         />
                       </td>
-                      <td class="eloCell">{{ r.elo }}</td>
+                      <td class="eloCell">{{ formatElo(r.elo) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -454,7 +454,7 @@
                           />
                         </span>
                       </td>
-                      <td class="eloCell">{{ r.elo }}</td>
+                      <td class="eloCell">{{ formatElo(r.elo) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -783,6 +783,7 @@ import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
+import { formatElo } from "@/badminton/formatElo.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",

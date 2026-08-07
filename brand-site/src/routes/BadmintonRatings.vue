@@ -48,7 +48,7 @@
                     :username="me?.username"
                   />
                 </td>
-                <td class="eloCell">{{ ratings?.singlesElo ?? $t('common.misc.noData') }}</td>
+                <td class="eloCell">{{ formatElo(ratings?.singlesElo) ?? $t('common.misc.noData') }}</td>
               </tr>
             </tbody>
           </table>
@@ -81,7 +81,7 @@
                   <td>{{ r.games }}</td>
                   <td>{{ r.wins }}</td>
                   <td>{{ r.losses }}</td>
-                  <td class="eloCell">{{ r.elo }}</td>
+                  <td class="eloCell">{{ formatElo(r.elo) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -135,6 +135,7 @@ import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient} from "@/badminton/client.js";
+import { formatElo } from "@/badminton/formatElo.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
 export default defineComponent({
@@ -174,6 +175,7 @@ export default defineComponent({
     await this.load();
   },
   methods: {
+    formatElo,
     async load() {
       this.loading = true;
       this.error = "";
