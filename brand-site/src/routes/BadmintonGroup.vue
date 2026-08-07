@@ -2224,7 +2224,7 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .dropdownItem { padding: 10px 14px; cursor: pointer; font-family: var(--font-display); font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dropdownItem:hover { background: #f6f6ff; }
 
-.selectedParticipant { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: white; border: 2px solid #4F3DFF; border-radius: 8px; font-family: var(--font-display); font-weight: 600; }
+.selectedParticipant { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: white; border: 2px solid #4F3DFF; border-radius: 12px; font-family: var(--font-display); font-weight: 600; }
 
 
 .scoresRow { display: flex; align-items: center; gap: 12px; }
