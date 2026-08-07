@@ -67,10 +67,10 @@
               <thead>
                 <tr>
                   <th>{{ $t('badminton.ratings.partner') }}</th>
+                  <th>{{ $t('badminton.ratings.elo') }}</th>
                   <th>{{ $t('badminton.ratings.games') }}</th>
                   <th>{{ $t('badminton.ratings.wins') }}</th>
                   <th>{{ $t('badminton.ratings.losses') }}</th>
-                  <th>{{ $t('badminton.ratings.elo') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,10 +78,10 @@
                   <td class="nameCell">
                     <PersonChip :name="r.partnerName" :photo-url="r.partnerPhotoUrl" :username="r.partnerUsername" />
                   </td>
+                  <td class="eloCell">{{ formatElo(r.elo) }}</td>
                   <td>{{ r.games }}</td>
                   <td>{{ r.wins }}</td>
                   <td>{{ r.losses }}</td>
-                  <td class="eloCell">{{ formatElo(r.elo) }}</td>
                 </tr>
               </tbody>
             </table>
