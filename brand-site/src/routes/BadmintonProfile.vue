@@ -44,7 +44,7 @@
             <RouterLink class="btn secondary" to="/?page=badminton&section=ratings">{{ $t('common.actions.cancel') }}</RouterLink>
           </template>
         </ProfileEditForm>
-        <p v-else class="hint">{{ $t('common.actions.loading') }}</p>
+        <p v-else class="hint"><LoadingPhrase :text="$t('common.actions.loading')" /></p>
       </div>
     </div>
   </div>

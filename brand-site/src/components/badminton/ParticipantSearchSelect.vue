@@ -10,7 +10,7 @@
     />
     <div v-if="dropdownOpen" class="dropdown">
       <div v-if="loading && items.length === 0" class="dropdownItem muted">
-        {{ $t("common.actions.loading") }}
+        <LoadingPhrase :text="$t('common.actions.loading')" />
       </div>
       <div
         v-for="p in items"

@@ -29,7 +29,8 @@
         <div class="row">
           <input class="input" v-model="newGroupName" :placeholder="$t('badminton.groups.groupName')" />
           <button class="btn" :disabled="loadingCreate || !newGroupName" @click="create">
-            {{ loadingCreate ? $t('badminton.groups.creating') : $t('common.actions.create') }}
+            <LoadingPhrase v-if="loadingCreate" :text="$t('badminton.groups.creating')" />
+            <template v-else>{{ $t('common.actions.create') }}</template>
           </button>
         </div>
       </div>
@@ -37,7 +38,8 @@
       <div class="card">
         <div class="cardTitle">{{ $t('badminton.groups.groups') }}</div>
         <button class="btn secondary" :disabled="loading" @click="load">
-          {{ loading ? $t('common.actions.loading') : $t('common.actions.refresh') }}
+          <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
+          <template v-else>{{ $t('common.actions.refresh') }}</template>
         </button>
 
         <div v-if="groups.length === 0 && !loading" class="empty">{{ $t('badminton.groups.noGroups') }}</div>

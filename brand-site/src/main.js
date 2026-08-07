@@ -2,6 +2,7 @@ import {createWebHistory, createRouter} from "vue-router";
 import {createApp} from 'vue'
 import App from './App.vue'
 import RouterView from "@/routes/RouterView.vue";
+import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import i18n from "@/i18n";
 import {setReauthRedirectHandler} from "@/badminton/apiHelpers.js";
 
@@ -23,4 +24,8 @@ setReauthRedirectHandler(() => {
     router.replace("/?page=badminton&section=login");
 });
 
-createApp(App).use(router).use(i18n).mount('#app')
+createApp(App)
+    .component("LoadingPhrase", LoadingPhrase)
+    .use(router)
+    .use(i18n)
+    .mount('#app')

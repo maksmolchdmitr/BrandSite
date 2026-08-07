@@ -23,7 +23,9 @@
       <div v-if="error" class="errorBox">{{ error }}</div>
       <div class="card">
         <div class="cardTitle">{{ cardTitle }}</div>
-        <div v-if="loading && currentPages.length === 0" class="empty">{{ $t("common.actions.loading") }}</div>
+        <div v-if="loading && currentPages.length === 0" class="empty">
+          <LoadingPhrase :text="$t('common.actions.loading')" />
+        </div>
         <div v-else-if="currentItems.length === 0" class="empty">{{ emptyMessage }}</div>
         <div v-else-if="effectiveTab === 'singles'">
           <div class="tableWrapper">

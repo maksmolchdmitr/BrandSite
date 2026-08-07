@@ -15,7 +15,10 @@
 
         <div class="topActions">
           <span v-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
-          <button class="btn secondary" :disabled="loading" @click="refresh">{{ loading ? $t('common.actions.loading') : $t('common.actions.refresh') }}</button>
+          <button class="btn secondary" :disabled="loading" @click="refresh">
+            <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
+            <template v-else>{{ $t('common.actions.refresh') }}</template>
+          </button>
         </div>
       </div>
 
@@ -81,7 +84,7 @@
                     @scroll="onInviteUserDropdownScroll"
                   >
                     <div v-if="inviteUserSearch.loading && inviteUserSearch.items.length === 0" class="dropdownItem">
-                      {{ $t('common.actions.loading') }}
+                      <LoadingPhrase :text="$t('common.actions.loading')" />
                     </div>
                     <div
                       v-for="u in inviteUserSearch.items"
@@ -96,7 +99,7 @@
                       />
                     </div>
                     <div v-if="inviteUserSearch.loading && inviteUserSearch.items.length > 0" class="dropdownItem">
-                      {{ $t('badminton.group.loadingMore') }}
+                      <LoadingPhrase :text="$t('badminton.group.loadingMore')" />
                     </div>
                     <div
                       v-if="!inviteUserSearch.loading && inviteUserSearch.items.length === 0 && newParticipantName.trim()"
@@ -107,7 +110,8 @@
                   </div>
                 </div>
                 <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
-                  {{ loadingAddParticipant ? $t('badminton.group.adding') : $t('common.actions.add') }}
+                  <LoadingPhrase v-if="loadingAddParticipant" :text="$t('badminton.group.adding')" />
+                  <template v-else>{{ $t('common.actions.add') }}</template>
                 </button>
               </div>
             </div>
@@ -138,7 +142,8 @@
                   :disabled="loadingAddUnlinked || !canCreateUnlinked"
                   @click="addUnlinkedParticipant"
                 >
-                  {{ loadingAddUnlinked ? $t('badminton.group.adding') : $t('common.actions.add') }}
+                  <LoadingPhrase v-if="loadingAddUnlinked" :text="$t('badminton.group.adding')" />
+                  <template v-else>{{ $t('common.actions.add') }}</template>
                 </button>
               </div>
               <div class="photoPickerRow">
@@ -151,7 +156,8 @@
                   <span v-else>{{ $t('badminton.group.photo') }}</span>
                 </div>
                 <label class="btn secondary small photoFileLabel">
-                  {{ uploadingUnlinkedPhoto ? $t('badminton.group.uploadingPhoto') : $t('badminton.group.choosePhoto') }}
+                  <LoadingPhrase v-if="uploadingUnlinkedPhoto" :text="$t('badminton.group.uploadingPhoto')" />
+                  <template v-else>{{ $t('badminton.group.choosePhoto') }}</template>
                   <input
                     class="photoFileInput"
                     type="file"
@@ -381,7 +387,8 @@
         <div class="cardTitleRow">
           <div class="cardTitle">{{ leaderboardCardTitle }}</div>
           <button class="btn secondary" :disabled="loadingLb" @click="loadLeaderboards">
-            {{ loadingLb ? $t('common.actions.loading') : $t('badminton.group.refreshLeaderboards') }}
+            <LoadingPhrase v-if="loadingLb" :text="$t('common.actions.loading')" />
+            <template v-else>{{ $t('badminton.group.refreshLeaderboards') }}</template>
           </button>
         </div>
 
@@ -515,7 +522,8 @@
         >
           <template #photo-actions>
             <label class="btn secondary small photoFileLabel">
-              {{ uploadingEditPhoto ? $t('badminton.group.uploadingPhoto') : $t('badminton.group.choosePhoto') }}
+              <LoadingPhrase v-if="uploadingEditPhoto" :text="$t('badminton.group.uploadingPhoto')" />
+              <template v-else>{{ $t('badminton.group.choosePhoto') }}</template>
               <input
                 class="photoFileInput"
                 type="file"
