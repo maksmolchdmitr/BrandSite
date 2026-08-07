@@ -24,17 +24,17 @@
       <nav class="groupNav">
         <RouterLink
           class="groupNavLink"
-          :class="{ active: isParticipantsNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=participants`"
-        >
-          {{ $t('badminton.group.participants') }}
-        </RouterLink>
-        <RouterLink
-          class="groupNavLink"
           :class="{ active: isMatchesNavActive }"
           :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=singles`"
         >
           {{ $t('badminton.group.matches') }}
+        </RouterLink>
+        <RouterLink
+          class="groupNavLink"
+          :class="{ active: isParticipantsNavActive }"
+          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=participants`"
+        >
+          {{ $t('badminton.group.participants') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
@@ -796,7 +796,7 @@ export default defineComponent({
   components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect },
   props: {
     groupId: { type: String, required: true },
-    groupSection: { type: String, default: "participants" },
+    groupSection: { type: String, default: "matches" },
     /** 'singles' | 'doubles' — внутри «Матчи» всегда один из двух */
     matchTab: { type: String, default: "singles" },
     participantId: { type: String, default: null },

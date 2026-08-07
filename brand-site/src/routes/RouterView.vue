@@ -140,7 +140,7 @@ export default defineComponent({
       const props = {};
       if (this.page === 'badminton' && this.section === 'groups' && this.groupId) {
         props.groupId = this.groupId;
-        props.groupSection = this.route?.query?.groupSection || 'participants';
+        props.groupSection = this.route?.query?.groupSection || 'matches';
         const mt = this.route?.query?.matchTab;
         props.matchTab = mt === "doubles" || mt === "singles" ? mt : "singles";
         props.participantId = this.route?.query?.participantId || null;
