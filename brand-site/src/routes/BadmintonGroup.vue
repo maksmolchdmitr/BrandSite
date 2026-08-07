@@ -38,8 +38,8 @@
         </RouterLink>
         <RouterLink
           class="groupNavLink"
-          :class="{ active: groupSection === 'leaderboards' }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards`"
+          :class="{ active: isLeaderboardsNavActive }"
+          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards&matchTab=singles`"
         >
           {{ $t('badminton.group.leaderboards') }}
         </RouterLink>
@@ -49,6 +49,11 @@
         v-if="groupSection === 'matches'"
         :items="groupMatchesNavItems"
         aria-label="group matches kind"
+      />
+      <BadmintonPillNav
+        v-if="groupSection === 'leaderboards'"
+        :items="groupLeaderboardsNavItems"
+        aria-label="group leaderboards kind"
       />
 
       <div v-if="groupSection === 'participants'" class="grid">
@@ -373,115 +378,112 @@
       </div>
 
       <div v-if="groupSection === 'leaderboards'" class="card">
-        <div class="cardTitle">{{ $t('badminton.group.leaderboards') }}</div>
-        <div class="row">
+        <div class="cardTitleRow">
+          <div class="cardTitle">{{ leaderboardCardTitle }}</div>
           <button class="btn secondary" :disabled="loadingLb" @click="loadLeaderboards">
             {{ loadingLb ? $t('common.actions.loading') : $t('badminton.group.refreshLeaderboards') }}
           </button>
         </div>
 
-        <div class="lbGrid">
-          <div class="lbCard">
-            <div class="lbTitle">{{ $t('badminton.group.singlesLeaderboard') }}</div>
-            <div v-if="singlesLb.length === 0" class="empty">{{ $t('badminton.singles.empty') }}</div>
-            <div v-else>
-              <div class="tableWrapper">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{{ $t('badminton.ratings.player') }}</th>
-                      <th>{{ $t('badminton.ratings.elo') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="r in singlesLb" :key="r.participantId">
-                      <td class="rankCell">{{ r.rank }}</td>
-                      <td class="nameCell">
-                        <PersonChip
-                          :name="r.participantName"
-                          :photo-url="getParticipantPhoto(r.participantId)"
-                          :username="getParticipantUsername(r.participantId)"
-                        />
-                      </td>
-                      <td class="eloCell">{{ formatElo(r.elo) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="pagerRow">
-                <button class="pagerButton" :disabled="!canGoPrevSinglesLb" @click="goPrevSinglesLb">←</button>
-                <span class="pagerPage">{{ $t('common.pager.page', { page: singlesLbPageIndex + 1 }) }}</span>
-                <button class="pagerButton" :disabled="!canGoNextSinglesLb" @click="goNextSinglesLb">→</button>
-                <div class="pagerLimit">
-                  <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
-                  <div class="pagerLimitSelect" @click="toggleSinglesLbLimitDropdown">
-                    <span>{{ lbLimit }}</span>
-                    <span class="pagerLimitArrow">▾</span>
-                    <div v-if="showSinglesLbLimitDropdown" class="pagerLimitDropdown">
-                      <div
-                        v-for="opt in lbLimitOptions"
-                        :key="'s'+opt"
-                        class="pagerLimitOption"
-                        :class="{ active: opt === lbLimit }"
-                        @click.stop="changeLbLimit(opt, 'singles')"
-                      >{{ opt }}</div>
-                    </div>
+        <div v-if="effectiveMatchTab === 'singles'">
+          <div v-if="singlesLb.length === 0" class="empty">{{ $t('badminton.singles.empty') }}</div>
+          <div v-else>
+            <div class="tableWrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>{{ $t('badminton.ratings.player') }}</th>
+                    <th>{{ $t('badminton.ratings.elo') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in singlesLb" :key="r.participantId">
+                    <td class="rankCell">{{ r.rank }}</td>
+                    <td class="nameCell">
+                      <PersonChip
+                        :name="r.participantName"
+                        :photo-url="getParticipantPhoto(r.participantId)"
+                        :username="getParticipantUsername(r.participantId)"
+                      />
+                    </td>
+                    <td class="eloCell">{{ formatElo(r.elo) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagerRow">
+              <button class="pagerButton" :disabled="!canGoPrevSinglesLb" @click="goPrevSinglesLb">←</button>
+              <span class="pagerPage">{{ $t('common.pager.page', { page: singlesLbPageIndex + 1 }) }}</span>
+              <button class="pagerButton" :disabled="!canGoNextSinglesLb" @click="goNextSinglesLb">→</button>
+              <div class="pagerLimit">
+                <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
+                <div class="pagerLimitSelect" @click="toggleSinglesLbLimitDropdown">
+                  <span>{{ lbLimit }}</span>
+                  <span class="pagerLimitArrow">▾</span>
+                  <div v-if="showSinglesLbLimitDropdown" class="pagerLimitDropdown">
+                    <div
+                      v-for="opt in lbLimitOptions"
+                      :key="'s'+opt"
+                      class="pagerLimitOption"
+                      :class="{ active: opt === lbLimit }"
+                      @click.stop="changeLbLimit(opt, 'singles')"
+                    >{{ opt }}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="lbCard">
-            <div class="lbTitle">{{ $t('badminton.group.doublesLeaderboard') }}</div>
-            <div v-if="doublesLb.length === 0" class="empty">{{ $t('badminton.doubles.empty') }}</div>
-            <div v-else>
-              <div class="tableWrapper">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{{ $t('badminton.group.team') }}</th>
-                      <th>{{ $t('badminton.ratings.elo') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="r in doublesLb" :key="r.pairKey">
-                      <td class="rankCell">{{ r.rank }}</td>
-                      <td class="nameCell">
-                        <span class="personChipRow">
-                          <PersonChip
-                            v-for="(name, idx) in (r.participantNames || [])"
-                            :key="`${r.pairKey}-${idx}`"
-                            :name="name"
-                            :photo-url="getParticipantPhoto(pairParticipantIds(r.pairKey)[idx])"
-                            :username="getParticipantUsername(pairParticipantIds(r.pairKey)[idx])"
-                          />
-                        </span>
-                      </td>
-                      <td class="eloCell">{{ formatElo(r.elo) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="pagerRow">
-                <button class="pagerButton" :disabled="!canGoPrevDoublesLb" @click="goPrevDoublesLb">←</button>
-                <span class="pagerPage">{{ $t('common.pager.page', { page: doublesLbPageIndex + 1 }) }}</span>
-                <button class="pagerButton" :disabled="!canGoNextDoublesLb" @click="goNextDoublesLb">→</button>
-                <div class="pagerLimit">
-                  <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
-                  <div class="pagerLimitSelect" @click="toggleDoublesLbLimitDropdown">
-                    <span>{{ lbLimit }}</span>
-                    <span class="pagerLimitArrow">▾</span>
-                    <div v-if="showDoublesLbLimitDropdown" class="pagerLimitDropdown">
-                      <div
-                        v-for="opt in lbLimitOptions"
-                        :key="'d'+opt"
-                        class="pagerLimitOption"
-                        :class="{ active: opt === lbLimit }"
-                        @click.stop="changeLbLimit(opt, 'doubles')"
-                      >{{ opt }}</div>
-                    </div>
+        </div>
+
+        <div v-else>
+          <div v-if="doublesLb.length === 0" class="empty">{{ $t('badminton.doubles.empty') }}</div>
+          <div v-else>
+            <div class="tableWrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>{{ $t('badminton.group.team') }}</th>
+                    <th>{{ $t('badminton.ratings.elo') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in doublesLb" :key="r.pairKey">
+                    <td class="rankCell">{{ r.rank }}</td>
+                    <td class="nameCell">
+                      <span class="personChipRow">
+                        <PersonChip
+                          v-for="(name, idx) in (r.participantNames || [])"
+                          :key="`${r.pairKey}-${idx}`"
+                          :name="name"
+                          :photo-url="getParticipantPhoto(pairParticipantIds(r.pairKey)[idx])"
+                          :username="getParticipantUsername(pairParticipantIds(r.pairKey)[idx])"
+                        />
+                      </span>
+                    </td>
+                    <td class="eloCell">{{ formatElo(r.elo) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagerRow">
+              <button class="pagerButton" :disabled="!canGoPrevDoublesLb" @click="goPrevDoublesLb">←</button>
+              <span class="pagerPage">{{ $t('common.pager.page', { page: doublesLbPageIndex + 1 }) }}</span>
+              <button class="pagerButton" :disabled="!canGoNextDoublesLb" @click="goNextDoublesLb">→</button>
+              <div class="pagerLimit">
+                <span class="pagerLimitLabel">{{ $t('common.pager.perPage') }}</span>
+                <div class="pagerLimitSelect" @click="toggleDoublesLbLimitDropdown">
+                  <span>{{ lbLimit }}</span>
+                  <span class="pagerLimitArrow">▾</span>
+                  <div v-if="showDoublesLbLimitDropdown" class="pagerLimitDropdown">
+                    <div
+                      v-for="opt in lbLimitOptions"
+                      :key="'d'+opt"
+                      class="pagerLimitOption"
+                      :class="{ active: opt === lbLimit }"
+                      @click.stop="changeLbLimit(opt, 'doubles')"
+                    >{{ opt }}</div>
                   </div>
                 </div>
               </div>
@@ -913,6 +915,14 @@ export default defineComponent({
     isMatchesNavActive() {
       return ["matches", "createMatch", "editMatch"].includes(this.groupSection);
     },
+    isLeaderboardsNavActive() {
+      return this.groupSection === "leaderboards";
+    },
+    leaderboardCardTitle() {
+      return this.effectiveMatchTab === "doubles"
+        ? this.$t("badminton.group.doublesLeaderboard")
+        : this.$t("badminton.group.singlesLeaderboard");
+    },
     matchFormTitle() {
       const kind = this.matchForm.kind === "singles"
         ? this.$t("badminton.group.singles")
@@ -1042,13 +1052,33 @@ export default defineComponent({
         },
       ];
     },
+    groupLeaderboardsNavItems() {
+      const tab = this.effectiveMatchTab;
+      return [
+        {
+          to: this.leaderboardsSubNavTo("singles"),
+          label: this.$t("badminton.group.singlesLeaderboard"),
+          active: tab === "singles",
+        },
+        {
+          to: this.leaderboardsSubNavTo("doubles"),
+          label: this.$t("badminton.group.doublesLeaderboard"),
+          active: tab === "doubles",
+        },
+      ];
+    },
   },
   watch: {
     groupSection() {
       this.normalizeMatchesQueryThenLoad();
     },
     matchTab() {
-      if (this.groupSection === "matches" || this.groupSection === "createMatch" || this.groupSection === "editMatch") {
+      if (
+        this.groupSection === "matches"
+        || this.groupSection === "createMatch"
+        || this.groupSection === "editMatch"
+        || this.groupSection === "leaderboards"
+      ) {
         this.loadSection();
       }
     },
@@ -1126,6 +1156,11 @@ export default defineComponent({
       const gid = encodeURIComponent(this.groupId);
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${tab}`;
     },
+    leaderboardsSubNavTo(tab) {
+      const gid = encodeURIComponent(this.groupId);
+      const t = tab === "doubles" ? "doubles" : "singles";
+      return `/?page=badminton&section=groups&groupId=${gid}&groupSection=leaderboards&matchTab=${t}`;
+    },
     cancelToParticipants() {
       this.$router.push(this.participantsListTo());
     },
@@ -1172,7 +1207,12 @@ export default defineComponent({
       };
     },
     async normalizeMatchesQueryThenLoad() {
-      if (this.groupSection === "matches" || this.groupSection === "createMatch" || this.groupSection === "editMatch") {
+      if (
+        this.groupSection === "matches"
+        || this.groupSection === "createMatch"
+        || this.groupSection === "editMatch"
+        || this.groupSection === "leaderboards"
+      ) {
         const q = this.$route.query;
         const mt = String(q.matchTab || "").toLowerCase();
         if (mt !== "singles" && mt !== "doubles") {
@@ -1464,16 +1504,26 @@ export default defineComponent({
     async loadLeaderboards() {
       this.loadingLb = true;
       try {
-        const [participantsRes, s, d] = await Promise.all([
+        const needSingles = this.effectiveMatchTab === "singles";
+        const [participantsRes, lbRes] = await Promise.all([
           badmintonClient.listAllParticipants(this.groupId),
-          badmintonClient.getSinglesLeaderboard(this.groupId, { limit: this.lbLimit }),
-          badmintonClient.getDoublesLeaderboard(this.groupId, { limit: this.lbLimit }),
+          needSingles
+            ? badmintonClient.getSinglesLeaderboard(this.groupId, { limit: this.lbLimit })
+            : badmintonClient.getDoublesLeaderboard(this.groupId, { limit: this.lbLimit }),
         ]);
         this.mergeParticipantNames(participantsRes?.items || []);
-        this.singlesLbPages = [{ items: s?.items || [], pageToken: s?.pageToken || null }];
-        this.singlesLbPageIndex = 0;
-        this.doublesLbPages = [{ items: d?.items || [], pageToken: d?.pageToken || null }];
-        this.doublesLbPageIndex = 0;
+        const page = { items: lbRes?.items || [], pageToken: lbRes?.pageToken || null };
+        if (needSingles) {
+          this.singlesLbPages = [page];
+          this.singlesLbPageIndex = 0;
+          this.doublesLbPages = [];
+          this.doublesLbPageIndex = 0;
+        } else {
+          this.doublesLbPages = [page];
+          this.doublesLbPageIndex = 0;
+          this.singlesLbPages = [];
+          this.singlesLbPageIndex = 0;
+        }
       } catch (e) {
         // don't block main UI
       } finally {
@@ -2133,9 +2183,6 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .matchSection:first-child { margin-top: 0; }
 .matchSectionTitle { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: #4F3DFF; margin-bottom: 12px; }
 
-.lbGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: 0; max-width: 100%; }
-.lbCard { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
-.lbTitle { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: #4F3DFF; }
 .eloCell { font-weight: 700; color: #4F3DFF; font-size: 16px; }
 .rankCell { font-weight: 700; opacity: 0.85; font-size: 14px; }
 
@@ -2234,7 +2281,6 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 
 @media (max-width: 980px) {
   .grid { grid-template-columns: 1fr; }
-  .lbGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   .page { gap: 12px; }
@@ -2261,8 +2307,7 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
   }
 
   .groupNavLink,
-  .card,
-  .lbCard {
+  .card {
     background: #2d2d2d;
     border-color: #4a4a4a;
   }
