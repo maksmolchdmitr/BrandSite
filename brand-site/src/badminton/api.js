@@ -2,6 +2,8 @@
  * Real API client for Badminton Service.
  * Auth flow: Telegram OAuth (oauth.telegram.org) → telegramLogin → Bearer access token.
  * On 401 we try refreshToken once and retry; if still unauthorized, force re-login.
+ * Transient network / 502–504: up to 5 attempts (create/update included) so flaky links
+ * do not wipe form data after a single failed fetch.
  */
 
 import {
@@ -20,15 +22,18 @@ const BASE_URL = getBadmintonApiBaseUrl();
 
 /** Transient upstream errors (e.g. Netlify proxy while badminton-service has no ready pods during deploy). */
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
-/** Backoff for GET during rolling deploy downtime (~30–90s on 1-replica node). */
-const TRANSIENT_RETRY_DELAYS_MS = [2000, 4000, 8000, 16000];
+/**
+ * Backoff between attempts. Length 4 → 5 tries total (initial + 4 retries).
+ * Covers short blips and brief deploy downtime on 1-replica.
+ */
+const TRANSIENT_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000];
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function isIdempotentMethod(method) {
-  return method === "GET" || method === "HEAD";
+function canRetryTransient(attempt) {
+  return attempt < TRANSIENT_RETRY_DELAYS_MS.length;
 }
 
 async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) {
@@ -58,7 +63,7 @@ async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) 
   try {
     response = await fetch(url, config);
   } catch (networkError) {
-    if (isIdempotentMethod(method) && attempt < TRANSIENT_RETRY_DELAYS_MS.length) {
+    if (canRetryTransient(attempt)) {
       await sleep(TRANSIENT_RETRY_DELAYS_MS[attempt]);
       return apiRequest(path, options, skipRefresh, attempt + 1);
     }
@@ -81,11 +86,7 @@ async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) 
     forceReauth();
   }
 
-  if (
-    RETRYABLE_STATUSES.has(response.status) &&
-    isIdempotentMethod(method) &&
-    attempt < TRANSIENT_RETRY_DELAYS_MS.length
-  ) {
+  if (RETRYABLE_STATUSES.has(response.status) && canRetryTransient(attempt)) {
     await sleep(TRANSIENT_RETRY_DELAYS_MS[attempt]);
     return apiRequest(path, options, skipRefresh, attempt + 1);
   }
