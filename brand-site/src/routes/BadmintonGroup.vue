@@ -235,10 +235,15 @@
       </div>
 
       <div v-if="groupSection === 'matches'" class="card">
-        <div class="cardTitle">{{ $t('badminton.group.matches') }}</div>
-        <div v-if="isAdmin" class="row">
-          <RouterLink class="btn" :to="createMatchTo('singles')">+ {{ $t('badminton.group.singlesMatch') }}</RouterLink>
-          <RouterLink class="btn" :to="createMatchTo('doubles')">+ {{ $t('badminton.group.doublesMatch') }}</RouterLink>
+        <div class="cardTitleRow">
+          <div class="cardTitle">{{ $t('badminton.group.matches') }}</div>
+          <RouterLink
+            v-if="isAdmin"
+            class="btn iconPlus"
+            :to="createMatchTo(effectiveMatchTab)"
+            :aria-label="createMatchLabel"
+            :title="createMatchLabel"
+          >+</RouterLink>
         </div>
         <div v-if="noMatchesForCurrentTab" class="empty">{{ $t('badminton.group.noMatches') }}</div>
         <div v-if="singlesMatches.length > 0 && effectiveMatchTab === 'singles'" class="matchSection">
@@ -915,6 +920,12 @@ export default defineComponent({
       return this.groupSection === "editMatch"
         ? this.$t("badminton.group.editMatch", { kind })
         : this.$t("badminton.group.createMatch", { kind });
+    },
+    createMatchLabel() {
+      const kind = this.effectiveMatchTab === "doubles"
+        ? this.$t("badminton.group.doubles")
+        : this.$t("badminton.group.singles");
+      return this.$t("badminton.group.createMatch", { kind });
     },
     canSaveMatch() {
       const p = this.matchForm;
@@ -2038,6 +2049,7 @@ export default defineComponent({
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: 0; max-width: 100%; }
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.cardTitleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; min-width: 0; box-sizing: border-box; }
 .addParticipantBlock { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
@@ -2085,6 +2097,17 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .input { padding: 12px 14px; border-radius: 12px; border: 1px solid #ddd; font-family: var(--font-display); font-size: 16px; flex: 1 1 0; min-width: 0; max-width: 100%; width: 0; box-sizing: border-box; }
 .label { font-family: var(--font-display); font-weight: 700; width: 90px; }
 .btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 10px 14px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
+.btn.iconPlus {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
 .btn.danger { background: #ff3d3d; color: white; }
 .btn.small { padding: 8px 10px; font-size: 13px; }
