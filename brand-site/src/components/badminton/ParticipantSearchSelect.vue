@@ -197,6 +197,25 @@ export default defineComponent({
 <style scoped>
 .participantSearch {
   position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-family: var(--font-display);
+  font-size: 16px;
+  background: white;
+  color: inherit;
+}
+.input:focus {
+  outline: none;
+  border-color: #4f3dff;
+  box-shadow: 0 0 0 3px rgba(79, 61, 255, 0.15);
 }
 .dropdown {
   position: absolute;
@@ -204,13 +223,13 @@ export default defineComponent({
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 2px solid #e0e0ff;
+  border-radius: 12px;
   margin-top: 4px;
   max-height: 320px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(79, 61, 255, 0.12);
 }
 .dropdownItem {
   padding: 10px 14px;
@@ -237,7 +256,7 @@ export default defineComponent({
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e0e0ff;
   position: sticky;
   bottom: 0;
   background: white;
@@ -246,7 +265,7 @@ export default defineComponent({
   border: 2px solid #4f3dff;
   background-color: white;
   border-radius: 999px;
-  padding: 4px 12px;
+  padding: 6px 14px;
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
@@ -260,9 +279,20 @@ export default defineComponent({
 .pagerPage {
   font-family: var(--font-display);
   font-size: 14px;
+  font-weight: 700;
+  color: #4f3dff;
 }
 
 @media (prefers-color-scheme: dark) {
+  .input {
+    background: #242424;
+    border-color: #4a4a4a;
+    color: #e8e8e8;
+  }
+  .input:focus {
+    border-color: #4f3dff;
+    box-shadow: 0 0 0 3px rgba(79, 61, 255, 0.25);
+  }
   .dropdown,
   .dropdownPager {
     background: #2d2d2d;
@@ -273,6 +303,11 @@ export default defineComponent({
   }
   .pagerButton {
     background-color: #2d2d2d;
+    color: #c7bcff;
+    border-color: #6f62c6;
+  }
+  .pagerPage {
+    color: #c7bcff;
   }
 }
 </style>
