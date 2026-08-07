@@ -512,6 +512,34 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /api/groups/{groupId}/matches/singles:
+    get:
+      tags: [ Matches ]
+      summary: List singles matches in group (member-only)
+      operationId: listGroupSinglesMatches
+      description: |
+        Returns all singles matches in the group, sorted by createdAt descending.
+        Use this for the group match history UI (not `/api/me/matches`).
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated singles matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [ Matches ]
       summary: Create singles match (admin-only)
@@ -589,6 +617,34 @@ paths:
           $ref: "#/components/responses/NotFound"
 
   /api/groups/{groupId}/matches/doubles:
+    get:
+      tags: [ Matches ]
+      summary: List doubles matches in group (member-only)
+      operationId: listGroupDoublesMatches
+      description: |
+        Returns all doubles matches in the group, sorted by createdAt descending.
+        Use this for the group match history UI (not `/api/me/matches`).
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - in: query
+          name: pageToken
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated doubles matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [ Matches ]
       summary: Create doubles match (admin-only)
@@ -692,7 +748,7 @@ paths:
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
-        Group match history in the UI should use this endpoint with **`groupId`** instead of a separate group matches list API.
+        For full group match history use `GET /api/groups/{groupId}/matches/singles`.
       parameters:
         - in: query
           name: groupId
@@ -732,7 +788,7 @@ paths:
 
         Optional **`groupId`**: when set, only matches in that group are returned. The caller must be a member of the group.
 
-        Group match history in the UI should use this endpoint with **`groupId`** instead of a separate group matches list API.
+        For full group match history use `GET /api/groups/{groupId}/matches/doubles`.
       parameters:
         - in: query
           name: groupId

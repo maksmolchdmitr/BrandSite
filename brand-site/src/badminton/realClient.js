@@ -45,6 +45,14 @@ export const realClient = {
     return api.getMyDoublesMatches({ groupId, limit, pageToken });
   },
 
+  async listGroupSinglesMatches(groupId, { limit, pageToken } = {}) {
+    return api.listGroupSinglesMatches(groupId, { limit, pageToken });
+  },
+
+  async listGroupDoublesMatches(groupId, { limit, pageToken } = {}) {
+    return api.listGroupDoublesMatches(groupId, { limit, pageToken });
+  },
+
   // Group endpoints
   async createGroup({name}) {
     return api.createGroup({name});

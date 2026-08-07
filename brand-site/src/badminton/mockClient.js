@@ -813,6 +813,38 @@ export const mockClient = {
     return result;
   },
 
+  async listGroupSinglesMatches(groupId, { limit = 20, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/matches/singles`, { limit, pageToken });
+    await delay();
+    requireMember(loadDb(), groupId);
+    const db = loadDb();
+    const all = (db.matches || [])
+      .filter(m => m.kind === "singles" && m.groupId === groupId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", `/api/groups/${groupId}/matches/singles`, result);
+    return result;
+  },
+
+  async listGroupDoublesMatches(groupId, { limit = 20, pageToken = null } = {}) {
+    logRequest("GET", `/api/groups/${groupId}/matches/doubles`, { limit, pageToken });
+    await delay();
+    requireMember(loadDb(), groupId);
+    const db = loadDb();
+    const all = (db.matches || [])
+      .filter(m => m.kind === "doubles" && m.groupId === groupId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    const start = pageToken && pageToken.startsWith("offset_") ? parseInt(pageToken.slice("offset_".length), 10) || 0 : 0;
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", `/api/groups/${groupId}/matches/doubles`, result);
+    return result;
+  },
+
   async getSinglesLeaderboard(groupId, { limit = 50, pageToken = null } = {}) {
     logRequest("GET", `/api/groups/${groupId}/ratings/singles`, { limit, pageToken });
     await delay();

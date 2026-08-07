@@ -1225,10 +1225,10 @@ export default defineComponent({
           const [participantsRes, singlesRes, doublesRes] = await Promise.all([
             badmintonClient.listAllParticipants(this.groupId),
             needSingles
-              ? badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit: this.singlesLimit })
+              ? badmintonClient.listGroupSinglesMatches(this.groupId, { limit: this.singlesLimit })
               : Promise.resolve({ items: [], pageToken: null }),
             needDoubles
-              ? badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit: this.doublesLimit })
+              ? badmintonClient.listGroupDoublesMatches(this.groupId, { limit: this.doublesLimit })
               : Promise.resolve({ items: [], pageToken: null }),
           ]);
           this.mergeParticipantNames(participantsRes?.items || []);
@@ -1294,11 +1294,11 @@ export default defineComponent({
         if (found) return found;
       }
       const fetcher = kind === "doubles"
-        ? (opts) => badmintonClient.getMyDoublesMatches(opts)
-        : (opts) => badmintonClient.getMySinglesMatches(opts);
+        ? (opts) => badmintonClient.listGroupDoublesMatches(this.groupId, opts)
+        : (opts) => badmintonClient.listGroupSinglesMatches(this.groupId, opts);
       let pageToken = null;
       for (let i = 0; i < 20; i++) {
-        const res = await fetcher({ groupId: this.groupId, limit: 50, pageToken });
+        const res = await fetcher({ limit: 50, pageToken });
         const found = (res?.items || []).find(m => m.id === matchId);
         if (found) return found;
         pageToken = res?.pageToken || null;
@@ -1392,7 +1392,7 @@ export default defineComponent({
       }
       this.loading = true;
       try {
-        const res = await badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit: this.singlesLimit, pageToken: nextToken });
+        const res = await badmintonClient.listGroupSinglesMatches(this.groupId, { limit: this.singlesLimit, pageToken: nextToken });
         this.singlesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.singlesPageIndex = this.singlesPages.length - 1;
       } catch (e) {
@@ -1410,7 +1410,7 @@ export default defineComponent({
       this.showSinglesLimitDropdown = false;
       this.loading = true;
       try {
-        const res = await badmintonClient.getMySinglesMatches({ groupId: this.groupId, limit });
+        const res = await badmintonClient.listGroupSinglesMatches(this.groupId, { limit });
         this.singlesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.singlesPageIndex = 0;
       } catch (e) {
@@ -1433,7 +1433,7 @@ export default defineComponent({
       }
       this.loading = true;
       try {
-        const res = await badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit: this.doublesLimit, pageToken: nextToken });
+        const res = await badmintonClient.listGroupDoublesMatches(this.groupId, { limit: this.doublesLimit, pageToken: nextToken });
         this.doublesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.doublesPageIndex = this.doublesPages.length - 1;
       } catch (e) {
@@ -1451,7 +1451,7 @@ export default defineComponent({
       this.showDoublesLimitDropdown = false;
       this.loading = true;
       try {
-        const res = await badmintonClient.getMyDoublesMatches({ groupId: this.groupId, limit });
+        const res = await badmintonClient.listGroupDoublesMatches(this.groupId, { limit });
         this.doublesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.doublesPageIndex = 0;
       } catch (e) {

@@ -221,6 +221,26 @@ export async function getMyDoublesMatches({ groupId, limit, pageToken } = {}) {
   return apiRequest(`/api/me/matches/doubles${query ? `?${query}` : ""}`);
 }
 
+export async function listGroupSinglesMatches(groupId, { limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(
+    `/api/groups/${encodeURIComponent(groupId)}/matches/singles${query ? `?${query}` : ""}`
+  );
+}
+
+export async function listGroupDoublesMatches(groupId, { limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit);
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(
+    `/api/groups/${encodeURIComponent(groupId)}/matches/doubles${query ? `?${query}` : ""}`
+  );
+}
+
 // Group endpoints
 export async function createGroup({name}) {
   return apiRequest("/api/groups", {
@@ -327,7 +347,7 @@ export async function linkUserToParticipant(groupId, participantId, {userId}) {
   });
 }
 
-// Match endpoints — список матчей в группе: GET /api/me/matches/singles|doubles?groupId=...
+// Match endpoints — список матчей в группе: GET /api/groups/{groupId}/matches/singles|doubles
 /** Body may include `kind` for routing; it is not sent (path implies singles vs doubles). */
 export async function createMatch(groupId, match) {
   const { kind, ...rest } = orderMatchTeamsForApi(match);
