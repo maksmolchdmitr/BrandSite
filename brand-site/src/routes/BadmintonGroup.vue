@@ -1058,6 +1058,7 @@ export default defineComponent({
     this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
   },
   methods: {
+    formatElo,
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };
       const photoMap = { ...this.participantPhotoMap };
