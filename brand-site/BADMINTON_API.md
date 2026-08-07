@@ -61,8 +61,10 @@ Mock data is stored in `localStorage` with key `badminton.mockdb.v3`. To reset m
 - `GET /me/matches/doubles` — парные игры текущего пользователя (те же query)
 - `POST /groups/{groupId}/matches/singles` - Create singles match (admin; body: teamA×1, teamB×1, score — без `kind`)
 - `POST /groups/{groupId}/matches/doubles` - Create doubles match (admin; body: teamA×2, teamB×2, score — без `kind`)
-- `PATCH /groups/{groupId}/matches/{matchId}` - Update match (admin)
-- `DELETE /groups/{groupId}/matches/{matchId}` - Delete match (admin)
+- `PATCH /groups/{groupId}/matches/singles/{matchId}` - Update singles match (admin)
+- `DELETE /groups/{groupId}/matches/singles/{matchId}` - Delete singles match (admin)
+- `PATCH /groups/{groupId}/matches/doubles/{matchId}` - Update doubles match (admin)
+- `DELETE /groups/{groupId}/matches/doubles/{matchId}` - Delete doubles match (admin)
 
 ### Ratings
 - `GET /groups/{groupId}/ratings/singles` - Singles leaderboard (query: `limit`, `pageToken`; response: `{ items, pageToken }`; each item includes `rank` — место в рейтинге)

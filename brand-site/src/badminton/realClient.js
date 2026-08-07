@@ -107,12 +107,12 @@ export const realClient = {
     return api.createMatch(groupId, match);
   },
 
-  async updateMatch(groupId, matchId, patch) {
-    return api.updateMatch(groupId, matchId, patch);
+  async updateMatch(groupId, matchId, patch, kind) {
+    return api.updateMatch(groupId, matchId, patch, kind);
   },
 
-  async deleteMatch(groupId, matchId) {
-    return api.deleteMatch(groupId, matchId);
+  async deleteMatch(groupId, matchId, kind) {
+    return api.deleteMatch(groupId, matchId, kind);
   },
 
   // Rating endpoints

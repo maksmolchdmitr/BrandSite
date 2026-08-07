@@ -681,30 +681,39 @@ export const mockClient = {
     return null;
   },
 
-  async updateMatch(groupId, matchId, patch) {
-    logRequest("PUT", `/api/groups/${groupId}/matches/${matchId}`, patch);
+  async updateMatch(groupId, matchId, patch, kind) {
+    const segment = kind === "doubles" ? "doubles" : "singles";
+    logRequest("PATCH", `/api/groups/${groupId}/matches/${segment}/${matchId}`, patch);
     await delay();
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
-    const idx = db.matches.findIndex(m => m.id === matchId && m.groupId === groupId);
+    const idx = db.matches.findIndex(
+      m => m.id === matchId && m.groupId === groupId && m.kind === (kind === "doubles" ? "doubles" : "singles")
+    );
     if (idx < 0) throw new Error("Not found");
     db.matches[idx] = {...db.matches[idx], ...patch};
     saveDb(db);
     const dto = matchToClientDto(db.matches[idx]);
-    logResponse("PUT", `/api/groups/${groupId}/matches/${matchId}`, dto);
+    logResponse("PATCH", `/api/groups/${groupId}/matches/${segment}/${matchId}`, dto);
     return dto;
   },
 
-  async deleteMatch(groupId, matchId) {
-    logRequest("DELETE", `/api/groups/${groupId}/matches/${matchId}`);
+  async deleteMatch(groupId, matchId, kind) {
+    const segment = kind === "doubles" ? "doubles" : "singles";
+    logRequest("DELETE", `/api/groups/${groupId}/matches/${segment}/${matchId}`);
     await delay();
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
-    db.matches = db.matches.filter(m => !(m.groupId === groupId && m.id === matchId));
+    const expectedKind = kind === "doubles" ? "doubles" : "singles";
+    const before = db.matches.length;
+    db.matches = db.matches.filter(
+      m => !(m.groupId === groupId && m.id === matchId && m.kind === expectedKind)
+    );
+    if (db.matches.length === before) throw new Error("Not found");
     saveDb(db);
-    logResponse("DELETE", `/api/groups/${groupId}/matches/${matchId}`, null, 204);
+    logResponse("DELETE", `/api/groups/${groupId}/matches/${segment}/${matchId}`, null, 204);
   },
 
   async getMyRatings({ limit = 50, pageToken = null } = {}) {

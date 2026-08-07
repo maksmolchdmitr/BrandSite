@@ -1968,7 +1968,7 @@ export default defineComponent({
             teamB: payload.teamB,
             score: games[0],
           };
-          await badmintonClient.updateMatch(this.groupId, this.matchForm.matchId, updateBody);
+          await badmintonClient.updateMatch(this.groupId, this.matchForm.matchId, updateBody, kind);
         } else {
           payload.score = { games };
           await badmintonClient.createMatch(this.groupId, payload);
@@ -1984,7 +1984,7 @@ export default defineComponent({
       if (!confirm(this.$t("badminton.group.confirmDeleteMatch", { id: m.id }))) return;
       this.error = "";
       try {
-        await badmintonClient.deleteMatch(this.groupId, m.id);
+        await badmintonClient.deleteMatch(this.groupId, m.id, m.kind);
         if (m.kind === "singles" && this.singlesPages[this.singlesPageIndex]) {
           const items = this.singlesPages[this.singlesPageIndex].items.filter(x => x.id !== m.id);
           this.singlesPages = this.singlesPages.slice();

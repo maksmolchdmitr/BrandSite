@@ -541,6 +541,53 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/groups/{groupId}/matches/singles/{matchId}:
+    patch:
+      tags: [ Matches ]
+      summary: Update singles match result (admin-only)
+      operationId: updateSinglesMatch
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/MatchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchUpdateRequest"
+      responses:
+        "200":
+          description: Updated match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [ Matches ]
+      summary: Delete singles match result (admin-only)
+      operationId: deleteSinglesMatch
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/MatchId"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/groups/{groupId}/matches/doubles:
     post:
       tags: [ Matches ]
@@ -571,11 +618,11 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /api/groups/{groupId}/matches/{matchId}:
+  /api/groups/{groupId}/matches/doubles/{matchId}:
     patch:
       tags: [ Matches ]
-      summary: Update match result (admin-only)
-      operationId: updateMatch
+      summary: Update doubles match result (admin-only)
+      operationId: updateDoublesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/MatchId"
@@ -603,8 +650,8 @@ paths:
 
     delete:
       tags: [ Matches ]
-      summary: Delete match result (admin-only)
-      operationId: deleteMatch
+      summary: Delete doubles match result (admin-only)
+      operationId: deleteDoublesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/MatchId"

@@ -336,17 +336,25 @@ export async function createMatch(groupId, match) {
   });
 }
 
-export async function updateMatch(groupId, matchId, patch) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
-    method: "PATCH",
-    body: patch,
-  });
+export async function updateMatch(groupId, matchId, patch, kind) {
+  const segment = kind === "doubles" ? "doubles" : "singles";
+  return apiRequest(
+    `/api/groups/${encodeURIComponent(groupId)}/matches/${segment}/${encodeURIComponent(matchId)}`,
+    {
+      method: "PATCH",
+      body: patch,
+    }
+  );
 }
 
-export async function deleteMatch(groupId, matchId) {
-  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches/${encodeURIComponent(matchId)}`, {
-    method: "DELETE",
-  });
+export async function deleteMatch(groupId, matchId, kind) {
+  const segment = kind === "doubles" ? "doubles" : "singles";
+  return apiRequest(
+    `/api/groups/${encodeURIComponent(groupId)}/matches/${segment}/${encodeURIComponent(matchId)}`,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 // Rating endpoints
