@@ -1,4 +1,4 @@
-/** Formats Elo for display with two decimal places. */
+/** Formats Elo for display: truncate fractional part after the decimal point. */
 export function formatElo(elo) {
   if (elo == null || elo === "") {
     return null;
@@ -7,5 +7,5 @@ export function formatElo(elo) {
   if (!Number.isFinite(value)) {
     return String(elo);
   }
-  return value.toFixed(2);
+  return String(Math.trunc(value));
 }
