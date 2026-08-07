@@ -14,6 +14,7 @@ import {
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { setLoggedInUserId } from "./cookies.js";
+import { orderMatchTeamsForApi } from "./uuidOrder.js";
 
 const BASE_URL = getBadmintonApiBaseUrl();
 
@@ -328,7 +329,7 @@ export async function linkUserToParticipant(groupId, participantId, {userId}) {
 // Match endpoints — список матчей в группе: GET /api/me/matches/singles|doubles?groupId=...
 /** Body may include `kind` for routing; it is not sent (path implies singles vs doubles). */
 export async function createMatch(groupId, match) {
-  const { kind, ...rest } = match;
+  const { kind, ...rest } = orderMatchTeamsForApi(match);
   const segment = kind === "doubles" ? "doubles" : "singles";
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/matches/${segment}`, {
     method: "POST",
@@ -342,7 +343,7 @@ export async function updateMatch(groupId, matchId, patch, kind) {
     `/api/groups/${encodeURIComponent(groupId)}/matches/${segment}/${encodeURIComponent(matchId)}`,
     {
       method: "PATCH",
-      body: patch,
+      body: orderMatchTeamsForApi(patch),
     }
   );
 }
