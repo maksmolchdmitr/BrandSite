@@ -1253,6 +1253,9 @@ components:
     MatchUpdateRequest:
       type: object
       additionalProperties: false
+      description: >
+        Partial update. Omitted fields keep current values.
+        When teamA/teamB are present they must have 1–2 items (minItems).
       properties:
         teamA:
           type: array
