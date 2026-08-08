@@ -123,13 +123,15 @@
                   class="input"
                   v-model="newUnlinkedFirstName"
                   :placeholder="$t('badminton.group.firstName')"
-                  @input="onUnlinkedNameInput"
+                  @input="onUnlinkedFirstNameInput"
+                  @blur="onUnlinkedFirstNameBlur"
                 />
                 <input
                   class="input"
                   v-model="newUnlinkedLastName"
                   :placeholder="$t('badminton.group.lastName')"
-                  @input="onUnlinkedNameInput"
+                  @input="onUnlinkedLastNameInput"
+                  @blur="onUnlinkedLastNameBlur"
                 />
                 <input
                   class="input"
@@ -1751,12 +1753,39 @@ export default defineComponent({
       this.inviteUserSearch.open = false;
     },
 
-    onUnlinkedNameInput() {
+    splitUnlinkedFirstNameIfNeeded() {
+      const parts = String(this.newUnlinkedFirstName || "").trim().split(/\s+/).filter(Boolean);
+      if (parts.length < 2) return false;
+      this.newUnlinkedFirstName = parts[0];
+      this.newUnlinkedLastName = parts.slice(1).join(" ");
+      return true;
+    },
+    trimUnlinkedNames() {
+      this.newUnlinkedFirstName = String(this.newUnlinkedFirstName || "").trim();
+      this.newUnlinkedLastName = String(this.newUnlinkedLastName || "").trim();
+    },
+    syncUnlinkedUsernameFromName() {
       if (this.newUnlinkedUsernameTouched) return;
       this.newUnlinkedUsername = this.suggestUsernameFromName(
         this.newUnlinkedFirstName,
         this.newUnlinkedLastName
       );
+    },
+    onUnlinkedFirstNameInput() {
+      this.splitUnlinkedFirstNameIfNeeded();
+      this.syncUnlinkedUsernameFromName();
+    },
+    onUnlinkedLastNameInput() {
+      this.syncUnlinkedUsernameFromName();
+    },
+    onUnlinkedFirstNameBlur() {
+      this.splitUnlinkedFirstNameIfNeeded();
+      this.trimUnlinkedNames();
+      this.syncUnlinkedUsernameFromName();
+    },
+    onUnlinkedLastNameBlur() {
+      this.trimUnlinkedNames();
+      this.syncUnlinkedUsernameFromName();
     },
 
     suggestUsernameFromName(firstName, lastName) {
@@ -1858,6 +1887,9 @@ export default defineComponent({
     },
 
     async addUnlinkedParticipant() {
+      this.splitUnlinkedFirstNameIfNeeded();
+      this.trimUnlinkedNames();
+      this.syncUnlinkedUsernameFromName();
       if (!this.canCreateUnlinked) return;
       this.loadingAddUnlinked = true;
       this.error = "";
