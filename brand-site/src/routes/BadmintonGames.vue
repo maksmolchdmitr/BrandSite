@@ -1,6 +1,5 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="localizedHeadItems" />
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t("badminton.gamesHub.title") }}</h1>
@@ -147,18 +146,16 @@
 
 <script>
 import { defineComponent } from "vue";
-import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
-import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 import { badmintonClient } from "@/badminton/client.js";
 import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
 
 export default defineComponent({
   name: "BadmintonGames",
-  components: { HeadBar, PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip },
+  components: { PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip },
   mixins: [matchFormatMixin],
   props: {
     gamesTab: { type: String, default: "singles" },
@@ -180,9 +177,6 @@ export default defineComponent({
     };
   },
   computed: {
-    localizedHeadItems() {
-      return getDefaultBadmintonHeadItems(this.$t);
-    },
     effectiveTab() {
       return this.gamesTab === "doubles" ? "doubles" : "singles";
     },
@@ -389,7 +383,7 @@ export default defineComponent({
   box-sizing: border-box;
 }
 .content {
-  padding: 0 50px 50px 50px;
+  padding: 24px 50px 50px 50px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -507,7 +501,7 @@ export default defineComponent({
 }
 @media (max-width: 768px) {
   .content {
-    padding: 0 20px 20px 20px;
+    padding: 16px 20px 20px 20px;
   }
   .title {
     font-size: 28px;

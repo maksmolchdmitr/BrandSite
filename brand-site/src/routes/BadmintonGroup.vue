@@ -1,7 +1,5 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="localizedHeadItems"></HeadBar>
-
     <div class="content">
       <div class="topRow">
         <div>
@@ -809,7 +807,6 @@
 
 <script>
 import { defineComponent } from "vue";
-import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
@@ -818,7 +815,6 @@ import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
-import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
   и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
@@ -828,7 +824,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect },
+  components: { PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "matches" },
@@ -914,9 +910,6 @@ export default defineComponent({
     };
   },
   computed: {
-    localizedHeadItems() {
-      return getDefaultBadmintonHeadItems(this.$t);
-    },
     isAdmin() {
       return this.group?.myRole === "admin";
     },
@@ -2163,7 +2156,7 @@ export default defineComponent({
 
 <style scoped>
 .page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
+.content { padding: 24px 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .crumbs { font-family: var(--font-display); display: flex; gap: 8px; align-items: center; }
 .crumb { text-decoration: none; color: #4F3DFF; font-weight: 700; }
@@ -2381,7 +2374,7 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 }
 @media (max-width: 768px) {
   .page { gap: 12px; }
-  .content { padding: 0 20px 20px 20px; }
+  .content { padding: 16px 20px 20px 20px; }
   .title { font-size: 28px; }
 }
 

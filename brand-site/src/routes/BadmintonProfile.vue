@@ -1,7 +1,5 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="localizedHeadItems"></HeadBar>
-
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t('badminton.profile.title') }}</h1>
@@ -45,15 +43,13 @@
 
 <script>
 import { defineComponent } from "vue";
-import HeadBar from "@/components/HeadBar.vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
-import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 import { badmintonClient } from "@/badminton/client.js";
 
 export default defineComponent({
   name: "BadmintonProfile",
-  components: { HeadBar, ProfileEditForm, BadmintonHubCtaRow },
+  components: { ProfileEditForm, BadmintonHubCtaRow },
   data() {
     return {
       loaded: false,
@@ -71,11 +67,6 @@ export default defineComponent({
         cropTouched: false,
       },
     };
-  },
-  computed: {
-    localizedHeadItems() {
-      return getDefaultBadmintonHeadItems(this.$t);
-    },
   },
   async mounted() {
     await this.load();
@@ -187,7 +178,7 @@ export default defineComponent({
 
 <style scoped>
 .page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
-.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
+.content { padding: 24px 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
@@ -240,7 +231,7 @@ export default defineComponent({
 
 @media (max-width: 768px) {
   .page { gap: 12px; }
-  .content { padding: 0 20px 20px 20px; }
+  .content { padding: 16px 20px 20px 20px; }
   .title { font-size: 28px; }
   .card { padding: 16px; }
 }

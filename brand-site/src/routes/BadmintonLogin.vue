@@ -1,7 +1,5 @@
 <template>
   <div class="page">
-    <HeadBar :headItems="localizedHeadItems"></HeadBar>
-
     <div class="content">
       <div v-if="error" class="errorBox">{{ error }}</div>
 
@@ -41,7 +39,6 @@
 
 <script>
 import {defineComponent} from "vue";
-import HeadBar from "@/components/HeadBar.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
@@ -55,7 +52,7 @@ function tgLog(...args) {
 }
 
 export default defineComponent({
-  components: {HeadBar, PersonChip},
+  components: {PersonChip},
   props: {
     userId: {
       type: String,
@@ -94,13 +91,6 @@ export default defineComponent({
     };
   },
   computed: {
-    localizedHeadItems() {
-      return [
-        { text: this.$t("common.nav.main"), ref: "/?page=main", isMainSwitch: false },
-        { text: this.$t("common.nav.products"), ref: "/?page=products", isMainSwitch: false },
-        { text: this.$t("common.nav.badminton"), ref: "/?page=badminton&section=ratings", isMainSwitch: true },
-      ];
-    },
     // Блок мок-юзеров: при USE_MOCKS=true список от badmintonClient; при реальном API — от mockClient, если SHOW_MOCK_USERS
     showMockUsers() {
       if (!SHOW_MOCK_USERS) return false;
@@ -272,7 +262,7 @@ export default defineComponent({
 }
 
 .content {
-  padding: 0 50px 50px 50px;
+  padding: 24px 50px 50px 50px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -415,7 +405,7 @@ export default defineComponent({
     gap: 12px;
   }
   .content {
-    padding: 0 20px 20px 20px;
+    padding: 16px 20px 20px 20px;
   }
   .title {
     font-size: 32px;
