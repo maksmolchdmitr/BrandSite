@@ -128,6 +128,7 @@ const messages = {
         historyErrLoad: "Failed to load rating history",
         historyWindow: "{from} – {to}",
         historyNow: "now",
+        historyPending: "Not rated yet",
         historyTruncated: "Showing the maximum of {max} points for this period — the series may be truncated. Try a shorter time window.",
         doublesByPartner: "Doubles Elo by Partner",
         ratingHint: "Rating is calculated by Elo after each game.",

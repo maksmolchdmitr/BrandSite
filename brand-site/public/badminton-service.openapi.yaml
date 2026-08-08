@@ -1501,11 +1501,17 @@ components:
     RatingHistoryPoint:
       type: object
       additionalProperties: false
+      description: |
+        Elo after the match when rating history exists; `elo` is omitted/null if the match
+        is not rated yet (recalculation lag).
       properties:
         matchId: { type: string }
-        elo: { type: number, format: double }
+        elo:
+          type: number
+          format: double
+          description: Elo after this match; null when rating is not calculated yet
         createdAt: { type: string, format: date-time }
-      required: [ matchId, elo, createdAt ]
+      required: [ matchId, createdAt ]
 
     RatingHistoryPage:
       type: object

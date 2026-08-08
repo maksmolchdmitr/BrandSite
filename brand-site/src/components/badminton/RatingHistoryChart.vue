@@ -16,12 +16,20 @@
         :y1="tick.y"
         :y2="tick.y"
       />
-      <polyline class="line" fill="none" :points="linePoints" />
+      <polyline
+        v-if="linePoints"
+        class="line"
+        fill="none"
+        :points="linePoints"
+      />
       <circle
         v-for="(point, index) in plotted"
         :key="point.matchId || index"
         class="dot"
-        :class="{ active: hoverIndex === index }"
+        :class="{
+          active: hoverIndex === index,
+          hollow: point.pending,
+        }"
         :cx="point.x"
         :cy="point.y"
         :r="hoverIndex === index ? 5 : 3.5"
@@ -61,7 +69,13 @@
       class="tooltip"
       :style="{ left: tooltipLeft + 'px', top: tooltipTop + 'px' }"
     >
-      <div class="tooltipElo">{{ formatElo(hoverPoint.elo) }}</div>
+      <div class="tooltipElo">
+        {{
+          hoverPoint.pending
+            ? pendingLabel
+            : formatElo(hoverPoint.elo)
+        }}
+      </div>
       <div class="tooltipDate">{{ formatDate(hoverPoint.createdAt) }}</div>
     </div>
   </div>
@@ -74,11 +88,16 @@ import { formatElo } from "@/badminton/formatElo.js";
 const WIDTH = 640;
 const HEIGHT = 260;
 
+function isRated(point) {
+  return point != null && point.elo != null && Number.isFinite(Number(point.elo));
+}
+
 export default defineComponent({
   name: "RatingHistoryChart",
   props: {
     points: { type: Array, default: () => [] },
     emptyText: { type: String, default: "" },
+    pendingLabel: { type: String, default: "—" },
   },
   data() {
     return {
@@ -97,13 +116,15 @@ export default defineComponent({
       if (!points.length) return [];
 
       const times = points.map((point) => new Date(point.createdAt).getTime());
-      const elos = points.map((point) => Number(point.elo));
+      const ratedElos = points
+        .filter(isRated)
+        .map((point) => Number(point.elo));
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
       const timeSpan = Math.max(maxTime - minTime, 1);
 
-      let minElo = Math.min(...elos);
-      let maxElo = Math.max(...elos);
+      let minElo = ratedElos.length ? Math.min(...ratedElos) : 1200;
+      let maxElo = ratedElos.length ? Math.max(...ratedElos) : 1200;
       if (minElo === maxElo) {
         minElo -= 10;
         maxElo += 10;
@@ -115,17 +136,22 @@ export default defineComponent({
       const eloSpan = maxElo - minElo;
       const innerWidth = this.width - this.padding.left - this.padding.right;
       const innerHeight = this.height - this.padding.top - this.padding.bottom;
+      const pendingY = this.height - this.padding.bottom;
 
       return points.map((point, index) => {
         const time = times[index];
-        const elo = elos[index];
+        const pending = !isRated(point);
+        const elo = pending ? null : Number(point.elo);
         const x = this.padding.left + ((time - minTime) / timeSpan) * innerWidth;
-        const y = this.padding.top + (1 - (elo - minElo) / eloSpan) * innerHeight;
+        const y = pending
+          ? pendingY
+          : this.padding.top + (1 - (elo - minElo) / eloSpan) * innerHeight;
         return {
           ...point,
           x,
           y,
           elo,
+          pending,
           minElo,
           maxElo,
           minTime,
@@ -134,7 +160,10 @@ export default defineComponent({
       });
     },
     linePoints() {
-      return this.plotted.map((point) => `${point.x},${point.y}`).join(" ");
+      return this.plotted
+        .filter((point) => !point.pending)
+        .map((point) => `${point.x},${point.y}`)
+        .join(" ");
     },
     yTicks() {
       if (!this.plotted.length) return [];
@@ -243,8 +272,17 @@ export default defineComponent({
   stroke: #fff;
   stroke-width: 1.5;
 }
+.dot.hollow {
+  fill: #fafaff;
+  stroke: #4f3dff;
+  stroke-width: 2;
+}
 .dot.active {
   fill: #2f1fd0;
+}
+.dot.hollow.active {
+  fill: #ececff;
+  stroke: #2f1fd0;
 }
 .crosshair {
   stroke: #4f3dff;
@@ -293,6 +331,12 @@ export default defineComponent({
   }
   .axisLabel {
     fill: #b8b8b8;
+  }
+  .dot.hollow {
+    fill: #343434;
+  }
+  .dot.hollow.active {
+    fill: #3a3a4a;
   }
   .tooltip {
     background: #111;

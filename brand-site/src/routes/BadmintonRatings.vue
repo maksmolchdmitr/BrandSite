@@ -46,6 +46,7 @@
         <RatingHistoryChart
           :points="historyPoints"
           :empty-text="$t('badminton.ratings.historyEmpty')"
+          :pending-label="$t('badminton.ratings.historyPending')"
         />
         <div class="pagerRow">
           <button
