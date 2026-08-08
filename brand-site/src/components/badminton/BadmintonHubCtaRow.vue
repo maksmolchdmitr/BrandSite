@@ -8,6 +8,13 @@
       <span class="ctaText">{{ $t("badminton.groups.myRatings") }}</span>
     </RouterLink>
     <RouterLink
+      v-if="current !== 'rating-history'"
+      class="cta secondary cta-rating-history"
+      to="/?page=badminton&section=rating-history"
+    >
+      <span class="ctaText">{{ $t("badminton.ratings.historyNav") }}</span>
+    </RouterLink>
+    <RouterLink
       v-if="current !== 'games'"
       class="cta secondary cta-games-hub"
       to="/?page=badminton&section=games&tab=singles"
@@ -91,6 +98,14 @@ export default defineComponent({
 }
 .cta-ratings.secondary .ctaText {
   color: #9C27B0;
+}
+
+.cta-rating-history.secondary {
+  background-color: #FCE4EC;
+  border-color: #E91E63;
+}
+.cta-rating-history.secondary .ctaText {
+  color: #C2185B;
 }
 
 .cta-games-hub.secondary {
