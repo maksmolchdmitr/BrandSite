@@ -78,8 +78,6 @@ export default defineComponent({
   name: "RatingHistoryChart",
   props: {
     points: { type: Array, default: () => [] },
-    windowStart: { type: String, default: null },
-    windowEnd: { type: String, default: null },
     emptyText: { type: String, default: "" },
   },
   data() {
@@ -100,12 +98,8 @@ export default defineComponent({
 
       const times = points.map((point) => new Date(point.createdAt).getTime());
       const elos = points.map((point) => Number(point.elo));
-      const minTime = this.windowStart
-        ? new Date(this.windowStart).getTime()
-        : Math.min(...times);
-      const maxTime = this.windowEnd
-        ? new Date(this.windowEnd).getTime()
-        : Math.max(...times);
+      const minTime = Math.min(...times);
+      const maxTime = Math.max(...times);
       const timeSpan = Math.max(maxTime - minTime, 1);
 
       let minElo = Math.min(...elos);

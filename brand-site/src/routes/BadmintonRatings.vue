@@ -40,10 +40,11 @@
       <div class="card">
         <div class="cardTitle">{{ $t('badminton.ratings.historyTitle') }}</div>
         <p class="hint">{{ historyWindowLabel }}</p>
+        <div v-if="historyTruncated" class="warnBox">
+          {{ $t('badminton.ratings.historyTruncated', { max: historySafetyCap }) }}
+        </div>
         <RatingHistoryChart
           :points="historyPoints"
-          :window-start="historyStartTime"
-          :window-end="historyEndTime || historyNowIso"
           :empty-text="$t('badminton.ratings.historyEmpty')"
         />
         <div class="pagerRow">
@@ -148,6 +149,7 @@ import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
+import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
 
 const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -192,6 +194,12 @@ export default defineComponent({
     },
     canGoNextHistory() {
       return !!this.historyEndTime;
+    },
+    historySafetyCap() {
+      return SINGLES_RATING_HISTORY_SAFETY_CAP;
+    },
+    historyTruncated() {
+      return this.historyPoints.length >= SINGLES_RATING_HISTORY_SAFETY_CAP;
     },
     historyWindowLabel() {
       if (!this.historyStartTime) return "";
@@ -472,6 +480,7 @@ export default defineComponent({
 }
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
+.warnBox { background: #fff7e6; border: 1px solid #ffd699; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); color: #7a5200; }
 
 @media (max-width: 768px) {
   .page { gap: 12px; }
@@ -523,6 +532,12 @@ export default defineComponent({
     background: #4a1f1f;
     border-color: #8e3c3c;
     color: #ffd6d6;
+  }
+
+  .warnBox {
+    background: #3d3218;
+    border-color: #8a6a2a;
+    color: #ffe6b0;
   }
 }
 </style>

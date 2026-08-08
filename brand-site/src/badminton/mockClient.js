@@ -1,5 +1,6 @@
 import {getLoggedInUserId, setLoggedInUserId} from "@/badminton/cookies.js";
 import {ensureMembership, getCurrentUser, getMyRole, loadDb, nowIso, saveDb, uuid} from "@/badminton/mockDb.js";
+import {SINGLES_RATING_HISTORY_SAFETY_CAP} from "@/badminton/ratingHistory.js";
 
 function delay(ms = 180) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -109,7 +110,7 @@ function calcSinglesElo(db, userId) {
   return Math.round(1200 + K * (wins - losses));
 }
 
-function calcSinglesRatingHistory(db, userId, { startTime, endTime, limit = 200 } = {}) {
+function calcSinglesRatingHistory(db, userId, { startTime, endTime } = {}) {
   const pIds = new Set(db.participants.filter(p => p.userId === userId).map(p => p.id));
   const startMs = startTime ? new Date(startTime).getTime() : Number.NEGATIVE_INFINITY;
   const endMs = endTime ? new Date(endTime).getTime() : Number.POSITIVE_INFINITY;
@@ -137,7 +138,7 @@ function calcSinglesRatingHistory(db, userId, { startTime, endTime, limit = 200 
       elo,
       createdAt: match.createdAt,
     });
-    if (items.length >= limit) {
+    if (items.length >= SINGLES_RATING_HISTORY_SAFETY_CAP) {
       break;
     }
   }
@@ -779,14 +780,14 @@ export const mockClient = {
     return result;
   },
 
-  async listMySinglesRatingHistory({ startTime, endTime, limit = 200 } = {}) {
-    logRequest("GET", "/api/me/ratings/singles/history", { startTime, endTime, limit });
+  async listMySinglesRatingHistory({ startTime, endTime } = {}) {
+    logRequest("GET", "/api/me/ratings/singles/history", { startTime, endTime });
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
     const u = db.users.find(x => x.id === userId) || db.users[0];
     const result = u
-      ? calcSinglesRatingHistory(db, u.id, { startTime, endTime, limit })
+      ? calcSinglesRatingHistory(db, u.id, { startTime, endTime })
       : { items: [] };
     logResponse("GET", "/api/me/ratings/singles/history", result);
     return result;

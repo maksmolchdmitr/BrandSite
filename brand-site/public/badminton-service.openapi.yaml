@@ -845,6 +845,14 @@ paths:
     get:
       tags: [ Ratings ]
       summary: Singles Elo history for current user in a time window
+      description: |
+        Returns chronological Elo points for singles matches in `[startTime, endTime)`
+        (`endTime` omitted → open-ended up to now).
+
+        Server applies a fixed safety-cap of **200** points per response (oldest-first within
+        the window via match `created_at ASC`). There is no client `limit` parameter.
+        If the response contains exactly 200 items, the series for this window may be truncated —
+        clients should warn the user and/or narrow the time window.
       operationId: listMySinglesRatingHistory
       parameters:
         - in: query
@@ -857,13 +865,9 @@ paths:
           required: false
           description: Exclusive upper bound; omit for open-ended window up to now
           schema: { type: string, format: date-time }
-        - in: query
-          name: limit
-          description: Safety cap on games fetched in the window
-          schema: { type: integer, minimum: 1, maximum: 200, default: 200 }
       responses:
         "200":
-          description: Rating history points (game + elo), chronological
+          description: Rating history points (at most 200), chronological
           content:
             application/json:
               schema:
