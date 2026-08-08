@@ -435,8 +435,27 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 .cropHint {
+  font-family: var(--font-display);
   font-size: 13px;
   opacity: 0.7;
+  line-height: 1.35;
+}
+.btn {
+  flex: 0 0 auto;
+  border: none;
+  cursor: pointer;
+  background-color: #4F3DFF;
+  color: white;
+  border-radius: 100px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.btn.secondary {
+  background: white;
+  color: #4F3DFF;
+  border: 2px solid #4F3DFF;
 }
 .btn.secondary.small {
   padding: 6px 12px;
@@ -445,5 +464,19 @@ export default defineComponent({
 .btn.secondary.small.active {
   background: #4F3DFF;
   color: #fff;
+  border-color: #4F3DFF;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn.secondary {
+    background-color: #2d2d2d;
+  }
+  .btn.secondary.small.active {
+    background: #4F3DFF;
+    color: #fff;
+  }
+  .cropHint {
+    color: #e8e8e8;
+  }
 }
 </style>
