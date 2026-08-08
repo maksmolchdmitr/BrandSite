@@ -3,6 +3,10 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t('badminton.ratings.historyTitle') }}</h1>
+        <button class="btn secondary" :disabled="loading" @click="loadHistory">
+          <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
+          <template v-else>{{ $t('common.actions.refresh') }}</template>
+        </button>
       </div>
 
       <BadmintonHubCtaRow current="rating-history" :disabled="loading" @logout="handleLogout" />
@@ -45,6 +49,7 @@
 import { defineComponent } from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
+import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
 
@@ -55,7 +60,7 @@ function toIso(date) {
 }
 
 export default defineComponent({
-  components: { BadmintonHubCtaRow, RatingHistoryChart },
+  components: { BadmintonHubCtaRow, RatingHistoryChart, LoadingPhrase },
   data() {
     return {
       loading: false,
@@ -162,6 +167,21 @@ export default defineComponent({
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
+.btn {
+  flex: 0 0 auto;
+  border: none;
+  cursor: pointer;
+  background-color: #4F3DFF;
+  color: white;
+  border-radius: 100px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.btn.secondary { background: white; color: #4F3DFF; border: 2px solid #4F3DFF; }
+.btn:disabled { opacity: 0.7; cursor: default; }
+
 .card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; margin: 0; }
 
@@ -214,6 +234,10 @@ export default defineComponent({
   }
 
   .pagerButton {
+    background-color: #2d2d2d;
+  }
+
+  .btn.secondary {
     background-color: #2d2d2d;
   }
 
