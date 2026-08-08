@@ -106,35 +106,53 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 .row {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .input {
-  flex: 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-family: var(--font-display);
+  font-size: 16px;
+  flex: 1 1 0;
   min-width: 140px;
-  padding: 10px 12px;
-  border: 1px solid #d8d8f0;
-  border-radius: 10px;
-  font: inherit;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .photoPickerRow {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.photoPickerRow .input {
+  flex: 1 1 180px;
+  width: auto;
+  min-width: 160px;
 }
 .photoPreview {
   width: 72px;
   height: 72px;
   border-radius: 50%;
   overflow: hidden;
-  background: #e8e8f8;
+  background: #f6f6ff;
+  border: 1px solid #ddd;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-display);
   font-size: 12px;
   flex: 0 0 auto;
 }
@@ -151,8 +169,40 @@ export default defineComponent({
 .formActions {
   margin-top: 4px;
 }
+.btn {
+  flex: 0 0 auto;
+  border: none;
+  cursor: pointer;
+  background-color: #4F3DFF;
+  color: white;
+  border-radius: 100px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.btn.secondary {
+  background: white;
+  color: #4F3DFF;
+  border: 2px solid #4F3DFF;
+}
 .btn.secondary.small {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input {
+    background: #242424;
+    border-color: #4a4a4a;
+    color: #e8e8e8;
+  }
+  .photoPreview {
+    background: #242424;
+    border-color: #4a4a4a;
+  }
+  .btn.secondary {
+    background-color: #2d2d2d;
+  }
 }
 </style>

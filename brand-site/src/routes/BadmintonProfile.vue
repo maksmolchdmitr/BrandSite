@@ -8,11 +8,17 @@
       </div>
 
       <div class="ctaRow">
-        <RouterLink class="cta secondary" to="/?page=badminton&section=ratings">
+        <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
           <span class="ctaText">{{ $t('badminton.ratings.title') }}</span>
         </RouterLink>
-        <RouterLink class="cta secondary" to="/?page=badminton&section=groups">
+        <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
           <span class="ctaText">{{ $t('badminton.ratings.myGroups') }}</span>
+        </RouterLink>
+        <button class="cta secondary cta-logout" :disabled="saving" @click="logout">
+          <span class="ctaText">{{ $t('common.actions.logout') }}</span>
+        </button>
+        <RouterLink class="cta secondary cta-back" to="/?page=products">
+          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
         </RouterLink>
       </div>
 
@@ -176,61 +182,172 @@ export default defineComponent({
         this.saving = false;
       }
     },
+    async logout() {
+      this.saving = true;
+      this.error = "";
+      try {
+        await badmintonClient.logout();
+        await this.$router.push("/?page=badminton&section=login");
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.login.errLogout");
+        this.saving = false;
+      }
+    },
   },
 });
 </script>
 
 <style scoped>
-.page { min-height: 100vh; }
-.content { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-.topRow { margin-bottom: 12px; }
-.title { font-family: var(--font-display); font-size: 2rem; margin: 0; }
-.ctaRow { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.content { padding: 0 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
+.topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
+
+.ctaRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .cta {
-  display: inline-flex;
-  padding: 10px 16px;
-  border-radius: 100px;
   text-decoration: none;
-  border: 2px solid #e0e0ff;
-  color: #4f3dff;
-  background: white;
-  font-weight: 700;
-}
-.errorBox {
-  padding: 12px;
-  border-radius: 10px;
-  background: #ffe8e8;
-  color: #a10;
-  margin-bottom: 12px;
-}
-.card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #ececff;
-}
-.cardTitle {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: 12px;
-}
-.hint { opacity: 0.7; }
-.btn {
+  background-color: #4F3DFF;
+  border-radius: 100px;
+  padding: 16px 22px;
   display: inline-flex;
   align-items: center;
-  padding: 10px 16px;
-  border-radius: 10px;
+  justify-content: center;
   border: none;
-  background: #4f3dff;
+  cursor: pointer;
+}
+
+.cta.secondary {
+  background-color: white;
+  border: 2px solid #4F3DFF;
+}
+
+.cta-ratings.secondary {
+  background-color: #F3E5F5;
+  border-color: #9C27B0;
+}
+.cta-ratings.secondary .ctaText {
+  color: #9C27B0;
+}
+
+.cta-groups.secondary {
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
+}
+.cta-groups.secondary .ctaText {
+  color: #4CAF50;
+}
+
+.cta-logout.secondary {
+  background-color: #FFE8E8;
+  border-color: #FF6B6B;
+}
+.cta-logout.secondary .ctaText {
+  color: #FF6B6B;
+}
+
+.cta-back.secondary {
+  background-color: #F5F5F5;
+  border-color: #888888;
+}
+.cta-back.secondary .ctaText {
+  color: #888888;
+}
+
+.cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.ctaText {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
   color: white;
+}
+
+.cta.secondary .ctaText {
+  color: #4F3DFF;
+}
+
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.formPage { max-width: 640px; }
+.cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
+.hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; }
+
+.btn {
+  flex: 0 0 auto;
+  border: none;
+  cursor: pointer;
+  background-color: #4F3DFF;
+  color: white;
+  border-radius: 100px;
+  padding: 12px 16px;
+  font-family: var(--font-display);
+  font-size: 16px;
   font-weight: 700;
   text-decoration: none;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 .btn.secondary {
   background: white;
-  color: #4f3dff;
-  border: 2px solid #e0e0ff;
+  color: #4F3DFF;
+  border: 2px solid #4F3DFF;
+}
+.btn:disabled { opacity: 0.7; cursor: default; }
+
+.errorBox {
+  background: #ffe6e6;
+  border: 1px solid #ffb3b3;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-family: var(--font-display);
+}
+
+@media (max-width: 768px) {
+  .page { gap: 12px; }
+  .content { padding: 0 20px 20px 20px; }
+  .title { font-size: 28px; }
+  .card { padding: 16px; }
+  .ctaText { font-size: 18px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .title { color: #e8e8e8; }
+
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+  }
+
+  .btn.secondary,
+  .cta.secondary {
+    background-color: #2d2d2d;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
 }
 </style>
