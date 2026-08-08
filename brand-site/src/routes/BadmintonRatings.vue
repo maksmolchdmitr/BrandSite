@@ -35,9 +35,6 @@
             </tbody>
           </table>
         </div>
-        <RouterLink class="historyLink" to="/?page=badminton&section=rating-history">
-          {{ $t('badminton.ratings.openHistory') }}
-        </RouterLink>
       </div>
 
       <div class="card">
@@ -256,13 +253,6 @@ export default defineComponent({
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; margin-top: 8px; }
 .empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
-.historyLink {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: #4F3DFF;
-  text-decoration: none;
-  align-self: flex-start;
-}
 
 .tableWrapper { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
