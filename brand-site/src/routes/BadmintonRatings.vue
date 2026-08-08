@@ -173,7 +173,6 @@ export default defineComponent({
       historyPoints: [],
       historyStartTime: null,
       historyEndTime: null,
-      historyNowIso: null,
       historyLoading: false,
       historyError: "",
     };
@@ -226,7 +225,6 @@ export default defineComponent({
     formatElo,
     resetHistoryWindow() {
       const now = Date.now();
-      this.historyNowIso = toIso(now);
       this.historyEndTime = null;
       this.historyStartTime = toIso(now - HISTORY_WINDOW_MS);
     },
@@ -260,7 +258,6 @@ export default defineComponent({
       if (!this.historyEndTime) return;
       const oldEnd = new Date(this.historyEndTime).getTime();
       const now = Date.now();
-      this.historyNowIso = toIso(now);
       this.historyStartTime = this.historyEndTime;
       if (oldEnd + HISTORY_WINDOW_MS >= now) {
         this.historyEndTime = null;
