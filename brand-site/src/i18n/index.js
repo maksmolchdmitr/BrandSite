@@ -375,6 +375,7 @@ const messages = {
         historyErrLoad: "Не удалось загрузить историю рейтинга",
         historyWindow: "{from} – {to}",
         historyNow: "сейчас",
+        historyPending: "Ещё не посчитан",
         historyTruncated: "Показан максимум {max} точек за период — ряд мог обрезаться. Попробуйте более короткое окно.",
         doublesByPartner: "Парный Elo по партнёрам",
         ratingHint: "Рейтинг рассчитывается по системе Elo после каждой игры.",
