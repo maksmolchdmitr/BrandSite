@@ -185,7 +185,21 @@
             </div>
           </div>
 
-          <div v-if="participants.length === 0" class="empty">{{ $t('badminton.group.noParticipants') }}</div>
+          <div class="row participantsFilterRow">
+            <input
+              class="input"
+              v-model="participantsQuery"
+              :placeholder="$t('badminton.group.searchParticipants')"
+              autocomplete="off"
+              @input="onParticipantsQueryInput"
+            />
+          </div>
+
+          <div v-if="participants.length === 0" class="empty">
+            {{ participantsQuery.trim()
+              ? $t('badminton.group.noParticipantsFound')
+              : $t('badminton.group.noParticipants') }}
+          </div>
           <div v-else>
             <div class="tableWrapper">
               <table class="table">
@@ -836,6 +850,8 @@ export default defineComponent({
       participantsLimit: 10,
       participantsLimitOptions: [10, 20, 50],
       showParticipantsLimitDropdown: false,
+      participantsQuery: "",
+      participantsQueryTimer: null,
 
       singlesPages: [],
       singlesPageIndex: 0,
@@ -1110,6 +1126,10 @@ export default defineComponent({
   mounted() {
     this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
   },
+  beforeUnmount() {
+    if (this.participantsQueryTimer) clearTimeout(this.participantsQueryTimer);
+    if (this.inviteUserSearchTimer) clearTimeout(this.inviteUserSearchTimer);
+  },
   methods: {
     formatElo,
     mergeParticipantNames(items) {
@@ -1250,11 +1270,7 @@ export default defineComponent({
       this.error = "";
       try {
         if (this.groupSection === "participants") {
-          const res = await badmintonClient.listParticipants(this.groupId, { limit: this.participantsLimit });
-          const pItems = res?.items || [];
-          this.participantsPages = [{ items: pItems, pageToken: res?.pageToken || null }];
-          this.participantsPageIndex = 0;
-          this.mergeParticipantNames(pItems);
+          await this.reloadParticipantsFirstPage();
         } else if (this.groupSection === "editParticipant") {
           await this.loadEditParticipantForm();
         } else if (this.groupSection === "linkUser") {
@@ -1374,6 +1390,45 @@ export default defineComponent({
       }
       this.matchForm = this.matchFormFromMatch(m);
     },
+    async fetchParticipantsPage({ limit, pageToken } = {}) {
+      const query = String(this.participantsQuery || "").trim();
+      if (query) {
+        return badmintonClient.searchParticipants(this.groupId, {
+          query,
+          limit: limit ?? this.participantsLimit,
+          pageToken,
+        });
+      }
+      return badmintonClient.listParticipants(this.groupId, {
+        limit: limit ?? this.participantsLimit,
+        pageToken,
+      });
+    },
+    async reloadParticipantsFirstPage() {
+      const res = await this.fetchParticipantsPage({ limit: this.participantsLimit });
+      const pItems = res?.items || [];
+      this.participantsPages = [{ items: pItems, pageToken: res?.pageToken || null }];
+      this.participantsPageIndex = 0;
+      this.mergeParticipantNames(pItems);
+    },
+    onParticipantsQueryInput() {
+      if (this.participantsQueryTimer) clearTimeout(this.participantsQueryTimer);
+      this.participantsQueryTimer = setTimeout(() => {
+        this.applyParticipantsQuery();
+      }, 200);
+    },
+    async applyParticipantsQuery() {
+      if (this.groupSection !== "participants" || !this.groupId) return;
+      this.loading = true;
+      this.error = "";
+      try {
+        await this.reloadParticipantsFirstPage();
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errLoad");
+      } finally {
+        this.loading = false;
+      }
+    },
     async goPrevParticipants() {
       if (!this.canGoPrevParticipants) return;
       this.participantsPageIndex = Math.max(0, this.participantsPageIndex - 1);
@@ -1392,7 +1447,10 @@ export default defineComponent({
       }
       this.loading = true;
       try {
-        const res = await badmintonClient.listParticipants(this.groupId, { limit: this.participantsLimit, pageToken: nextToken });
+        const res = await this.fetchParticipantsPage({
+          limit: this.participantsLimit,
+          pageToken: nextToken,
+        });
         const page = { items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken };
         this.participantsPages.push(page);
         this.participantsPageIndex = this.participantsPages.length - 1;
@@ -1415,11 +1473,7 @@ export default defineComponent({
       this.showParticipantsLimitDropdown = false;
       this.loading = true;
       try {
-        const res = await badmintonClient.listParticipants(this.groupId, { limit });
-        const pItems = res?.items || [];
-        this.participantsPages = [{ items: pItems, pageToken: res?.pageToken || null }];
-        this.participantsPageIndex = 0;
-        this.mergeParticipantNames(pItems);
+        await this.reloadParticipantsFirstPage();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errLoad");
       } finally {
@@ -2144,6 +2198,8 @@ export default defineComponent({
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; min-width: 0; box-sizing: border-box; }
 .addParticipantBlock { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
+.participantsFilterRow { margin-bottom: 4px; }
+.participantsFilterRow .input { width: 100%; max-width: 100%; }
 .addParticipantSection { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
 .addParticipantLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #333; }
 .photoPickerRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
