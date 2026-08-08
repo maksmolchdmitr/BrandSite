@@ -256,7 +256,10 @@
             :title="createMatchLabel"
           >+</RouterLink>
         </div>
-        <div v-if="noMatchesForCurrentTab" class="empty">{{ $t('badminton.group.noMatches') }}</div>
+        <div v-if="loading && noMatchesForCurrentTab" class="empty">
+          <LoadingPhrase :text="$t('common.actions.loading')" />
+        </div>
+        <div v-else-if="noMatchesForCurrentTab" class="empty">{{ $t('badminton.group.noMatches') }}</div>
         <div v-if="singlesMatches.length > 0 && effectiveMatchTab === 'singles'" class="matchSection">
           <div class="matchSectionTitle">{{ $t('badminton.group.singles') }}</div>
           <div class="tableWrapper">
@@ -1099,8 +1102,7 @@ export default defineComponent({
       if (this.groupSection === "editMatch") this.loadSection();
     },
     groupId() {
-      this.loadGroup();
-      this.normalizeMatchesQueryThenLoad();
+      this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
     },
   },
   mounted() {
@@ -1225,10 +1227,9 @@ export default defineComponent({
         const mt = String(q.matchTab || "").toLowerCase();
         if (mt !== "singles" && mt !== "doubles") {
           await this.$router.replace({ query: { ...q, matchTab: "singles" } });
-          return;
         }
       }
-      this.loadSection();
+      await this.loadSection();
     },
     async loadGroup() {
       this.loading = true;
