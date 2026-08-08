@@ -142,7 +142,7 @@ export default defineComponent({
         props.groupId = this.groupId;
         props.groupSection = this.route?.query?.groupSection || 'matches';
         const mt = this.route?.query?.matchTab;
-        props.matchTab = mt === "doubles" || mt === "singles" ? mt : "singles";
+        props.matchTab = mt === "singles" || mt === "doubles" ? mt : "doubles";
         props.participantId = this.route?.query?.participantId || null;
         props.matchId = this.route?.query?.matchId || null;
       }

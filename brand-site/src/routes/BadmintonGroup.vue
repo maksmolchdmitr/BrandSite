@@ -28,7 +28,7 @@
         <RouterLink
           class="groupNavLink"
           :class="{ active: isMatchesNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=singles`"
+          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=doubles`"
         >
           {{ $t('badminton.group.matches') }}
         </RouterLink>
@@ -42,7 +42,7 @@
         <RouterLink
           class="groupNavLink"
           :class="{ active: isLeaderboardsNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards&matchTab=singles`"
+          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards&matchTab=doubles`"
         >
           {{ $t('badminton.group.leaderboards') }}
         </RouterLink>
@@ -832,8 +832,8 @@ export default defineComponent({
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "matches" },
-    /** 'singles' | 'doubles' — внутри «Матчи» всегда один из двух */
-    matchTab: { type: String, default: "singles" },
+    /** 'singles' | 'doubles' — внутри «Матчи»/лидербордов; по умолчанию парные */
+    matchTab: { type: String, default: "doubles" },
     participantId: { type: String, default: null },
     matchId: { type: String, default: null },
   },
@@ -902,7 +902,7 @@ export default defineComponent({
       linkUserForm: { userId: "" },
       matchForm: {
         matchId: "",
-        kind: "singles",
+        kind: "doubles",
         team1P1: null,
         team1P2: null,
         team2P1: null,
@@ -1058,8 +1058,8 @@ export default defineComponent({
       return !!page.pageToken;
     },
     effectiveMatchTab() {
-      const t = String(this.matchTab || "singles").toLowerCase();
-      return t === "doubles" ? "doubles" : "singles";
+      const t = String(this.matchTab || "doubles").toLowerCase();
+      return t === "singles" ? "singles" : "doubles";
     },
     noMatchesForCurrentTab() {
       return this.effectiveMatchTab === "singles"
@@ -1070,14 +1070,14 @@ export default defineComponent({
       const tab = this.effectiveMatchTab;
       return [
         {
-          to: this.matchesSubNavTo("singles"),
-          label: this.$t("badminton.groups.mySinglesMatches"),
-          active: tab === "singles",
-        },
-        {
           to: this.matchesSubNavTo("doubles"),
           label: this.$t("badminton.groups.myDoublesMatches"),
           active: tab === "doubles",
+        },
+        {
+          to: this.matchesSubNavTo("singles"),
+          label: this.$t("badminton.groups.mySinglesMatches"),
+          active: tab === "singles",
         },
       ];
     },
@@ -1085,14 +1085,14 @@ export default defineComponent({
       const tab = this.effectiveMatchTab;
       return [
         {
-          to: this.leaderboardsSubNavTo("singles"),
-          label: this.$t("badminton.group.singlesLeaderboard"),
-          active: tab === "singles",
-        },
-        {
           to: this.leaderboardsSubNavTo("doubles"),
           label: this.$t("badminton.group.doublesLeaderboard"),
           active: tab === "doubles",
+        },
+        {
+          to: this.leaderboardsSubNavTo("singles"),
+          label: this.$t("badminton.group.singlesLeaderboard"),
+          active: tab === "singles",
         },
       ];
     },
@@ -1157,7 +1157,7 @@ export default defineComponent({
     },
     matchesListTo(tab = this.effectiveMatchTab) {
       const gid = encodeURIComponent(this.groupId);
-      const t = tab === "doubles" ? "doubles" : "singles";
+      const t = tab === "singles" ? "singles" : "doubles";
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${t}`;
     },
     isUnlinkedParticipant(participant) {
@@ -1175,13 +1175,13 @@ export default defineComponent({
     },
     createMatchTo(kind) {
       const gid = encodeURIComponent(this.groupId);
-      const tab = kind === "doubles" ? "doubles" : "singles";
+      const tab = kind === "singles" ? "singles" : "doubles";
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=createMatch&matchTab=${tab}`;
     },
     editMatchTo(m) {
       const gid = encodeURIComponent(this.groupId);
       const mid = encodeURIComponent(m.id);
-      const tab = m.kind === "doubles" ? "doubles" : "singles";
+      const tab = m.kind === "singles" ? "singles" : "doubles";
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=editMatch&matchId=${mid}&matchTab=${tab}`;
     },
     matchesSubNavTo(tab) {
@@ -1190,7 +1190,7 @@ export default defineComponent({
     },
     leaderboardsSubNavTo(tab) {
       const gid = encodeURIComponent(this.groupId);
-      const t = tab === "doubles" ? "doubles" : "singles";
+      const t = tab === "singles" ? "singles" : "doubles";
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=leaderboards&matchTab=${t}`;
     },
     cancelToParticipants() {
@@ -1202,7 +1202,7 @@ export default defineComponent({
     emptyMatchForm(kind, matchId = "") {
       return {
         matchId: matchId || "",
-        kind: kind === "doubles" ? "doubles" : "singles",
+        kind: kind === "singles" ? "singles" : "doubles",
         team1P1: null,
         team1P2: null,
         team2P1: null,
@@ -1248,7 +1248,7 @@ export default defineComponent({
         const q = this.$route.query;
         const mt = String(q.matchTab || "").toLowerCase();
         if (mt !== "singles" && mt !== "doubles") {
-          await this.$router.replace({ query: { ...q, matchTab: "singles" } });
+          await this.$router.replace({ query: { ...q, matchTab: "doubles" } });
         }
       }
       await this.loadSection();
