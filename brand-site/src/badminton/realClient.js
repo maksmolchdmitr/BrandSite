@@ -33,6 +33,10 @@ export const realClient = {
     return api.getMyRatings({limit, pageToken});
   },
 
+  async listMySinglesRatingHistory({ startTime, endTime, limit } = {}) {
+    return api.listMySinglesRatingHistory({ startTime, endTime, limit });
+  },
+
   async getMyGamesStats() {
     return api.getMyGamesStats();
   },

@@ -38,6 +38,35 @@
       </div>
 
       <div class="card">
+        <div class="cardTitle">{{ $t('badminton.ratings.historyTitle') }}</div>
+        <p class="hint">{{ historyWindowLabel }}</p>
+        <RatingHistoryChart
+          :points="historyPoints"
+          :window-start="historyStartTime"
+          :window-end="historyEndTime || historyNowIso"
+          :empty-text="$t('badminton.ratings.historyEmpty')"
+        />
+        <div class="pagerRow">
+          <button
+            class="pagerButton"
+            :disabled="historyLoading"
+            @click="goPrevHistory"
+          >
+            ←
+          </button>
+          <span class="pagerPage">{{ historyWindowLabel }}</span>
+          <button
+            class="pagerButton"
+            :disabled="!canGoNextHistory || historyLoading"
+            @click="goNextHistory"
+          >
+            →
+          </button>
+        </div>
+        <div v-if="historyError" class="errorBox">{{ historyError }}</div>
+      </div>
+
+      <div class="card">
         <div class="cardTitle">{{ $t('badminton.ratings.doublesByPartner') }}</div>
         <p class="hint">{{ $t('badminton.ratings.ratingHint') }}</p>
         <div v-if="currentDoublesPage.items.length === 0" class="empty">
@@ -116,11 +145,18 @@
 import {defineComponent} from "vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
+import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 
+const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+function toIso(date) {
+  return new Date(date).toISOString();
+}
+
 export default defineComponent({
-  components: {PersonChip, BadmintonHubCtaRow},
+  components: {PersonChip, BadmintonHubCtaRow, RatingHistoryChart},
   data() {
     return {
       loading: false,
@@ -132,6 +168,12 @@ export default defineComponent({
       doublesLimit: 10,
       doublesLimitOptions: [10, 20, 50],
       showDoublesLimitDropdown: false,
+      historyPoints: [],
+      historyStartTime: null,
+      historyEndTime: null,
+      historyNowIso: null,
+      historyLoading: false,
+      historyError: "",
     };
   },
   computed: {
@@ -148,12 +190,77 @@ export default defineComponent({
       const page = this.currentDoublesPage;
       return !!page.nextPageToken;
     },
+    canGoNextHistory() {
+      return !!this.historyEndTime;
+    },
+    historyWindowLabel() {
+      if (!this.historyStartTime) return "";
+      const locale = this.$i18n?.locale === "en" ? "en-GB" : "ru-RU";
+      const from = new Date(this.historyStartTime).toLocaleDateString(locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const to = this.historyEndTime
+        ? new Date(this.historyEndTime).toLocaleDateString(locale, {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : this.$t("badminton.ratings.historyNow");
+      return this.$t("badminton.ratings.historyWindow", { from, to });
+    },
   },
   async mounted() {
     await this.load();
   },
   methods: {
     formatElo,
+    resetHistoryWindow() {
+      const now = Date.now();
+      this.historyNowIso = toIso(now);
+      this.historyEndTime = null;
+      this.historyStartTime = toIso(now - HISTORY_WINDOW_MS);
+    },
+    async loadHistory() {
+      if (!this.historyStartTime) {
+        this.resetHistoryWindow();
+      }
+      this.historyLoading = true;
+      this.historyError = "";
+      try {
+        const page = await badmintonClient.listMySinglesRatingHistory({
+          startTime: this.historyStartTime,
+          endTime: this.historyEndTime || undefined,
+        });
+        this.historyPoints = page?.items || [];
+      } catch (e) {
+        this.historyError = e?.message || this.$t("badminton.ratings.historyErrLoad");
+        this.historyPoints = [];
+      } finally {
+        this.historyLoading = false;
+      }
+    },
+    async goPrevHistory() {
+      if (!this.historyStartTime) return;
+      const oldStart = new Date(this.historyStartTime).getTime();
+      this.historyEndTime = this.historyStartTime;
+      this.historyStartTime = toIso(oldStart - HISTORY_WINDOW_MS);
+      await this.loadHistory();
+    },
+    async goNextHistory() {
+      if (!this.historyEndTime) return;
+      const oldEnd = new Date(this.historyEndTime).getTime();
+      const now = Date.now();
+      this.historyNowIso = toIso(now);
+      this.historyStartTime = this.historyEndTime;
+      if (oldEnd + HISTORY_WINDOW_MS >= now) {
+        this.historyEndTime = null;
+      } else {
+        this.historyEndTime = toIso(oldEnd + HISTORY_WINDOW_MS);
+      }
+      await this.loadHistory();
+    },
     async load() {
       this.loading = true;
       this.error = "";
@@ -170,6 +277,8 @@ export default defineComponent({
         };
         this.doublesPages = [first];
         this.doublesCurrentPageIndex = 0;
+        this.resetHistoryWindow();
+        await this.loadHistory();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.ratings.errLoad");
       } finally {

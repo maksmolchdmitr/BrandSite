@@ -199,6 +199,15 @@ export async function getMyRatings({limit, pageToken} = {}) {
   return apiRequest(`/api/me/ratings${query ? `?${query}` : ""}`);
 }
 
+export async function listMySinglesRatingHistory({ startTime, endTime, limit } = {}) {
+  const params = new URLSearchParams();
+  if (startTime) params.append("startTime", startTime);
+  if (endTime) params.append("endTime", endTime);
+  if (limit) params.append("limit", limit);
+  const query = params.toString();
+  return apiRequest(`/api/me/ratings/singles/history${query ? `?${query}` : ""}`);
+}
+
 export async function getMyGamesStats() {
   return apiRequest("/api/me/games-stats");
 }

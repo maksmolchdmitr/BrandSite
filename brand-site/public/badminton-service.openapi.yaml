@@ -841,6 +841,38 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /api/me/ratings/singles/history:
+    get:
+      tags: [ Ratings ]
+      summary: Singles Elo history for current user in a time window
+      operationId: listMySinglesRatingHistory
+      parameters:
+        - in: query
+          name: startTime
+          required: true
+          description: Inclusive lower bound of the time window
+          schema: { type: string, format: date-time }
+        - in: query
+          name: endTime
+          required: false
+          description: Exclusive upper bound; omit for open-ended window up to now
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          description: Safety cap on games fetched in the window
+          schema: { type: integer, minimum: 1, maximum: 200, default: 200 }
+      responses:
+        "200":
+          description: Rating history points (game + elo), chronological
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingHistoryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /api/groups/{groupId}/ratings/singles:
     get:
       tags: [ Ratings ]
@@ -1460,4 +1492,23 @@ components:
             $ref: "#/components/schemas/RatingRowDoubles"
         pageToken:
           type: string
+      required: [ items ]
+
+    RatingHistoryPoint:
+      type: object
+      additionalProperties: false
+      properties:
+        matchId: { type: string }
+        elo: { type: number, format: double }
+        createdAt: { type: string, format: date-time }
+      required: [ matchId, elo, createdAt ]
+
+    RatingHistoryPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingHistoryPoint"
       required: [ items ]

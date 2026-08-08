@@ -109,6 +109,41 @@ function calcSinglesElo(db, userId) {
   return Math.round(1200 + K * (wins - losses));
 }
 
+function calcSinglesRatingHistory(db, userId, { startTime, endTime, limit = 200 } = {}) {
+  const pIds = new Set(db.participants.filter(p => p.userId === userId).map(p => p.id));
+  const startMs = startTime ? new Date(startTime).getTime() : Number.NEGATIVE_INFINITY;
+  const endMs = endTime ? new Date(endTime).getTime() : Number.POSITIVE_INFINITY;
+  const chronological = (db.matches || [])
+    .filter(m => m.kind === "singles" && (pIds.has(m.teamA?.[0]) || pIds.has(m.teamB?.[0])))
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+
+  const K = 8;
+  let wins = 0;
+  let losses = 0;
+  const items = [];
+  for (const match of chronological) {
+    const isA = pIds.has(match.teamA?.[0]);
+    const win = didTeamWin(match, isA ? "A" : "B");
+    if (win === true) wins++;
+    else if (win === false) losses++;
+    const elo = Math.round(1200 + K * (wins - losses));
+    const createdMs = new Date(match.createdAt).getTime();
+    if (Number.isNaN(createdMs) || createdMs < startMs || createdMs >= endMs) {
+      continue;
+    }
+    items.push({
+      matchId: match.id,
+      elo,
+      createdAt: match.createdAt,
+    });
+    if (items.length >= limit) {
+      break;
+    }
+  }
+  return { items };
+}
+
 function calcDoublesPerPartner(db, userId) {
   // Build partner Elo map: simple Elo-like value per partner (across all groups), based on wins and losses together with that partner.
   const myParticipants = db.participants.filter(p => p.userId === userId);
@@ -741,6 +776,19 @@ export const mockClient = {
       };
     }
     logResponse("GET", "/api/me/ratings", result);
+    return result;
+  },
+
+  async listMySinglesRatingHistory({ startTime, endTime, limit = 200 } = {}) {
+    logRequest("GET", "/api/me/ratings/singles/history", { startTime, endTime, limit });
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const u = db.users.find(x => x.id === userId) || db.users[0];
+    const result = u
+      ? calcSinglesRatingHistory(db, u.id, { startTime, endTime, limit })
+      : { items: [] };
+    logResponse("GET", "/api/me/ratings/singles/history", result);
     return result;
   },
 
