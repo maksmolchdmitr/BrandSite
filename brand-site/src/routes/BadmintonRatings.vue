@@ -35,37 +35,9 @@
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="cardTitle">{{ $t('badminton.ratings.historyTitle') }}</div>
-        <p class="hint">{{ historyWindowLabel }}</p>
-        <div v-if="historyTruncated" class="warnBox">
-          {{ $t('badminton.ratings.historyTruncated', { max: historySafetyCap }) }}
-        </div>
-        <RatingHistoryChart
-          :points="historyPoints"
-          :empty-text="$t('badminton.ratings.historyEmpty')"
-          :pending-label="$t('badminton.ratings.historyPending')"
-        />
-        <div class="pagerRow">
-          <button
-            class="pagerButton"
-            :disabled="historyLoading"
-            @click="goPrevHistory"
-          >
-            ←
-          </button>
-          <span class="pagerPage">{{ historyWindowLabel }}</span>
-          <button
-            class="pagerButton"
-            :disabled="!canGoNextHistory || historyLoading"
-            @click="goNextHistory"
-          >
-            →
-          </button>
-        </div>
-        <div v-if="historyError" class="errorBox">{{ historyError }}</div>
+        <RouterLink class="historyLink" to="/?page=badminton&section=rating-history">
+          {{ $t('badminton.ratings.openHistory') }}
+        </RouterLink>
       </div>
 
       <div class="card">
@@ -147,19 +119,11 @@
 import {defineComponent} from "vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
-import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
-import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
-
-const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-
-function toIso(date) {
-  return new Date(date).toISOString();
-}
 
 export default defineComponent({
-  components: {PersonChip, BadmintonHubCtaRow, RatingHistoryChart},
+  components: {PersonChip, BadmintonHubCtaRow},
   data() {
     return {
       loading: false,
@@ -171,11 +135,6 @@ export default defineComponent({
       doublesLimit: 10,
       doublesLimitOptions: [10, 20, 50],
       showDoublesLimitDropdown: false,
-      historyPoints: [],
-      historyStartTime: null,
-      historyEndTime: null,
-      historyLoading: false,
-      historyError: "",
     };
   },
   computed: {
@@ -192,81 +151,12 @@ export default defineComponent({
       const page = this.currentDoublesPage;
       return !!page.nextPageToken;
     },
-    canGoNextHistory() {
-      return !!this.historyEndTime;
-    },
-    historySafetyCap() {
-      return SINGLES_RATING_HISTORY_SAFETY_CAP;
-    },
-    historyTruncated() {
-      return this.historyPoints.length >= SINGLES_RATING_HISTORY_SAFETY_CAP;
-    },
-    historyWindowLabel() {
-      if (!this.historyStartTime) return "";
-      const locale = this.$i18n?.locale === "en" ? "en-GB" : "ru-RU";
-      const from = new Date(this.historyStartTime).toLocaleDateString(locale, {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-      const to = this.historyEndTime
-        ? new Date(this.historyEndTime).toLocaleDateString(locale, {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
-        : this.$t("badminton.ratings.historyNow");
-      return this.$t("badminton.ratings.historyWindow", { from, to });
-    },
   },
   async mounted() {
     await this.load();
   },
   methods: {
     formatElo,
-    resetHistoryWindow() {
-      const now = Date.now();
-      this.historyEndTime = null;
-      this.historyStartTime = toIso(now - HISTORY_WINDOW_MS);
-    },
-    async loadHistory() {
-      if (!this.historyStartTime) {
-        this.resetHistoryWindow();
-      }
-      this.historyLoading = true;
-      this.historyError = "";
-      try {
-        const page = await badmintonClient.listMySinglesRatingHistory({
-          startTime: this.historyStartTime,
-          endTime: this.historyEndTime || undefined,
-        });
-        this.historyPoints = page?.items || [];
-      } catch (e) {
-        this.historyError = e?.message || this.$t("badminton.ratings.historyErrLoad");
-        this.historyPoints = [];
-      } finally {
-        this.historyLoading = false;
-      }
-    },
-    async goPrevHistory() {
-      if (!this.historyStartTime) return;
-      const oldStart = new Date(this.historyStartTime).getTime();
-      this.historyEndTime = this.historyStartTime;
-      this.historyStartTime = toIso(oldStart - HISTORY_WINDOW_MS);
-      await this.loadHistory();
-    },
-    async goNextHistory() {
-      if (!this.historyEndTime) return;
-      const oldEnd = new Date(this.historyEndTime).getTime();
-      const now = Date.now();
-      this.historyStartTime = this.historyEndTime;
-      if (oldEnd + HISTORY_WINDOW_MS >= now) {
-        this.historyEndTime = null;
-      } else {
-        this.historyEndTime = toIso(oldEnd + HISTORY_WINDOW_MS);
-      }
-      await this.loadHistory();
-    },
     async load() {
       this.loading = true;
       this.error = "";
@@ -283,8 +173,6 @@ export default defineComponent({
         };
         this.doublesPages = [first];
         this.doublesCurrentPageIndex = 0;
-        this.resetHistoryWindow();
-        await this.loadHistory();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.ratings.errLoad");
       } finally {
@@ -300,7 +188,6 @@ export default defineComponent({
       const current = this.currentDoublesPage;
       const nextToken = current.nextPageToken;
       if (!nextToken) return;
-      // If we already loaded this page (e.g. after changing page back and forth), just move index
       const existingIndex = this.doublesPages.findIndex(
         (p, idx) => idx > this.doublesCurrentPageIndex && p.pageTokenFrom === nextToken
       );
@@ -363,15 +250,19 @@ export default defineComponent({
 .page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
 .content { padding: 24px 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.topActions { display: flex; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
-.linkBtn { text-decoration: none; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
-.logoutBtn { background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
 
 .card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .cardTitle { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #4F3DFF; }
 .hint { font-family: var(--font-display); font-size: 13px; opacity: 0.7; margin-top: 8px; }
 .empty { font-family: var(--font-display); opacity: 0.7; padding: 20px; text-align: center; }
+.historyLink {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #4F3DFF;
+  text-decoration: none;
+  align-self: flex-start;
+}
 
 .tableWrapper { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
@@ -478,7 +369,6 @@ export default defineComponent({
 }
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
-.warnBox { background: #fff7e6; border: 1px solid #ffd699; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); color: #7a5200; }
 
 @media (max-width: 768px) {
   .page { gap: 12px; }
@@ -511,7 +401,6 @@ export default defineComponent({
     background: #363636;
   }
 
-  .btn.secondary,
   .pagerButton,
   .pagerLimitSelect {
     background-color: #2d2d2d;
@@ -531,13 +420,5 @@ export default defineComponent({
     border-color: #8e3c3c;
     color: #ffd6d6;
   }
-
-  .warnBox {
-    background: #3d3218;
-    border-color: #8a6a2a;
-    color: #ffe6b0;
-  }
 }
 </style>
-
-

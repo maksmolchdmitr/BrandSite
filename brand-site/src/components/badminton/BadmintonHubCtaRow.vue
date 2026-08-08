@@ -51,7 +51,7 @@ export default defineComponent({
     current: {
       type: String,
       required: true,
-      validator: (v) => ["ratings", "games", "profile", "groups"].includes(v),
+      validator: (v) => ["ratings", "rating-history", "games", "profile", "groups"].includes(v),
     },
     disabled: { type: Boolean, default: false },
   },
