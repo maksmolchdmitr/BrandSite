@@ -75,7 +75,7 @@ const messages = {
     },
     products: {
       badmintonTitle: "Badminton Service",
-      badmintonSubtitle: "Groups • Matches • Elo • Telegram auth",
+      badmintonSubtitle: "badminton-service",
     },
     dateSwitch: {
       alt: "Go to another date entry",
@@ -315,7 +315,7 @@ const messages = {
     },
     products: {
       badmintonTitle: "Сервис бадминтона",
-      badmintonSubtitle: "Группы • Матчи • Elo • Telegram auth",
+      badmintonSubtitle: "badminton-service",
     },
     dateSwitch: {
       alt: "Перейти к другой дате",
