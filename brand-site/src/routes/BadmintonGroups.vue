@@ -7,20 +7,7 @@
         <h1 class="title">{{ $t('badminton.groups.title') }}</h1>
       </div>
 
-      <div class="ctaRow">
-        <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
-          <span class="ctaText">{{ $t('badminton.groups.myRatings') }}</span>
-        </RouterLink>
-        <RouterLink class="cta secondary cta-games-hub" to="/?page=badminton&section=games&tab=singles">
-          <span class="ctaText">{{ $t('badminton.groups.myMatches') }}</span>
-        </RouterLink>
-        <button class="cta secondary cta-logout" :disabled="loading" @click="logout">
-          <span class="ctaText">{{ $t('common.actions.logout') }}</span>
-        </button>
-        <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
-        </RouterLink>
-      </div>
+      <BadmintonHubCtaRow current="groups" :disabled="loading" @logout="logout" />
 
       <div v-if="error" class="errorBox">{{ error }}</div>
 
@@ -61,11 +48,12 @@
 <script>
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
+import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 
 export default defineComponent({
-  components: {HeadBar},
+  components: {HeadBar, BadmintonHubCtaRow},
   data() {
     return {
       loading: false,
@@ -149,82 +137,6 @@ export default defineComponent({
 
 .linkBtn { text-decoration: none; font-family: var(--font-display); font-weight: 700; color: #4F3DFF; }
 
-.ctaRow {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.cta {
-  text-decoration: none;
-  background-color: #4F3DFF;
-  border-radius: 100px;
-  padding: 16px 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-}
-
-.cta.secondary {
-  background-color: white;
-  border: 2px solid #4F3DFF;
-}
-
-/* My ratings - фиолетовый */
-.cta-ratings.secondary {
-  background-color: #F3E5F5;
-  border-color: #9C27B0;
-}
-.cta-ratings.secondary .ctaText {
-  color: #9C27B0;
-}
-
-.cta-games-hub.secondary {
-  background-color: #EDE7F6;
-  border-color: #673AB7;
-}
-.cta-games-hub.secondary .ctaText {
-  color: #5E35B1;
-}
-
-/* Logout - красноватый */
-.cta-logout.secondary {
-  background-color: #FFE8E8;
-  border-color: #FF6B6B;
-}
-.cta-logout.secondary .ctaText {
-  color: #FF6B6B;
-}
-
-/* Back to Products - серый */
-.cta-back.secondary {
-  background-color: #F5F5F5;
-  border-color: #888888;
-}
-.cta-back.secondary .ctaText {
-  color: #888888;
-}
-
-.cta:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.ctaText {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-}
-
-.cta.secondary .ctaText {
-  color: #4F3DFF;
-}
-
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 .empty { font-family: var(--font-display); opacity: 0.7; margin-top: 8px; }
 
@@ -240,7 +152,6 @@ export default defineComponent({
   .page { gap: 12px; }
   .content { padding: 0 20px 20px 20px; }
   .title { font-size: 28px; }
-  .ctaText { font-size: 18px; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -255,8 +166,7 @@ export default defineComponent({
     color: #e8e8e8;
   }
 
-  .btn.secondary,
-  .cta.secondary {
+  .btn.secondary {
     background-color: #2d2d2d;
   }
 

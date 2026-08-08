@@ -5,20 +5,7 @@
       <div class="topRow">
         <h1 class="title">{{ $t("badminton.gamesHub.title") }}</h1>
       </div>
-      <div class="ctaRow">
-        <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
-          <span class="ctaText">{{ $t("badminton.groups.myRatings") }}</span>
-        </RouterLink>
-        <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
-          <span class="ctaText">{{ $t("badminton.singles.myGroups") }}</span>
-        </RouterLink>
-        <button class="cta secondary cta-logout" type="button" :disabled="loading" @click="logout">
-          <span class="ctaText">{{ $t("common.actions.logout") }}</span>
-        </button>
-        <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">{{ $t("common.actions.backToProducts") }}</span>
-        </RouterLink>
-      </div>
+      <BadmintonHubCtaRow current="games" :disabled="loading" @logout="logout" />
       <BadmintonPillNav :items="gamesNavItems" aria-label="games kind" />
       <div v-if="error" class="errorBox">{{ error }}</div>
       <div class="card">
@@ -163,6 +150,7 @@ import { defineComponent } from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
+import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 import { badmintonClient } from "@/badminton/client.js";
@@ -170,7 +158,7 @@ import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
 
 export default defineComponent({
   name: "BadmintonGames",
-  components: { HeadBar, PagerBar, BadmintonPillNav, PersonChip },
+  components: { HeadBar, PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip },
   mixins: [matchFormatMixin],
   props: {
     gamesTab: { type: String, default: "singles" },
@@ -421,69 +409,6 @@ export default defineComponent({
   font-size: 40px;
   font-weight: 700;
 }
-.ctaRow {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  max-width: 100%;
-  min-width: 0;
-}
-.cta {
-  text-decoration: none;
-  background-color: #4f3dff;
-  border-radius: 100px;
-  padding: 16px 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-}
-.cta.secondary {
-  background-color: white;
-  border: 2px solid #4f3dff;
-}
-.cta-ratings.secondary {
-  background-color: #f3e5f5;
-  border-color: #9c27b0;
-}
-.cta-ratings.secondary .ctaText {
-  color: #9c27b0;
-}
-.cta-groups.secondary {
-  background-color: #e8f5e9;
-  border-color: #4caf50;
-}
-.cta-groups.secondary .ctaText {
-  color: #4caf50;
-}
-.cta-logout.secondary {
-  background-color: #ffe8e8;
-  border-color: #ff6b6b;
-}
-.cta-logout.secondary .ctaText {
-  color: #ff6b6b;
-}
-.cta-back.secondary {
-  background-color: #f5f5f5;
-  border-color: #888;
-}
-.cta-back.secondary .ctaText {
-  color: #888;
-}
-.cta:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-.ctaText {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-}
-.cta.secondary .ctaText {
-  color: #4f3dff;
-}
 .card {
   background: white;
   border-radius: 18px;
@@ -587,9 +512,6 @@ export default defineComponent({
   .title {
     font-size: 28px;
   }
-  .ctaText {
-    font-size: 18px;
-  }
 }
 @media (prefers-color-scheme: dark) {
   .card {
@@ -608,9 +530,6 @@ export default defineComponent({
   }
   .table tbody tr:hover {
     background: #363636;
-  }
-  .cta.secondary {
-    background-color: #2d2d2d;
   }
   .errorBox {
     background: #4a1f1f;

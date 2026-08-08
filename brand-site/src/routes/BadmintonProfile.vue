@@ -7,20 +7,7 @@
         <h1 class="title">{{ $t('badminton.profile.title') }}</h1>
       </div>
 
-      <div class="ctaRow">
-        <RouterLink class="cta secondary cta-ratings" to="/?page=badminton&section=ratings">
-          <span class="ctaText">{{ $t('badminton.ratings.title') }}</span>
-        </RouterLink>
-        <RouterLink class="cta secondary cta-groups" to="/?page=badminton&section=groups">
-          <span class="ctaText">{{ $t('badminton.ratings.myGroups') }}</span>
-        </RouterLink>
-        <button class="cta secondary cta-logout" :disabled="saving" @click="logout">
-          <span class="ctaText">{{ $t('common.actions.logout') }}</span>
-        </button>
-        <RouterLink class="cta secondary cta-back" to="/?page=products">
-          <span class="ctaText">{{ $t('common.actions.backToProducts') }}</span>
-        </RouterLink>
-      </div>
+      <BadmintonHubCtaRow current="profile" :disabled="saving" @logout="logout" />
 
       <div v-if="error" class="errorBox">{{ error }}</div>
 
@@ -60,12 +47,13 @@
 import { defineComponent } from "vue";
 import HeadBar from "@/components/HeadBar.vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
+import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import { getDefaultBadmintonHeadItems } from "@/badminton/headItems.js";
 import { badmintonClient } from "@/badminton/client.js";
 
 export default defineComponent({
   name: "BadmintonProfile",
-  components: { HeadBar, ProfileEditForm },
+  components: { HeadBar, ProfileEditForm, BadmintonHubCtaRow },
   data() {
     return {
       loaded: false,
@@ -203,79 +191,6 @@ export default defineComponent({
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
-.ctaRow {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.cta {
-  text-decoration: none;
-  background-color: #4F3DFF;
-  border-radius: 100px;
-  padding: 16px 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-}
-
-.cta.secondary {
-  background-color: white;
-  border: 2px solid #4F3DFF;
-}
-
-.cta-ratings.secondary {
-  background-color: #F3E5F5;
-  border-color: #9C27B0;
-}
-.cta-ratings.secondary .ctaText {
-  color: #9C27B0;
-}
-
-.cta-groups.secondary {
-  background-color: #E8F5E9;
-  border-color: #4CAF50;
-}
-.cta-groups.secondary .ctaText {
-  color: #4CAF50;
-}
-
-.cta-logout.secondary {
-  background-color: #FFE8E8;
-  border-color: #FF6B6B;
-}
-.cta-logout.secondary .ctaText {
-  color: #FF6B6B;
-}
-
-.cta-back.secondary {
-  background-color: #F5F5F5;
-  border-color: #888888;
-}
-.cta-back.secondary .ctaText {
-  color: #888888;
-}
-
-.cta:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.ctaText {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-}
-
-.cta.secondary .ctaText {
-  color: #4F3DFF;
-}
-
 .card {
   background: white;
   border-radius: 18px;
@@ -328,7 +243,6 @@ export default defineComponent({
   .content { padding: 0 20px 20px 20px; }
   .title { font-size: 28px; }
   .card { padding: 16px; }
-  .ctaText { font-size: 18px; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -339,8 +253,7 @@ export default defineComponent({
     border: 1px solid #3b3b3b;
   }
 
-  .btn.secondary,
-  .cta.secondary {
+  .btn.secondary {
     background-color: #2d2d2d;
   }
 
