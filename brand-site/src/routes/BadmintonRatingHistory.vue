@@ -15,10 +15,23 @@
             <div class="cardTitle">{{ $t('badminton.ratings.historyChartTitle') }}</div>
             <p class="hint">{{ historyWindowLabel }}</p>
           </div>
-          <button class="btn secondary small" :disabled="loading" @click="loadHistory">
-            <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
-            <template v-else>{{ $t('common.actions.refresh') }}</template>
-          </button>
+          <div class="headerActions">
+            <div class="periodRow" role="group" :aria-label="$t('badminton.ratings.historyPeriod')">
+              <button
+                v-for="opt in periodOptions"
+                :key="opt.id"
+                type="button"
+                class="periodBtn"
+                :class="{ active: historyPeriod === opt.id }"
+                :disabled="loading"
+                @click="setHistoryPeriod(opt.id)"
+              >{{ opt.id }}</button>
+            </div>
+            <button class="btn secondary small" :disabled="loading" @click="loadHistory">
+              <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
+              <template v-else>{{ $t('common.actions.refresh') }}</template>
+            </button>
+          </div>
         </div>
 
         <div v-if="stats" class="statsRow">
@@ -82,7 +95,13 @@ import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
 
-const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PERIOD_OPTIONS = [
+  { id: "1d", ms: 1 * DAY_MS },
+  { id: "1w", ms: 7 * DAY_MS },
+  { id: "1m", ms: 30 * DAY_MS },
+  { id: "1y", ms: 365 * DAY_MS },
+];
 
 function toIso(date) {
   return new Date(date).toISOString();
@@ -101,9 +120,14 @@ export default defineComponent({
       historyPoints: [],
       historyStartTime: null,
       historyEndTime: null,
+      historyPeriod: "1m",
+      periodOptions: PERIOD_OPTIONS,
     };
   },
   computed: {
+    historyWindowMs() {
+      return PERIOD_OPTIONS.find((opt) => opt.id === this.historyPeriod)?.ms || PERIOD_OPTIONS[2].ms;
+    },
     canGoNextHistory() {
       return !!this.historyEndTime;
     },
@@ -150,7 +174,13 @@ export default defineComponent({
     resetHistoryWindow() {
       const now = Date.now();
       this.historyEndTime = null;
-      this.historyStartTime = toIso(now - HISTORY_WINDOW_MS);
+      this.historyStartTime = toIso(now - this.historyWindowMs);
+    },
+    async setHistoryPeriod(periodId) {
+      if (this.historyPeriod === periodId) return;
+      this.historyPeriod = periodId;
+      this.resetHistoryWindow();
+      await this.loadHistory();
     },
     async loadHistory() {
       if (!this.historyStartTime) {
@@ -175,7 +205,7 @@ export default defineComponent({
       if (!this.historyStartTime) return;
       const oldStart = new Date(this.historyStartTime).getTime();
       this.historyEndTime = this.historyStartTime;
-      this.historyStartTime = toIso(oldStart - HISTORY_WINDOW_MS);
+      this.historyStartTime = toIso(oldStart - this.historyWindowMs);
       await this.loadHistory();
     },
     async goNextHistory() {
@@ -183,10 +213,10 @@ export default defineComponent({
       const oldEnd = new Date(this.historyEndTime).getTime();
       const now = Date.now();
       this.historyStartTime = this.historyEndTime;
-      if (oldEnd + HISTORY_WINDOW_MS >= now) {
+      if (oldEnd + this.historyWindowMs >= now) {
         this.historyEndTime = null;
       } else {
-        this.historyEndTime = toIso(oldEnd + HISTORY_WINDOW_MS);
+        this.historyEndTime = toIso(oldEnd + this.historyWindowMs);
       }
       await this.loadHistory();
     },
@@ -222,6 +252,7 @@ export default defineComponent({
   min-width: 0;
   box-sizing: border-box;
   border: 1px solid rgba(79, 61, 255, 0.08);
+  overflow: hidden;
 }
 .cardHeader {
   display: flex;
@@ -229,6 +260,43 @@ export default defineComponent({
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.periodRow {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f3f1ff;
+  border: 1px solid rgba(79, 61, 255, 0.12);
+}
+.periodBtn {
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #4F3DFF;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+.periodBtn.active {
+  background: #4F3DFF;
+  color: white;
+}
+.periodBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 .cardTitle {
   font-family: var(--font-display);
@@ -270,6 +338,7 @@ export default defineComponent({
   font-weight: 700;
   color: #4F3DFF;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 .statValue.muted { color: #2a2a3a; }
 .statValue.up { color: #1f9d57; }
@@ -355,6 +424,20 @@ export default defineComponent({
   .pagerButton,
   .btn.secondary {
     background-color: #2d2d2d;
+  }
+
+  .periodRow {
+    background: #34323f;
+    border-color: #4a4860;
+  }
+
+  .periodBtn {
+    color: #c7bcff;
+  }
+
+  .periodBtn.active {
+    background: #4F3DFF;
+    color: white;
   }
 
   .pagerPage { color: #c7c4de; }

@@ -110,7 +110,7 @@ import { formatElo } from "@/badminton/formatElo.js";
 
 const WIDTH = 1000;
 const HEIGHT = 360;
-const PAD = { top: 22, right: 16, bottom: 12, left: 8 };
+const PAD = { top: 36, right: 40, bottom: 18, left: 28 };
 
 function isRated(point) {
   return point != null && point.elo != null && Number.isFinite(Number(point.elo));
@@ -248,11 +248,15 @@ export default defineComponent({
     },
     tooltipStyle() {
       if (!this.hoverPoint) return {};
-      const left = Math.min(Math.max(this.hoverPoint.leftPercent, 12), 88);
-      const top = Math.max(this.hoverPoint.topPercent - 12, 6);
+      const left = Math.min(Math.max(this.hoverPoint.leftPercent, 16), 84);
+      const nearTop = this.hoverPoint.topPercent < 22;
+      const top = nearTop
+        ? Math.min(this.hoverPoint.topPercent + 10, 72)
+        : Math.max(this.hoverPoint.topPercent - 10, 10);
       return {
         left: `${left}%`,
         top: `${top}%`,
+        transform: nearTop ? "translate(-50%, 12%)" : "translate(-50%, -115%)",
       };
     },
   },
@@ -323,12 +327,17 @@ export default defineComponent({
 .chartRoot {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .chartBody {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 8px;
   align-items: stretch;
+  max-width: 100%;
+  min-width: 0;
 }
 .yAxis {
   position: relative;
@@ -361,6 +370,7 @@ export default defineComponent({
   border: 1px solid rgba(79, 61, 255, 0.14);
   overflow: hidden;
   cursor: crosshair;
+  box-sizing: border-box;
 }
 .svg {
   width: 100%;
@@ -410,8 +420,11 @@ export default defineComponent({
 }
 .xAxis {
   position: relative;
-  height: 24px;
-  margin: 0 4px;
+  height: 28px;
+  margin: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .xLabel {
   position: absolute;
@@ -420,10 +433,13 @@ export default defineComponent({
   font-weight: 700;
   color: #7a76a8;
   white-space: nowrap;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .xLabel.center { transform: translateX(-50%); }
-.xLabel.start { transform: translateX(0); }
-.xLabel.end { transform: translateX(-100%); }
+.xLabel.start { left: 0 !important; transform: none; }
+.xLabel.end { left: auto !important; right: 0; transform: none; }
 .legend {
   display: flex;
   align-items: center;
@@ -449,7 +465,6 @@ export default defineComponent({
 .tooltip {
   position: absolute;
   pointer-events: none;
-  transform: translate(-50%, -115%);
   background: #1c1a2e;
   color: #fff;
   border-radius: 14px;
@@ -457,8 +472,10 @@ export default defineComponent({
   font-family: var(--font-display);
   box-shadow: 0 12px 28px rgba(40, 30, 120, 0.28);
   min-width: 120px;
+  max-width: calc(100% - 24px);
   z-index: 2;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
 }
 .tooltipElo {
   font-weight: 700;
