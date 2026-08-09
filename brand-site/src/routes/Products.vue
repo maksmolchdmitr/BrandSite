@@ -5,18 +5,21 @@
     <div class="content">
       <RouterLink class="productCard" to="/?page=badminton">
         <div class="cardInner">
-          <div class="cardTitle">{{ $t('products.badmintonTitle') }}</div>
-          <div class="cardSubtitle">{{ $t('products.badmintonSubtitle') }}</div>
+          <img
+            class="cardLogo"
+            src="@/assets/badminton-service-logo.png"
+            alt="badminton-service"
+            width="72"
+            height="72"
+          />
+          <div class="cardText">
+            <div class="cardTitle">{{ $t('products.badmintonTitle') }}</div>
+            <div class="cardSubtitle">{{ $t('products.badmintonSubtitle') }}</div>
+          </div>
         </div>
       </RouterLink>
     </div>
   </div>
-<!--  <div class="random-walk-link">-->
-<!--    <a href="https://github.com/ru-random-walk/mobile_app/releases/download/v0.0.7-beta/app-release.apk" target="_blank">-->
-<!--      <img src="@/assets/RandomWalk.svg" alt="Random Walk"/>-->
-<!--      <span>Random Walk Android App</span>-->
-<!--    </a>-->
-<!--  </div>-->
 </template>
 
 <script>
@@ -72,14 +75,32 @@ export default defineComponent({
   max-width: min(720px, 100%);
   box-sizing: border-box;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .cardInner:hover {
   transform: scale(1.01);
   filter: brightness(95%);
+}
+
+.cardLogo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  background: #F7F6FF;
+  box-shadow: 0 6px 18px rgba(20, 10, 80, 0.22);
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .cardTitle {
@@ -96,24 +117,6 @@ export default defineComponent({
   color: rgba(255, 255, 255, 0.9);
 }
 
-.random-walk-link {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.random-walk-link a {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.random-walk-link img {
-  width: 50%; /* Adjust size as needed */
-  height: 50%; /* Adjust size as needed */
-}
-
 @media (max-width: 768px) {
   .page {
     gap: 12px;
@@ -127,6 +130,13 @@ export default defineComponent({
     max-width: 100%;
     padding: 16px 18px;
     border-radius: 20px;
+    gap: 14px;
+  }
+
+  .cardLogo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
   }
 
   .cardTitle {
