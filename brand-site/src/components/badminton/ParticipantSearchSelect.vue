@@ -17,7 +17,12 @@
       @input="onQueryInput"
       @focus="onFocus"
     />
-    <div v-show="dropdownOpen" class="dropdown">
+    <div
+      v-show="dropdownOpen"
+      ref="dropdown"
+      class="dropdown"
+      @scroll.passive="onDropdownScroll"
+    >
       <div v-if="loading && items.length === 0" class="dropdownItem muted">
         <LoadingPhrase :text="$t('common.actions.loading')" />
       </div>
@@ -40,27 +45,10 @@
       >
         {{ $t("badminton.group.noParticipants") }}
       </div>
-      <div v-if="showPager" class="dropdownPager">
-        <button
-          type="button"
-          class="pagerButton"
-          :disabled="!canGoPrev || loading"
-          @mousedown.prevent
-          @click.stop="goPrev"
-        >
-          ←
-        </button>
-        <span class="pagerPage">{{ $t("common.pager.page", { page: pageIndex + 1 }) }}</span>
-        <button
-          type="button"
-          class="pagerButton"
-          :disabled="!canGoNext || loading"
-          @mousedown.prevent
-          @click.stop="goNext"
-        >
-          →
-        </button>
+      <div v-if="loadingMore" class="dropdownItem muted">
+        <LoadingPhrase :text="$t('common.actions.loading')" />
       </div>
+      <div v-if="canLoadMore" ref="scrollSentinel" class="scrollSentinel" aria-hidden="true" />
     </div>
   </div>
 </template>
@@ -71,6 +59,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import { badmintonClient } from "@/badminton/client.js";
 
 const PAGE_LIMIT = 10;
+const SCROLL_LOAD_THRESHOLD_PX = 48;
 
 function isTouchPointer(event) {
   return event?.pointerType === "touch" || event?.pointerType === "pen";
@@ -89,47 +78,63 @@ export default defineComponent({
   data() {
     return {
       query: "",
-      pages: [],
-      pageIndex: 0,
+      rawItems: [],
+      nextPageToken: null,
       loading: false,
+      loadingMore: false,
       open: false,
       typingEnabled: true,
       touchOpenPending: false,
       searchTimer: null,
       requestSeq: 0,
+      scrollObserver: null,
     };
   },
   computed: {
-    currentPage() {
-      return this.pages[this.pageIndex] || { items: [], pageToken: null };
-    },
     items() {
       const exclude = new Set((this.excludeIds || []).filter(Boolean));
-      return (this.currentPage.items || []).filter((p) => !exclude.has(p.id));
+      return (this.rawItems || []).filter((p) => !exclude.has(p.id));
     },
     dropdownOpen() {
-      return this.open && (this.loading || this.items.length > 0 || Boolean(this.query.trim()) || this.pages.length > 0);
+      return this.open && (
+        this.loading
+        || this.loadingMore
+        || this.items.length > 0
+        || Boolean(this.query.trim())
+        || this.rawItems.length > 0
+      );
     },
-    canGoPrev() {
-      return this.pageIndex > 0;
+    canLoadMore() {
+      return Boolean(this.nextPageToken) && !this.loading;
     },
-    canGoNext() {
-      return Boolean(this.currentPage?.pageToken);
+  },
+  watch: {
+    dropdownOpen(isOpen) {
+      if (isOpen) {
+        this.$nextTick(() => this.setupScrollObserver());
+      } else {
+        this.teardownScrollObserver();
+      }
     },
-    showPager() {
-      return this.pages.length > 0 && (this.canGoPrev || this.canGoNext);
+    canLoadMore(can) {
+      if (can && this.dropdownOpen) {
+        this.$nextTick(() => this.setupScrollObserver());
+      }
     },
   },
   beforeUnmount() {
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.teardownScrollObserver();
   },
   methods: {
     reset() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.teardownScrollObserver();
       this.query = "";
-      this.pages = [];
-      this.pageIndex = 0;
+      this.rawItems = [];
+      this.nextPageToken = null;
       this.loading = false;
+      this.loadingMore = false;
       this.open = false;
       this.typingEnabled = true;
       this.touchOpenPending = false;
@@ -137,13 +142,11 @@ export default defineComponent({
     onPointerDown(event) {
       if (!isTouchPointer(event)) return;
       if (!this.open) {
-        // First tap: open roster without keyboard (readonly until next tap).
         this.touchOpenPending = true;
         this.typingEnabled = false;
         return;
       }
       if (!this.typingEnabled) {
-        // Second tap: allow typing / show keyboard.
         this.typingEnabled = true;
       }
     },
@@ -152,13 +155,11 @@ export default defineComponent({
       this.touchOpenPending = false;
       if (!this.open) {
         this.open = true;
-        // Mouse/keyboard: type immediately. Touch first tap stays readonly.
         this.typingEnabled = !fromTouchOpen;
       }
-      if (this.pages.length === 0 && !this.loading) {
-        this.loadFirstPage();
+      if (this.rawItems.length === 0 && !this.loading) {
+        this.reload();
       }
-      // Some mobile WebViews still raise the keyboard on readonly focus — drop it.
       if (fromTouchOpen && !this.typingEnabled) {
         this.$nextTick(() => {
           if (!this.typingEnabled) {
@@ -173,18 +174,61 @@ export default defineComponent({
       this.open = true;
       if (this.searchTimer) clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(() => {
-        this.loadFirstPage();
+        this.reload();
       }, 200);
     },
-    async loadFirstPage() {
-      this.pages = [];
-      this.pageIndex = 0;
-      await this.fetchPage({ pageToken: undefined, replace: true });
+    onDropdownScroll() {
+      const el = this.$refs.dropdown;
+      if (!el || !this.canLoadMore || this.loadingMore) return;
+      const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (remaining <= SCROLL_LOAD_THRESHOLD_PX) {
+        this.loadMore();
+      }
     },
-    async fetchPage({ pageToken, replace }) {
+    setupScrollObserver() {
+      this.teardownScrollObserver();
+      const root = this.$refs.dropdown;
+      const sentinel = this.$refs.scrollSentinel;
+      if (!root || !sentinel || typeof IntersectionObserver === "undefined") return;
+      this.scrollObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            this.loadMore();
+          }
+        },
+        { root, rootMargin: "0px 0px 48px 0px", threshold: 0 }
+      );
+      this.scrollObserver.observe(sentinel);
+    },
+    teardownScrollObserver() {
+      if (this.scrollObserver) {
+        this.scrollObserver.disconnect();
+        this.scrollObserver = null;
+      }
+    },
+    async reload() {
+      this.rawItems = [];
+      this.nextPageToken = null;
+      await this.fetchPage({ pageToken: undefined, append: false });
+      this.$nextTick(() => {
+        const el = this.$refs.dropdown;
+        if (el) el.scrollTop = 0;
+        this.setupScrollObserver();
+      });
+    },
+    async loadMore() {
+      if (!this.canLoadMore || this.loadingMore || this.loading) return;
+      await this.fetchPage({ pageToken: this.nextPageToken, append: true });
+      this.$nextTick(() => this.setupScrollObserver());
+    },
+    async fetchPage({ pageToken, append }) {
       if (!this.groupId) return;
       const seq = ++this.requestSeq;
-      this.loading = true;
+      if (append) {
+        this.loadingMore = true;
+      } else {
+        this.loading = true;
+      }
       try {
         const result = await badmintonClient.searchParticipants(this.groupId, {
           query: this.query.trim(),
@@ -192,46 +236,22 @@ export default defineComponent({
           pageToken,
         });
         if (seq !== this.requestSeq) return;
-        const page = {
-          items: result?.items || [],
-          pageToken: result?.pageToken || null,
-          pageTokenFrom: pageToken || null,
-        };
-        if (replace) {
-          this.pages = [page];
-          this.pageIndex = 0;
-        } else {
-          this.pages.push(page);
-          this.pageIndex = this.pages.length - 1;
-        }
+        const pageItems = result?.items || [];
+        this.rawItems = append ? [...this.rawItems, ...pageItems] : pageItems;
+        this.nextPageToken = result?.pageToken || null;
       } catch (e) {
         if (seq !== this.requestSeq) return;
         console.error("Failed to load participants:", e);
-        if (replace) {
-          this.pages = [{ items: [], pageToken: null, pageTokenFrom: null }];
-          this.pageIndex = 0;
+        if (!append) {
+          this.rawItems = [];
+          this.nextPageToken = null;
         }
       } finally {
-        if (seq === this.requestSeq) this.loading = false;
+        if (seq === this.requestSeq) {
+          this.loading = false;
+          this.loadingMore = false;
+        }
       }
-    },
-    goPrev() {
-      if (!this.canGoPrev || this.loading) return;
-      this.pageIndex -= 1;
-    },
-    async goNext() {
-      if (!this.canGoNext || this.loading) return;
-      const nextToken = this.currentPage.pageToken;
-      if (!nextToken) return;
-      const existingIndex = this.pages.findIndex(
-        (p, idx) => idx > this.pageIndex && p.pageTokenFrom === nextToken
-      );
-      if (existingIndex >= 0) {
-        this.pageIndex = existingIndex;
-        return;
-      }
-      this.pages = this.pages.slice(0, this.pageIndex + 1);
-      await this.fetchPage({ pageToken: nextToken, replace: false });
     },
     onSelect(participant) {
       this.$emit("select", participant);
@@ -278,6 +298,7 @@ export default defineComponent({
   margin-top: 4px;
   max-height: 320px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 10;
   box-shadow: 0 4px 12px rgba(79, 61, 255, 0.12);
 }
@@ -301,36 +322,10 @@ export default defineComponent({
 .dropdownItem.muted:hover {
   background: transparent;
 }
-.dropdownPager {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-top: 1px solid #e0e0ff;
-  position: sticky;
-  bottom: 0;
-  background: white;
-}
-.pagerButton {
-  border: 2px solid #4f3dff;
-  background-color: white;
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: #4f3dff;
-  cursor: pointer;
-}
-.pagerButton:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.pagerPage {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: #4f3dff;
+.scrollSentinel {
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -343,21 +338,12 @@ export default defineComponent({
     border-color: #4f3dff;
     box-shadow: 0 0 0 3px rgba(79, 61, 255, 0.25);
   }
-  .dropdown,
-  .dropdownPager {
+  .dropdown {
     background: #2d2d2d;
     border-color: #4a4a4a;
   }
   .dropdownItem:hover {
     background: #3a3a3a;
-  }
-  .pagerButton {
-    background-color: #2d2d2d;
-    color: #c7bcff;
-    border-color: #6f62c6;
-  }
-  .pagerPage {
-    color: #c7bcff;
   }
 }
 </style>
