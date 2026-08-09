@@ -1,14 +1,21 @@
 <template>
   <div class="participantSearch">
     <input
+      ref="input"
       class="input"
+      type="search"
+      enterkeyhint="search"
+      inputmode="search"
       :value="query"
       :placeholder="placeholder"
       autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
       @input="onQueryInput"
       @focus="onFocus"
     />
-    <div v-if="dropdownOpen" class="dropdown">
+    <div v-show="dropdownOpen" class="dropdown">
       <div v-if="loading && items.length === 0" class="dropdownItem muted">
         <LoadingPhrase :text="$t('common.actions.loading')" />
       </div>
@@ -16,6 +23,7 @@
         v-for="p in items"
         :key="p.id"
         class="dropdownItem"
+        @mousedown.prevent
         @click="onSelect(p)"
       >
         <PersonChip
@@ -35,6 +43,7 @@
           type="button"
           class="pagerButton"
           :disabled="!canGoPrev || loading"
+          @mousedown.prevent
           @click.stop="goPrev"
         >
           ←
@@ -44,6 +53,7 @@
           type="button"
           class="pagerButton"
           :disabled="!canGoNext || loading"
+          @mousedown.prevent
           @click.stop="goNext"
         >
           →
@@ -78,6 +88,7 @@ export default defineComponent({
       loading: false,
       open: false,
       searchTimer: null,
+      openTimer: null,
       requestSeq: 0,
     };
   },
@@ -104,10 +115,12 @@ export default defineComponent({
   },
   beforeUnmount() {
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    if (this.openTimer) clearTimeout(this.openTimer);
   },
   methods: {
     reset() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
+      if (this.openTimer) clearTimeout(this.openTimer);
       this.query = "";
       this.pages = [];
       this.pageIndex = 0;
@@ -115,10 +128,22 @@ export default defineComponent({
       this.open = false;
     },
     onFocus() {
-      this.open = true;
-      if (this.pages.length === 0 && !this.loading) {
-        this.loadFirstPage();
-      }
+      // Defer list open: mounting/showing the dropdown in the same tick as focus
+      // often blocks the mobile keyboard (iOS / Telegram WebView) until a 2nd tap.
+      if (this.openTimer) clearTimeout(this.openTimer);
+      // Let the keyboard attach from the user focus gesture first (iOS / Telegram WebView).
+      this.openTimer = setTimeout(() => {
+        this.open = true;
+        if (this.pages.length === 0 && !this.loading) {
+          this.loadFirstPage();
+        }
+        this.$nextTick(() => {
+          const input = this.$refs.input;
+          if (input && document.activeElement !== input) {
+            input.focus({ preventScroll: true });
+          }
+        });
+      }, 50);
     },
     onQueryInput(event) {
       this.query = event.target.value;
