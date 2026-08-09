@@ -11,20 +11,46 @@
 
       <div class="card">
         <div class="cardHeader">
-          <p class="hint">{{ historyWindowLabel }}</p>
+          <div>
+            <div class="cardTitle">{{ $t('badminton.ratings.historyChartTitle') }}</div>
+            <p class="hint">{{ historyWindowLabel }}</p>
+          </div>
           <button class="btn secondary small" :disabled="loading" @click="loadHistory">
             <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
             <template v-else>{{ $t('common.actions.refresh') }}</template>
           </button>
         </div>
+
+        <div v-if="stats" class="statsRow">
+          <div class="stat">
+            <div class="statLabel">{{ $t('badminton.ratings.historyCurrent') }}</div>
+            <div class="statValue">{{ formatElo(stats.current) }}</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">{{ $t('badminton.ratings.historyDelta') }}</div>
+            <div
+              class="statValue"
+              :class="{ up: stats.delta > 0, down: stats.delta < 0 }"
+            >
+              {{ stats.delta > 0 ? '+' : '' }}{{ formatElo(stats.delta) }}
+            </div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">{{ $t('badminton.ratings.historyPoints') }}</div>
+            <div class="statValue muted">{{ historyPoints.length }}</div>
+          </div>
+        </div>
+
         <div v-if="historyTruncated" class="warnBox">
           {{ $t('badminton.ratings.historyTruncated', { max: historySafetyCap }) }}
         </div>
+
         <RatingHistoryChart
           :points="historyPoints"
           :empty-text="$t('badminton.ratings.historyEmpty')"
           :pending-label="$t('badminton.ratings.historyPending')"
         />
+
         <div class="pagerRow">
           <button
             class="pagerButton"
@@ -53,12 +79,17 @@ import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
+import { formatElo } from "@/badminton/formatElo.js";
 import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
 
 const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 function toIso(date) {
   return new Date(date).toISOString();
+}
+
+function isRated(point) {
+  return point != null && point.elo != null && Number.isFinite(Number(point.elo));
 }
 
 export default defineComponent({
@@ -99,12 +130,23 @@ export default defineComponent({
         : this.$t("badminton.ratings.historyNow");
       return this.$t("badminton.ratings.historyWindow", { from, to });
     },
+    stats() {
+      const rated = (this.historyPoints || []).filter(isRated);
+      if (!rated.length) return null;
+      const first = Number(rated[0].elo);
+      const current = Number(rated[rated.length - 1].elo);
+      return {
+        current,
+        delta: current - first,
+      };
+    },
   },
   async mounted() {
     this.resetHistoryWindow();
     await this.loadHistory();
   },
   methods: {
+    formatElo,
     resetHistoryWindow() {
       const now = Date.now();
       this.historyEndTime = null;
@@ -164,20 +206,74 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 64px; max-width: 100%; box-sizing: border-box; }
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 100%; box-sizing: border-box; }
 .content { padding: 24px 50px 50px 50px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; box-sizing: border-box; min-width: 0; }
 .topRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .title { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 
-.card { background: white; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(79, 61, 255, 0.08);
+}
 .cardHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
 }
-.hint { font-family: var(--font-display); font-size: 14px; font-weight: 600; opacity: 0.75; margin: 0; }
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: #4F3DFF;
+  margin: 0 0 4px 0;
+}
+.hint {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.65;
+  margin: 0;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.stat {
+  background: linear-gradient(180deg, #f7f6ff 0%, #f3f1ff 100%);
+  border: 1px solid rgba(79, 61, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+.statLabel {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a76a8;
+  margin-bottom: 6px;
+}
+.statValue {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: #4F3DFF;
+  line-height: 1.1;
+}
+.statValue.muted { color: #2a2a3a; }
+.statValue.up { color: #1f9d57; }
+.statValue.down { color: #d64545; }
 
 .btn {
   flex: 0 0 auto;
@@ -199,10 +295,10 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
   flex-wrap: wrap;
   max-width: 100%;
   min-width: 0;
+  padding-top: 4px;
 }
 
 .pagerButton {
@@ -224,7 +320,9 @@ export default defineComponent({
 
 .pagerPage {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #4a4868;
 }
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
@@ -235,21 +333,31 @@ export default defineComponent({
   .content { padding: 16px 20px 20px 20px; }
   .title { font-size: 28px; }
   .card { padding: 16px; }
+  .statsRow { grid-template-columns: 1fr; }
+  .statValue { font-size: 24px; }
 }
 
 @media (prefers-color-scheme: dark) {
+  .title { color: #e8e8e8; }
+
   .card {
     background: #2d2d2d;
-    border: 1px solid #3b3b3b;
+    border-color: #3b3b3b;
   }
 
-  .pagerButton {
-    background-color: #2d2d2d;
+  .stat {
+    background: linear-gradient(180deg, #34323f 0%, #2f2d39 100%);
+    border-color: #4a4860;
   }
 
+  .statValue.muted { color: #e8e8e8; }
+
+  .pagerButton,
   .btn.secondary {
     background-color: #2d2d2d;
   }
+
+  .pagerPage { color: #c7c4de; }
 
   .errorBox {
     background: #4a1f1f;

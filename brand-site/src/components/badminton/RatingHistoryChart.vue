@@ -21,8 +21,9 @@
               preserveAspectRatio="none"
             >
               <defs>
-                <linearGradient id="eloArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#4F3DFF" stop-opacity="0.28" />
+                <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#4F3DFF" stop-opacity="0.22" />
+                  <stop offset="55%" stop-color="#4F3DFF" stop-opacity="0.06" />
                   <stop offset="100%" stop-color="#4F3DFF" stop-opacity="0" />
                 </linearGradient>
               </defs>
@@ -35,7 +36,7 @@
                 :y1="tick.y"
                 :y2="tick.y"
               />
-              <path v-if="areaPath" class="area" :d="areaPath" />
+              <path v-if="areaPath" class="area" :d="areaPath" :fill="`url(#${gradientId})`" />
               <polyline
                 v-if="linePoints"
                 class="line"
@@ -60,7 +61,7 @@
                 }"
                 :cx="point.x"
                 :cy="point.y"
-                :r="point.pending ? (hoverIndex === index ? 4.5 : 3.5) : (hoverIndex === index ? 5.5 : 4)"
+                :r="dotRadius(point, index)"
               />
             </svg>
             <div
@@ -69,7 +70,15 @@
               :style="tooltipStyle"
             >
               <div class="tooltipElo">
-                {{ hoverPoint.pending ? pendingLabel : formatElo(hoverPoint.elo) }}
+                <template v-if="hoverPoint.pending">{{ pendingLabel }}</template>
+                <template v-else>
+                  {{ formatElo(hoverPoint.elo) }}
+                  <span
+                    v-if="hoverDelta != null && hoverDelta !== 0"
+                    class="tooltipDelta"
+                    :class="hoverDelta > 0 ? 'up' : 'down'"
+                  >{{ hoverDelta > 0 ? '+' : '' }}{{ formatElo(hoverDelta) }}</span>
+                </template>
               </div>
               <div class="tooltipDate">{{ formatDate(hoverPoint.createdAt) }}</div>
             </div>
@@ -79,6 +88,7 @@
               v-for="(tick, index) in xTicks"
               :key="'x-' + index"
               class="xLabel"
+              :class="tick.align"
               :style="{ left: tick.leftPercent + '%' }"
             >
               {{ tick.label }}
@@ -99,8 +109,8 @@ import { defineComponent } from "vue";
 import { formatElo } from "@/badminton/formatElo.js";
 
 const WIDTH = 1000;
-const HEIGHT = 320;
-const PAD = { top: 18, right: 12, bottom: 28, left: 8 };
+const HEIGHT = 360;
+const PAD = { top: 22, right: 16, bottom: 12, left: 8 };
 
 function isRated(point) {
   return point != null && point.elo != null && Number.isFinite(Number(point.elo));
@@ -118,6 +128,7 @@ export default defineComponent({
       width: WIDTH,
       height: HEIGHT,
       hoverIndex: null,
+      gradientId: `eloArea-${Math.random().toString(36).slice(2, 9)}`,
     };
   },
   computed: {
@@ -135,10 +146,10 @@ export default defineComponent({
       let minElo = ratedElos.length ? Math.min(...ratedElos) : 1200;
       let maxElo = ratedElos.length ? Math.max(...ratedElos) : 1200;
       if (minElo === maxElo) {
-        minElo -= 12;
-        maxElo += 12;
+        minElo -= 16;
+        maxElo += 16;
       } else {
-        const pad = (maxElo - minElo) * 0.15;
+        const pad = Math.max((maxElo - minElo) * 0.18, 8);
         minElo -= pad;
         maxElo += pad;
       }
@@ -202,18 +213,22 @@ export default defineComponent({
     xTicks() {
       if (!this.plotted.length) return [];
       const last = this.plotted.length - 1;
-      const indexes = last === 0 ? [0] : [0, Math.round(last / 2), last];
-      const seen = new Set();
-      return indexes.map((index) => {
+      const indexes = last === 0
+        ? [0]
+        : last === 1
+          ? [0, 1]
+          : [0, Math.round(last / 2), last];
+      const dayKeys = indexes.map((index) => this.dayKey(this.plotted[index].createdAt));
+      return indexes.map((index, tickIndex) => {
         const point = this.plotted[index];
-        let label = this.formatAxisDate(point.createdAt);
-        if (seen.has(label) && index > 0) {
-          label = this.formatAxisDateTime(point.createdAt);
-        }
-        seen.add(label);
+        const sameDayAsPrev = tickIndex > 0 && dayKeys[tickIndex] === dayKeys[tickIndex - 1];
+        const align = tickIndex === 0 ? "start" : tickIndex === indexes.length - 1 ? "end" : "center";
         return {
           leftPercent: point.leftPercent,
-          label,
+          align,
+          label: sameDayAsPrev
+            ? this.formatAxisTime(point.createdAt)
+            : this.formatAxisDate(point.createdAt),
         };
       });
     },
@@ -221,10 +236,20 @@ export default defineComponent({
       if (this.hoverIndex == null) return null;
       return this.plotted[this.hoverIndex] || null;
     },
+    hoverDelta() {
+      if (!this.hoverPoint || this.hoverPoint.pending || this.hoverIndex == null) return null;
+      for (let i = this.hoverIndex - 1; i >= 0; i -= 1) {
+        const prev = this.plotted[i];
+        if (!prev.pending && prev.elo != null) {
+          return this.hoverPoint.elo - prev.elo;
+        }
+      }
+      return null;
+    },
     tooltipStyle() {
       if (!this.hoverPoint) return {};
-      const left = Math.min(Math.max(this.hoverPoint.leftPercent, 8), 78);
-      const top = Math.max(this.hoverPoint.topPercent - 14, 4);
+      const left = Math.min(Math.max(this.hoverPoint.leftPercent, 12), 88);
+      const top = Math.max(this.hoverPoint.topPercent - 12, 6);
       return {
         left: `${left}%`,
         top: `${top}%`,
@@ -233,6 +258,11 @@ export default defineComponent({
   },
   methods: {
     formatElo,
+    dotRadius(point, index) {
+      const active = this.hoverIndex === index;
+      if (point.pending) return active ? 5 : 3.5;
+      return active ? 6 : 4.5;
+    },
     clearHover() {
       this.hoverIndex = null;
     },
@@ -252,6 +282,11 @@ export default defineComponent({
       });
       this.hoverIndex = bestIndex;
     },
+    dayKey(dateStr) {
+      const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return "";
+      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    },
     formatDate(dateStr) {
       if (!dateStr) return "—";
       const date = new Date(dateStr);
@@ -269,15 +304,13 @@ export default defineComponent({
       if (Number.isNaN(date.getTime())) return "";
       return date.toLocaleDateString(this.$i18n?.locale === "en" ? "en-GB" : "ru-RU", {
         day: "2-digit",
-        month: "2-digit",
+        month: "short",
       });
     },
-    formatAxisDateTime(dateStr) {
+    formatAxisTime(dateStr) {
       const date = new Date(dateStr);
       if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleString(this.$i18n?.locale === "en" ? "en-GB" : "ru-RU", {
-        day: "2-digit",
-        month: "2-digit",
+      return date.toLocaleTimeString(this.$i18n?.locale === "en" ? "en-GB" : "ru-RU", {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -293,13 +326,13 @@ export default defineComponent({
 }
 .chartBody {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
   align-items: stretch;
 }
 .yAxis {
   position: relative;
-  min-height: 280px;
+  min-height: 320px;
 }
 .yLabel {
   position: absolute;
@@ -307,26 +340,27 @@ export default defineComponent({
   transform: translateY(-50%);
   font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 600;
-  color: #6b6b8a;
+  font-weight: 700;
+  color: #7a76a8;
   white-space: nowrap;
 }
 .plotCol {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .plot {
   position: relative;
   width: 100%;
-  height: 280px;
-  border-radius: 14px;
+  height: 320px;
+  border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(79, 61, 255, 0.06), transparent 42%),
-    #f7f7ff;
-  border: 1px solid #e6e6ff;
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(79, 61, 255, 0.10), transparent 70%),
+    linear-gradient(180deg, #fafaff 0%, #f3f2ff 100%);
+  border: 1px solid rgba(79, 61, 255, 0.14);
   overflow: hidden;
+  cursor: crosshair;
 }
 .svg {
   width: 100%;
@@ -334,16 +368,13 @@ export default defineComponent({
   display: block;
 }
 .grid {
-  stroke: rgba(79, 61, 255, 0.12);
+  stroke: rgba(79, 61, 255, 0.10);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-.area {
-  fill: url(#eloArea);
-}
 .line {
   stroke: #4f3dff;
-  stroke-width: 3;
+  stroke-width: 3.5;
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -351,8 +382,9 @@ export default defineComponent({
 .dot {
   fill: #4f3dff;
   stroke: #fff;
-  stroke-width: 2;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
+  transition: r 0.12s ease;
 }
 .dot.hollow {
   fill: transparent;
@@ -362,40 +394,44 @@ export default defineComponent({
 }
 .dot.active {
   fill: #2f1fd0;
+  stroke: #fff;
 }
 .dot.hollow.active {
-  fill: rgba(79, 61, 255, 0.15);
+  fill: rgba(79, 61, 255, 0.18);
   stroke: #4f3dff;
   stroke-dasharray: none;
 }
 .crosshair {
   stroke: #4f3dff;
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
-  opacity: 0.35;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  opacity: 0.28;
   vector-effect: non-scaling-stroke;
 }
 .xAxis {
   position: relative;
-  height: 22px;
+  height: 24px;
+  margin: 0 4px;
 }
 .xLabel {
   position: absolute;
-  transform: translateX(-50%);
   font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 600;
-  color: #6b6b8a;
+  font-weight: 700;
+  color: #7a76a8;
   white-space: nowrap;
 }
+.xLabel.center { transform: translateX(-50%); }
+.xLabel.start { transform: translateX(0); }
+.xLabel.end { transform: translateX(-100%); }
 .legend {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 8px;
   font-family: var(--font-display);
   font-size: 13px;
-  color: #6b6b8a;
+  color: #7a76a8;
 }
 .legendDot {
   width: 10px;
@@ -407,55 +443,76 @@ export default defineComponent({
 .empty {
   font-family: var(--font-display);
   opacity: 0.7;
-  padding: 48px 20px;
+  padding: 64px 20px;
   text-align: center;
 }
 .tooltip {
   position: absolute;
   pointer-events: none;
-  transform: translate(-50%, -110%);
-  background: rgba(24, 24, 36, 0.94);
+  transform: translate(-50%, -115%);
+  background: #1c1a2e;
   color: #fff;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 10px 14px;
   font-family: var(--font-display);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  min-width: 108px;
+  box-shadow: 0 12px 28px rgba(40, 30, 120, 0.28);
+  min-width: 120px;
   z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .tooltipElo {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
+.tooltipDelta {
+  font-size: 13px;
+  font-weight: 700;
+}
+.tooltipDelta.up { color: #7dffa6; }
+.tooltipDelta.down { color: #ff9b9b; }
 .tooltipDate {
   font-size: 12px;
-  opacity: 0.85;
-  margin-top: 2px;
+  opacity: 0.78;
+  margin-top: 3px;
+}
+
+@media (max-width: 768px) {
+  .chartBody {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .yAxis,
+  .plot {
+    min-height: 240px;
+    height: 240px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   .plot {
     background:
-      linear-gradient(180deg, rgba(79, 61, 255, 0.16), transparent 48%),
-      #2a2a32;
-    border-color: #3d3d4a;
+      radial-gradient(ellipse 80% 55% at 50% 0%, rgba(79, 61, 255, 0.22), transparent 70%),
+      linear-gradient(180deg, #2c2b36 0%, #24232d 100%);
+    border-color: #454356;
   }
   .grid {
-    stroke: rgba(255, 255, 255, 0.08);
+    stroke: rgba(255, 255, 255, 0.07);
   }
   .yLabel,
   .xLabel,
   .legend {
-    color: #b8b8c8;
+    color: #b8b5d0;
   }
   .dot {
-    stroke: #2a2a32;
+    stroke: #2c2b36;
   }
   .dot.hollow {
     stroke: #a59dff;
   }
   .tooltip {
-    background: rgba(12, 12, 18, 0.96);
+    background: #12111a;
   }
 }
 </style>
