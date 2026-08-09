@@ -120,7 +120,7 @@ export default defineComponent({
       historyPoints: [],
       historyStartTime: null,
       historyEndTime: null,
-      historyPeriod: "1m",
+      historyPeriod: "1d",
       periodOptions: PERIOD_OPTIONS,
     };
   },
