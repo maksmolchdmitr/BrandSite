@@ -3,15 +3,17 @@
     <input
       ref="input"
       class="input"
-      type="search"
-      enterkeyhint="search"
+      type="text"
       inputmode="search"
+      enterkeyhint="search"
+      :readonly="!typingEnabled"
       :value="query"
       :placeholder="placeholder"
       autocomplete="off"
       autocorrect="off"
       autocapitalize="off"
       spellcheck="false"
+      @pointerdown="onPointerDown"
       @input="onQueryInput"
       @focus="onFocus"
     />
@@ -70,6 +72,10 @@ import { badmintonClient } from "@/badminton/client.js";
 
 const PAGE_LIMIT = 10;
 
+function isTouchPointer(event) {
+  return event?.pointerType === "touch" || event?.pointerType === "pen";
+}
+
 export default defineComponent({
   name: "ParticipantSearchSelect",
   components: { PersonChip },
@@ -87,8 +93,9 @@ export default defineComponent({
       pageIndex: 0,
       loading: false,
       open: false,
+      typingEnabled: true,
+      touchOpenPending: false,
       searchTimer: null,
-      openTimer: null,
       requestSeq: 0,
     };
   },
@@ -115,37 +122,53 @@ export default defineComponent({
   },
   beforeUnmount() {
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    if (this.openTimer) clearTimeout(this.openTimer);
   },
   methods: {
     reset() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
-      if (this.openTimer) clearTimeout(this.openTimer);
       this.query = "";
       this.pages = [];
       this.pageIndex = 0;
       this.loading = false;
       this.open = false;
+      this.typingEnabled = true;
+      this.touchOpenPending = false;
+    },
+    onPointerDown(event) {
+      if (!isTouchPointer(event)) return;
+      if (!this.open) {
+        // First tap: open roster without keyboard (readonly until next tap).
+        this.touchOpenPending = true;
+        this.typingEnabled = false;
+        return;
+      }
+      if (!this.typingEnabled) {
+        // Second tap: allow typing / show keyboard.
+        this.typingEnabled = true;
+      }
     },
     onFocus() {
-      // Defer list open: mounting/showing the dropdown in the same tick as focus
-      // often blocks the mobile keyboard (iOS / Telegram WebView) until a 2nd tap.
-      if (this.openTimer) clearTimeout(this.openTimer);
-      // Let the keyboard attach from the user focus gesture first (iOS / Telegram WebView).
-      this.openTimer = setTimeout(() => {
+      const fromTouchOpen = this.touchOpenPending;
+      this.touchOpenPending = false;
+      if (!this.open) {
         this.open = true;
-        if (this.pages.length === 0 && !this.loading) {
-          this.loadFirstPage();
-        }
+        // Mouse/keyboard: type immediately. Touch first tap stays readonly.
+        this.typingEnabled = !fromTouchOpen;
+      }
+      if (this.pages.length === 0 && !this.loading) {
+        this.loadFirstPage();
+      }
+      // Some mobile WebViews still raise the keyboard on readonly focus — drop it.
+      if (fromTouchOpen && !this.typingEnabled) {
         this.$nextTick(() => {
-          const input = this.$refs.input;
-          if (input && document.activeElement !== input) {
-            input.focus({ preventScroll: true });
+          if (!this.typingEnabled) {
+            this.$refs.input?.blur();
           }
         });
-      }, 50);
+      }
     },
     onQueryInput(event) {
+      this.typingEnabled = true;
       this.query = event.target.value;
       this.open = true;
       if (this.searchTimer) clearTimeout(this.searchTimer);
@@ -207,7 +230,6 @@ export default defineComponent({
         this.pageIndex = existingIndex;
         return;
       }
-      // Drop forward cache when branching from an earlier page
       this.pages = this.pages.slice(0, this.pageIndex + 1);
       await this.fetchPage({ pageToken: nextToken, replace: false });
     },
@@ -241,6 +263,9 @@ export default defineComponent({
   outline: none;
   border-color: #4f3dff;
   box-shadow: 0 0 0 3px rgba(79, 61, 255, 0.15);
+}
+.input:read-only {
+  caret-color: transparent;
 }
 .dropdown {
   position: absolute;
