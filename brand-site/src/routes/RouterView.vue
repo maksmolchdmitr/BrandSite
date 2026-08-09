@@ -28,6 +28,7 @@ export default defineComponent({
     await this.maybeRedirectBadmintonToSection();
     this.redirectLegacyBadmintonGamesSection();
     this.normalizeBadmintonGamesSection();
+    this.applyDocumentChrome();
   },
   watch: {
     "$route": {
@@ -36,10 +37,26 @@ export default defineComponent({
         this.maybeRedirectBadmintonToSection();
         this.redirectLegacyBadmintonGamesSection();
         this.normalizeBadmintonGamesSection();
+        this.applyDocumentChrome();
       },
     },
   },
   methods: {
+    applyDocumentChrome() {
+      if (typeof document === "undefined") return;
+      const isBadminton = this.page === "badminton";
+      document.title = isBadminton ? "badminton-service" : "MaksMolch site";
+      let icon = document.querySelector("link[rel='icon']");
+      if (!icon) {
+        icon = document.createElement("link");
+        icon.rel = "icon";
+        document.head.appendChild(icon);
+      }
+      icon.type = "image/png";
+      icon.href = isBadminton
+        ? "/badminton-service-favicon.png"
+        : "/favicon.ico";
+    },
     /** games-singles / games-doubles → section=games&tab=… */
     redirectLegacyBadmintonGamesSection() {
       if (this.page !== "badminton") return;
