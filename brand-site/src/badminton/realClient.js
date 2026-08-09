@@ -5,6 +5,10 @@
  */
 
 import * as api from "./api.js";
+import {
+  cachedSearchParticipants,
+  invalidateParticipantSearchCache,
+} from "./participantSearchCache.js";
 
 export const realClient = {
   // Auth: один вызов — данные от Telegram в telegramLogin
@@ -76,7 +80,11 @@ export const realClient = {
   },
 
   async searchParticipants(groupId, { query = "", limit = 10, pageToken } = {}) {
-    return api.searchParticipants(groupId, { query, limit, pageToken });
+    return cachedSearchParticipants(
+      (gid, opts) => api.searchParticipants(gid, opts),
+      groupId,
+      { query, limit, pageToken }
+    );
   },
 
   async searchUsers({ query = "", limit = 10, pageToken } = {}) {
@@ -84,15 +92,32 @@ export const realClient = {
   },
 
   async createParticipant(groupId, {name}) {
-    return api.createParticipant(groupId, {name});
+    const result = await api.createParticipant(groupId, {name});
+    invalidateParticipantSearchCache(groupId);
+    return result;
   },
 
   async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop}) {
-    return api.createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop});
+    const result = await api.createUnlinkedParticipant(groupId, {
+      username,
+      firstName,
+      lastName,
+      photoUrl,
+      photoCrop,
+    });
+    invalidateParticipantSearchCache(groupId);
+    return result;
   },
 
   async updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop}) {
-    return api.updateParticipant(groupId, participantId, {firstName, lastName, photoUrl, photoCrop});
+    const result = await api.updateParticipant(groupId, participantId, {
+      firstName,
+      lastName,
+      photoUrl,
+      photoCrop,
+    });
+    invalidateParticipantSearchCache(groupId);
+    return result;
   },
 
   async createPhotoUploadUrl(groupId, {contentType, contentLength}) {
@@ -107,11 +132,15 @@ export const realClient = {
   },
 
   async deleteParticipant(groupId, participantId) {
-    return api.deleteParticipant(groupId, participantId);
+    const result = await api.deleteParticipant(groupId, participantId);
+    invalidateParticipantSearchCache(groupId);
+    return result;
   },
 
   async linkUserToParticipant(groupId, participantId, {userId}) {
-    return api.linkUserToParticipant(groupId, participantId, {userId});
+    const result = await api.linkUserToParticipant(groupId, participantId, {userId});
+    invalidateParticipantSearchCache(groupId);
+    return result;
   },
 
   // Match endpoints

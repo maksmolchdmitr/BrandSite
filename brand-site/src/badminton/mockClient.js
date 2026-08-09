@@ -1,5 +1,9 @@
 import {getLoggedInUserId, setLoggedInUserId} from "@/badminton/cookies.js";
 import {ensureMembership, getCurrentUser, getMyRole, loadDb, nowIso, saveDb, uuid} from "@/badminton/mockDb.js";
+import {
+  cachedSearchParticipants,
+  invalidateParticipantSearchCache,
+} from "@/badminton/participantSearchCache.js";
 import {SINGLES_RATING_HISTORY_SAFETY_CAP} from "@/badminton/ratingHistory.js";
 
 function delay(ms = 180) {
@@ -38,6 +42,52 @@ function participantNameMap(db, groupId) {
   const map = new Map();
   db.participants.filter(p => p.groupId === groupId).forEach(p => map.set(p.id, p.name));
   return map;
+}
+
+async function mockSearchParticipantsUncached(groupId, { query = "", limit = 10, pageToken = null } = {}) {
+  logRequest("GET", `/api/groups/${groupId}/participants/search`, { query, limit, pageToken });
+  await delay();
+  const db = loadDb();
+  const userId = getLoggedInUserId() || "u_alex";
+  const u = db.users.find(x => x.id === userId) || db.users[0];
+  if (u) {
+    const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
+    if (!exists) {
+      db.memberships.push({groupId, userId: u.id, role: "member"});
+      saveDb(db);
+    }
+  }
+
+  let all = db.participants
+    .filter(p => p.groupId === groupId)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (query && query.trim()) {
+    const lower = query.trim().toLowerCase();
+    all = all.filter((p) => {
+      const linkedUser = p.userId ? db.users.find((x) => x.id === p.userId) : null;
+      const username = String(linkedUser?.username || p.username || "").toLowerCase();
+      const firstName = String(linkedUser?.firstName || "").toLowerCase();
+      const lastName = String(linkedUser?.lastName || "").toLowerCase();
+      const fullName = [firstName, lastName].filter(Boolean).join(" ")
+        || String(p.name || "").toLowerCase();
+      return (
+        username.startsWith(lower) ||
+        firstName.startsWith(lower) ||
+        lastName.startsWith(lower) ||
+        fullName.startsWith(lower)
+      );
+    });
+  }
+
+  const start = pageToken && pageToken.startsWith("offset_")
+    ? parseInt(pageToken.slice("offset_".length), 10) || 0
+    : 0;
+  const pageItems = all.slice(start, start + limit).map(p => participantToClientDto(p, db));
+  const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+  const result = { items: pageItems, pageToken: nextToken };
+  logResponse("GET", `/api/groups/${groupId}/participants/search`, result);
+  return result;
 }
 
 function participantToClientDto(p, db) {
@@ -450,53 +500,11 @@ export const mockClient = {
   },
 
   async searchParticipants(groupId, { query = "", limit = 10, pageToken = null } = {}) {
-    logRequest("GET", `/api/groups/${groupId}/participants/search`, { query, limit, pageToken });
-    await delay();
-    const db = loadDb();
-    // Use default user if not logged in
-    const userId = getLoggedInUserId() || "u_alex";
-    const u = db.users.find(x => x.id === userId) || db.users[0];
-    if (u) {
-      // Ensure membership
-      const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
-      if (!exists) {
-        db.memberships.push({groupId, userId: u.id, role: "member"});
-        saveDb(db);
-      }
-    }
-
-    // Get all participants for this group, sorted alphabetically
-    let all = db.participants
-      .filter(p => p.groupId === groupId)
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // Prefix filter on username / first / last / full name (same as API)
-    if (query && query.trim()) {
-      const lower = query.trim().toLowerCase();
-      all = all.filter((p) => {
-        const linkedUser = p.userId ? db.users.find((u) => u.id === p.userId) : null;
-        const username = String(linkedUser?.username || p.username || "").toLowerCase();
-        const firstName = String(linkedUser?.firstName || "").toLowerCase();
-        const lastName = String(linkedUser?.lastName || "").toLowerCase();
-        const fullName = [firstName, lastName].filter(Boolean).join(" ")
-          || String(p.name || "").toLowerCase();
-        return (
-          username.startsWith(lower) ||
-          firstName.startsWith(lower) ||
-          lastName.startsWith(lower) ||
-          fullName.startsWith(lower)
-        );
-      });
-    }
-
-    const start = pageToken && pageToken.startsWith("offset_")
-      ? parseInt(pageToken.slice("offset_".length), 10) || 0
-      : 0;
-    const pageItems = all.slice(start, start + limit).map(p => participantToClientDto(p, db));
-    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
-    const result = { items: pageItems, pageToken: nextToken };
-    logResponse("GET", `/api/groups/${groupId}/participants/search`, result);
-    return result;
+    return cachedSearchParticipants(
+      (gid, opts) => mockSearchParticipantsUncached(gid, opts),
+      groupId,
+      { query, limit, pageToken }
+    );
   },
 
   async searchUsers({ query = "", limit = 10, pageToken = null } = {}) {
@@ -544,6 +552,7 @@ export const mockClient = {
     const p = {id: uuid("p"), groupId, name, userId: null, createdAt: nowIso()};
     db.participants.unshift(p);
     saveDb(db);
+    invalidateParticipantSearchCache(groupId);
     logResponse("POST", `/api/groups/${groupId}/participants`, participantToClientDto(p, db), 201);
     return participantToClientDto(p, db);
   },
@@ -580,6 +589,7 @@ export const mockClient = {
     };
     db.participants.unshift(p);
     saveDb(db);
+    invalidateParticipantSearchCache(groupId);
     const dto = participantToClientDto(p, db);
     logResponse("POST", `/api/groups/${groupId}/participants/unlinked`, dto, 201);
     return dto;
@@ -622,6 +632,7 @@ export const mockClient = {
     }
     db.participants[idx] = next;
     saveDb(db);
+    invalidateParticipantSearchCache(groupId);
     const dto = participantToClientDto(db.participants[idx], db);
     logResponse("PATCH", `/api/groups/${groupId}/participants/${participantId}`, dto);
     return dto;
@@ -662,6 +673,7 @@ export const mockClient = {
     // Also remove from matches
     db.matches = db.matches.filter(m => !((m.groupId === groupId) && ((m.teamA || []).includes(participantId) || (m.teamB || []).includes(participantId))));
     saveDb(db);
+    invalidateParticipantSearchCache(groupId);
     logResponse("DELETE", `/api/groups/${groupId}/participants/${participantId}`, null, 204);
   },
 
@@ -680,6 +692,7 @@ export const mockClient = {
     const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
     if (!exists) db.memberships.push({groupId, userId: u.id, role: "member"});
     saveDb(db);
+    invalidateParticipantSearchCache(groupId);
     const dto = participantToClientDto(db.participants[idx], db);
     logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, dto);
     return dto;
