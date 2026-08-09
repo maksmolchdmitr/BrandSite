@@ -613,6 +613,7 @@
                   <button
                     v-if="groupSection === 'createMatch'"
                     class="btn small secondary"
+                    :disabled="!canAddMatchScore"
                     @click="addScore('team1')"
                   >+</button>
                 </div>
@@ -659,6 +660,7 @@
                   <button
                     v-if="groupSection === 'createMatch'"
                     class="btn small secondary"
+                    :disabled="!canAddMatchScore"
                     @click="addScore('team2')"
                   >+</button>
                 </div>
@@ -724,6 +726,7 @@
                   <button
                     v-if="groupSection === 'createMatch'"
                     class="btn small secondary"
+                    :disabled="!canAddMatchScore"
                     @click="addScore('team1')"
                   >+</button>
                 </div>
@@ -786,6 +789,7 @@
                   <button
                     v-if="groupSection === 'createMatch'"
                     class="btn small secondary"
+                    :disabled="!canAddMatchScore"
                     @click="addScore('team2')"
                   >+</button>
                 </div>
@@ -970,6 +974,13 @@ export default defineComponent({
                p.team1Scores.some(s => s > 0) &&
                p.team2Scores.some(s => s > 0);
       }
+    },
+    canAddMatchScore() {
+      const n = Math.max(
+        (this.matchForm.team1Scores || []).length,
+        (this.matchForm.team2Scores || []).length
+      );
+      return n < 5;
     },
     currentParticipantsPage() {
       if (!this.participantsPages.length) return { items: [], pageToken: null };
@@ -2047,6 +2058,7 @@ export default defineComponent({
       this.mergeParticipantNames([participant]);
     },
     addScore(team) {
+      if (!this.canAddMatchScore) return;
       const field = `${team}Scores`;
       const otherTeam = team === "team1" ? "team2" : "team1";
       const otherField = `${otherTeam}Scores`;
