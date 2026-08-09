@@ -93,6 +93,7 @@
                       <PersonChip
                         :name="inviteUserLabel(u)"
                         :photo-url="u.photoUrl"
+                        :photo-crop="u.photoCrop || null"
                         :username="u.username"
                       />
                     </div>
@@ -213,7 +214,7 @@
                       <PersonChip
                         :name="p.name"
                         :photo-url="p.photoUrl || getParticipantPhoto(p.id)"
-                        :photo-crop="p.photoCrop"
+                        :photo-crop="p.photoCrop || getParticipantCrop(p.id)"
                         :username="p.username || getParticipantUsername(p.id)"
                       />
                     </td>
@@ -294,6 +295,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[0])"
                       :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[0])"
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
@@ -302,6 +304,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
                       :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[0])"
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
@@ -350,6 +353,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[0])"
                       :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[0])"
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
@@ -357,6 +361,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[1])"
                       :photo-url="getParticipantPhoto(m.teamA?.[1])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[1])"
                       :username="getParticipantUsername(m.teamA?.[1])"
                     />
                   </td>
@@ -365,6 +370,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
                       :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[0])"
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
@@ -372,6 +378,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[1])"
                       :photo-url="getParticipantPhoto(m.teamB?.[1])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[1])"
                       :username="getParticipantUsername(m.teamB?.[1])"
                     />
                   </td>
@@ -428,6 +435,7 @@
                       <PersonChip
                         :name="r.participantName"
                         :photo-url="getParticipantPhoto(r.participantId)"
+                        :photo-crop="getParticipantCrop(r.participantId)"
                         :username="getParticipantUsername(r.participantId)"
                       />
                     </td>
@@ -482,6 +490,7 @@
                           :key="`${r.pairKey}-${idx}`"
                           :name="name"
                           :photo-url="getParticipantPhoto(pairParticipantIds(r.pairKey)[idx])"
+                          :photo-crop="getParticipantCrop(pairParticipantIds(r.pairKey)[idx])"
                           :username="getParticipantUsername(pairParticipantIds(r.pairKey)[idx])"
                         />
                       </span>
@@ -586,6 +595,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team1P1)"
                   :photo-url="getParticipantPhoto(matchForm.team1P1)"
+                  :photo-crop="getParticipantCrop(matchForm.team1P1)"
                   :username="getParticipantUsername(matchForm.team1P1)"
                 />
                 <button class="btn small danger" @click="matchForm.team1P1 = null">×</button>
@@ -633,6 +643,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team2P1)"
                   :photo-url="getParticipantPhoto(matchForm.team2P1)"
+                  :photo-crop="getParticipantCrop(matchForm.team2P1)"
                   :username="getParticipantUsername(matchForm.team2P1)"
                 />
                 <button class="btn small danger" @click="matchForm.team2P1 = null">×</button>
@@ -683,6 +694,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team1P1)"
                   :photo-url="getParticipantPhoto(matchForm.team1P1)"
+                  :photo-crop="getParticipantCrop(matchForm.team1P1)"
                   :username="getParticipantUsername(matchForm.team1P1)"
                 />
                 <button class="btn small danger" @click="matchForm.team1P1 = null">×</button>
@@ -699,6 +711,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team1P2)"
                   :photo-url="getParticipantPhoto(matchForm.team1P2)"
+                  :photo-crop="getParticipantCrop(matchForm.team1P2)"
                   :username="getParticipantUsername(matchForm.team1P2)"
                 />
                 <button class="btn small danger" @click="matchForm.team1P2 = null">×</button>
@@ -746,6 +759,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team2P1)"
                   :photo-url="getParticipantPhoto(matchForm.team2P1)"
+                  :photo-crop="getParticipantCrop(matchForm.team2P1)"
                   :username="getParticipantUsername(matchForm.team2P1)"
                 />
                 <button class="btn small danger" @click="matchForm.team2P1 = null">×</button>
@@ -762,6 +776,7 @@
                 <PersonChip
                   :name="getParticipantName(matchForm.team2P2)"
                   :photo-url="getParticipantPhoto(matchForm.team2P2)"
+                  :photo-crop="getParticipantCrop(matchForm.team2P2)"
                   :username="getParticipantUsername(matchForm.team2P2)"
                 />
                 <button class="btn small danger" @click="matchForm.team2P2 = null">×</button>
@@ -844,6 +859,7 @@ export default defineComponent({
       group: null,
       participantNameMap: {},
       participantPhotoMap: {},
+      participantCropMap: {},
       participantUsernameMap: {},
       participantsPages: [],
       participantsPageIndex: 0,
@@ -1139,15 +1155,19 @@ export default defineComponent({
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };
       const photoMap = { ...this.participantPhotoMap };
+      const cropMap = { ...this.participantCropMap };
       const usernameMap = { ...this.participantUsernameMap };
       (items || []).forEach(p => {
         nameMap[p.id] = p.name;
         if (p.photoUrl) photoMap[p.id] = p.photoUrl;
         else delete photoMap[p.id];
+        if (p.photoCrop) cropMap[p.id] = p.photoCrop;
+        else delete cropMap[p.id];
         if (p.username) usernameMap[p.id] = p.username;
       });
       this.participantNameMap = nameMap;
       this.participantPhotoMap = photoMap;
+      this.participantCropMap = cropMap;
       this.participantUsernameMap = usernameMap;
     },
     formatRole(role) {
@@ -1687,6 +1707,10 @@ export default defineComponent({
       if (!participantId) return "";
       return this.participantPhotoMap[participantId] || "";
     },
+    getParticipantCrop(participantId) {
+      if (!participantId) return null;
+      return this.participantCropMap[participantId] || null;
+    },
     getParticipantUsername(participantId) {
       if (!participantId) return "";
       return this.participantUsernameMap[participantId] || "";
@@ -2040,6 +2064,8 @@ export default defineComponent({
         this.participantNameMap = rest;
         const { [p.id]: __, ...photoRest } = this.participantPhotoMap;
         this.participantPhotoMap = photoRest;
+        const { [p.id]: ____, ...cropRest } = this.participantCropMap;
+        this.participantCropMap = cropRest;
         const { [p.id]: ___, ...usernameRest } = this.participantUsernameMap;
         this.participantUsernameMap = usernameRest;
         const idx = this.participantsPageIndex;

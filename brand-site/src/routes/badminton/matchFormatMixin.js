@@ -9,6 +9,7 @@ export const matchFormatMixin = {
     return {
       participantNames: new Map(),
       participantPhotos: new Map(),
+      participantCrops: new Map(),
       participantUsernames: new Map(),
     };
   },
@@ -20,6 +21,10 @@ export const matchFormatMixin = {
     getParticipantPhoto(participantId) {
       if (!participantId) return "";
       return this.participantPhotos.get(participantId) || "";
+    },
+    getParticipantCrop(participantId) {
+      if (!participantId) return null;
+      return this.participantCrops.get(participantId) || null;
     },
     getParticipantUsername(participantId) {
       if (!participantId) return "";
@@ -59,6 +64,9 @@ export const matchFormatMixin = {
         this.participantNames = new Map(allParticipants.map((p) => [p.id, p.name]));
         this.participantPhotos = new Map(
           allParticipants.filter((p) => p.photoUrl).map((p) => [p.id, p.photoUrl])
+        );
+        this.participantCrops = new Map(
+          allParticipants.filter((p) => p.photoCrop).map((p) => [p.id, p.photoCrop])
         );
         this.participantUsernames = new Map(
           allParticipants.filter((p) => p.username).map((p) => [p.id, p.username])

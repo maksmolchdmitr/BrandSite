@@ -31,6 +31,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[0])"
                       :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[0])"
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
@@ -39,6 +40,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
                       :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[0])"
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
@@ -81,6 +83,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[0])"
                       :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[0])"
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
@@ -88,6 +91,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamA?.[1])"
                       :photo-url="getParticipantPhoto(m.teamA?.[1])"
+                      :photo-crop="getParticipantCrop(m.teamA?.[1])"
                       :username="getParticipantUsername(m.teamA?.[1])"
                     />
                   </td>
@@ -96,6 +100,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
                       :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[0])"
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
@@ -103,6 +108,7 @@
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[1])"
                       :photo-url="getParticipantPhoto(m.teamB?.[1])"
+                      :photo-crop="getParticipantCrop(m.teamB?.[1])"
                       :username="getParticipantUsername(m.teamB?.[1])"
                     />
                   </td>

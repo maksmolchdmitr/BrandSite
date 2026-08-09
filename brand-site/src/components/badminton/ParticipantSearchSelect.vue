@@ -36,6 +36,7 @@
         <PersonChip
           :name="p.name"
           :photo-url="p.photoUrl || ''"
+          :photo-crop="p.photoCrop || null"
           :username="p.username || ''"
         />
       </div>

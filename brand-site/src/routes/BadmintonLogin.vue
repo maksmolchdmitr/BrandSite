@@ -20,6 +20,7 @@
             <PersonChip
               :name="[u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || u.id"
               :photo-url="u.photoUrl"
+              :photo-crop="u.photoCrop || null"
               :username="u.username"
             />
             <div class="userMeta">{{ $t('badminton.login.telegramShort') }}: {{ u.telegramId }}</div>
