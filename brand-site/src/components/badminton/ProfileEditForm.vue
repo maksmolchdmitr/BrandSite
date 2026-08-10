@@ -14,7 +14,7 @@
         @input="$emit('update:lastName', $event.target.value)"
       />
     </div>
-    <div class="photoPickerRow">
+    <div class="photoPickerRow" :title="pastePhotoHint || undefined">
       <div class="photoPreview" :class="{ empty: !previewable }">
         <PhotoHoldPreview
           v-if="previewable"
@@ -77,6 +77,7 @@ export default defineComponent({
     resetCropLabel: { type: String, default: "Reset crop" },
     squareCropLabel: { type: String, default: "1:1" },
     cropHint: { type: String, default: "" },
+    pastePhotoHint: { type: String, default: "" },
   },
   emits: [
     "update:firstName",

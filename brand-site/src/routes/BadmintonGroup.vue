@@ -115,7 +115,7 @@
               </div>
             </div>
 
-            <div class="addParticipantSection">
+            <div class="addParticipantSection" @paste="onUnlinkedPhotoPaste">
               <div class="addParticipantLabel">{{ $t('badminton.group.createUnlinked') }}</div>
               <div class="row">
                 <input
@@ -147,7 +147,7 @@
                   <template v-else>{{ $t('common.actions.add') }}</template>
                 </button>
               </div>
-              <div class="photoPickerRow">
+              <div class="photoPickerRow" :title="$t('badminton.group.pastePhotoHint')">
                 <div class="photoPreview" :class="{ empty: !isPreviewablePhotoUrl(newUnlinkedPhotoUrl) }">
                   <PhotoHoldPreview
                     v-if="isPreviewablePhotoUrl(newUnlinkedPhotoUrl)"
@@ -526,7 +526,7 @@
       </div>
 
       <!-- Full-page forms (no modals) -->
-      <div v-if="groupSection === 'editParticipant'" class="card formPage">
+      <div v-if="groupSection === 'editParticipant'" class="card formPage" @paste="onEditPhotoPaste">
         <div class="cardTitle">{{ $t('badminton.group.editParticipant') }}</div>
         <ProfileEditForm
           v-model:first-name="editParticipantForm.firstName"
@@ -542,6 +542,7 @@
           :reset-crop-label="$t('badminton.group.resetCrop')"
           :square-crop-label="$t('badminton.group.cropSquare')"
           :crop-hint="$t('badminton.group.cropHint')"
+          :paste-photo-hint="$t('badminton.group.pastePhotoHint')"
           @clear-photo="clearEditParticipantPhoto"
           @photo-url-input="onEditPhotoUrlInput"
           @update:photo-crop="onEditPhotoCrop"
@@ -834,6 +835,7 @@ import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
+import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
 import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
@@ -1904,10 +1906,33 @@ export default defineComponent({
       if (code === "photoUploadFailed") return this.$t("badminton.group.errPhotoUpload");
       return error?.message || this.$t("badminton.group.errPhotoUpload");
     },
+    onUnlinkedPhotoPaste(event) {
+      if (this.uploadingUnlinkedPhoto || this.loadingAddUnlinked) return;
+      const file = participantPhotoFileFromPaste(event);
+      if (!file) return;
+      event.preventDefault();
+      this.uploadUnlinkedPhoto(file);
+    },
+    onEditPhotoPaste(event) {
+      if (this.uploadingEditPhoto || this.formSaving) return;
+      const file = participantPhotoFileFromPaste(event);
+      if (!file) return;
+      event.preventDefault();
+      this.uploadEditPhoto(file);
+    },
     async onUnlinkedPhotoFileChange(event) {
       const file = event?.target?.files?.[0];
       if (event?.target) event.target.value = "";
       if (!file) return;
+      await this.uploadUnlinkedPhoto(file);
+    },
+    async onEditPhotoFileChange(event) {
+      const file = event?.target?.files?.[0];
+      if (event?.target) event.target.value = "";
+      if (!file) return;
+      await this.uploadEditPhoto(file);
+    },
+    async uploadUnlinkedPhoto(file) {
       this.uploadingUnlinkedPhoto = true;
       this.error = "";
       try {
@@ -1918,10 +1943,7 @@ export default defineComponent({
         this.uploadingUnlinkedPhoto = false;
       }
     },
-    async onEditPhotoFileChange(event) {
-      const file = event?.target?.files?.[0];
-      if (event?.target) event.target.value = "";
-      if (!file) return;
+    async uploadEditPhoto(file) {
       this.uploadingEditPhoto = true;
       this.error = "";
       try {

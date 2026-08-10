@@ -25,6 +25,19 @@ export function assertParticipantPhotoFile(file) {
   }
 }
 
+/** @returns {File | null} */
+export function participantPhotoFileFromPaste(event) {
+  const items = event?.clipboardData?.items;
+  if (!items) return null;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
+    const file = item.getAsFile();
+    if (file) return file;
+  }
+  return null;
+}
+
 /**
  * @param {File} file
  * @param {(body: {contentType: string, contentLength: number}) => Promise<{uploadUrl: string, publicUrl: string}>} createPhotoUploadUrl
