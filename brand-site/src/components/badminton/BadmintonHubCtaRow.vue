@@ -17,7 +17,7 @@
     <RouterLink
       v-if="current !== 'games'"
       class="cta secondary cta-games-hub"
-      to="/?page=badminton&section=games&tab=singles"
+      :to="gamesTo"
     >
       <span class="ctaText">{{ $t("badminton.groups.myMatches") }}</span>
     </RouterLink>
@@ -51,6 +51,7 @@
 
 <script>
 import { defineComponent } from "vue";
+import { gamesSectionTo } from "@/badminton/uiPrefs.js";
 
 export default defineComponent({
   name: "BadmintonHubCtaRow",
@@ -63,6 +64,11 @@ export default defineComponent({
     disabled: { type: Boolean, default: false },
   },
   emits: ["logout"],
+  computed: {
+    gamesTo() {
+      return gamesSectionTo();
+    },
+  },
 });
 </script>
 

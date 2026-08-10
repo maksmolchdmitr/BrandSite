@@ -26,21 +26,21 @@
         <RouterLink
           class="groupNavLink"
           :class="{ active: isMatchesNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=matches&matchTab=doubles`"
+          :to="matchesListTo()"
         >
           {{ $t('badminton.group.matches') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
           :class="{ active: isParticipantsNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=participants`"
+          :to="participantsListTo()"
         >
           {{ $t('badminton.group.participants') }}
         </RouterLink>
         <RouterLink
           class="groupNavLink"
           :class="{ active: isLeaderboardsNavActive }"
-          :to="`/?page=badminton&section=groups&groupId=${groupId}&groupSection=leaderboards&matchTab=doubles`"
+          :to="leaderboardsSubNavTo()"
         >
           {{ $t('badminton.group.leaderboards') }}
         </RouterLink>
@@ -834,6 +834,7 @@ import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
+import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
   и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
@@ -847,8 +848,8 @@ export default defineComponent({
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "matches" },
-    /** 'singles' | 'doubles' — внутри «Матчи»/лидербордов; по умолчанию парные */
-    matchTab: { type: String, default: "doubles" },
+    /** 'singles' | 'doubles' — внутри «Матчи»/лидербордов; fallback — remembered pref */
+    matchTab: { type: String, default: "" },
     participantId: { type: String, default: null },
     matchId: { type: String, default: null },
   },
@@ -1078,7 +1079,7 @@ export default defineComponent({
       return !!page.pageToken;
     },
     effectiveMatchTab() {
-      const t = String(this.matchTab || "doubles").toLowerCase();
+      const t = String(this.matchTab || getGroupMatchTab() || "doubles").toLowerCase();
       return t === "singles" ? "singles" : "doubles";
     },
     noMatchesForCurrentTab() {
@@ -1212,7 +1213,7 @@ export default defineComponent({
       const gid = encodeURIComponent(this.groupId);
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=matches&matchTab=${tab}`;
     },
-    leaderboardsSubNavTo(tab) {
+    leaderboardsSubNavTo(tab = this.effectiveMatchTab) {
       const gid = encodeURIComponent(this.groupId);
       const t = tab === "singles" ? "singles" : "doubles";
       return `/?page=badminton&section=groups&groupId=${gid}&groupSection=leaderboards&matchTab=${t}`;
@@ -1272,7 +1273,8 @@ export default defineComponent({
         const q = this.$route.query;
         const mt = String(q.matchTab || "").toLowerCase();
         if (mt !== "singles" && mt !== "doubles") {
-          await this.$router.replace({ query: { ...q, matchTab: "doubles" } });
+          const { getGroupMatchTab } = await import("@/badminton/uiPrefs.js");
+          await this.$router.replace({ query: { ...q, matchTab: getGroupMatchTab() } });
         }
       }
       await this.loadSection();

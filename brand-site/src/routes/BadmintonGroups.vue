@@ -30,7 +30,7 @@
         <div v-if="groups.length === 0 && !loading" class="empty">{{ $t('badminton.groups.noGroups') }}</div>
 
         <div class="list">
-          <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="`/?page=badminton&section=groups&groupId=${g.id}&groupSection=matches&matchTab=doubles`">
+          <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="groupTo(g.id)">
             <div class="groupName">{{ g.name }}</div>
             <div class="groupMeta">
               <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
@@ -47,6 +47,7 @@
 import {defineComponent} from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import {badmintonClient} from "@/badminton/client.js";
+import {groupHref} from "@/badminton/uiPrefs.js";
 
 export default defineComponent({
   components: {BadmintonHubCtaRow},
@@ -63,6 +64,9 @@ export default defineComponent({
     this.load();
   },
   methods: {
+    groupTo(groupId) {
+      return groupHref(groupId);
+    },
     formatRole(role) {
       if (role === "admin") return this.$t("badminton.roles.admin");
       if (role === "member") return this.$t("badminton.roles.member");
@@ -87,7 +91,7 @@ export default defineComponent({
         const g = await badmintonClient.createGroup({name: this.newGroupName});
         this.newGroupName = "";
         this.groups = [g, ...this.groups];
-        this.$router.push(`/?page=badminton&section=groups&groupId=${g.id}&groupSection=matches&matchTab=doubles`);
+        this.$router.push(groupHref(g.id, { groupSection: "matches" }));
       } catch (e) {
         this.error = e?.message || this.$t("badminton.groups.errCreate");
       } finally {

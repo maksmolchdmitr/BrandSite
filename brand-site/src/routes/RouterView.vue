@@ -15,6 +15,14 @@ import BadmintonRatings from "@/routes/BadmintonRatings.vue";
 import BadmintonRatingHistory from "@/routes/BadmintonRatingHistory.vue";
 import BadmintonGames from "@/routes/BadmintonGames.vue";
 import BadmintonProfile from "@/routes/BadmintonProfile.vue";
+import {
+  getGamesTab,
+  getGroupMatchTab,
+  getGroupSection,
+  setGamesTab,
+  setGroupMatchTab,
+  setGroupSection,
+} from "@/badminton/uiPrefs.js";
 
 export default defineComponent({
   setup() {
@@ -28,6 +36,8 @@ export default defineComponent({
     await this.maybeRedirectBadmintonToSection();
     this.redirectLegacyBadmintonGamesSection();
     this.normalizeBadmintonGamesSection();
+    this.normalizeBadmintonGroupSection();
+    this.rememberBadmintonUiPrefs();
     this.applyDocumentChrome();
   },
   watch: {
@@ -37,6 +47,8 @@ export default defineComponent({
         this.maybeRedirectBadmintonToSection();
         this.redirectLegacyBadmintonGamesSection();
         this.normalizeBadmintonGamesSection();
+        this.normalizeBadmintonGroupSection();
+        this.rememberBadmintonUiPrefs();
         this.applyDocumentChrome();
       },
     },
@@ -57,6 +69,21 @@ export default defineComponent({
         ? "/badminton-service-favicon.png"
         : "/favicon.ico";
     },
+    rememberBadmintonUiPrefs() {
+      if (this.page !== "badminton") return;
+      if (this.section === "games") {
+        const tab = this.route.query.tab;
+        if (tab === "singles" || tab === "doubles") setGamesTab(tab);
+      }
+      if (this.section === "groups" && this.groupId) {
+        const mt = this.route.query.matchTab;
+        if (mt === "singles" || mt === "doubles") setGroupMatchTab(mt);
+        const gs = this.route.query.groupSection;
+        if (gs === "matches" || gs === "participants" || gs === "leaderboards") {
+          setGroupSection(gs);
+        }
+      }
+    },
     /** games-singles / games-doubles → section=games&tab=… */
     redirectLegacyBadmintonGamesSection() {
       if (this.page !== "badminton") return;
@@ -70,13 +97,39 @@ export default defineComponent({
         });
       }
     },
-    /** section=games без tab → tab=singles */
+    /** section=games без tab → last remembered tab */
     normalizeBadmintonGamesSection() {
       if (this.page !== "badminton" || this.section !== "games") return;
       const tab = this.route.query.tab;
       if (tab === "singles" || tab === "doubles") return;
       this.router.replace({
-        query: { ...this.route.query, page: "badminton", section: "games", tab: "singles" },
+        query: { ...this.route.query, page: "badminton", section: "games", tab: getGamesTab() },
+      });
+    },
+    /** group without groupSection / matchTab → remembered defaults */
+    normalizeBadmintonGroupSection() {
+      if (this.page !== "badminton" || this.section !== "groups" || !this.groupId) return;
+      const q = this.route.query;
+      const patch = {};
+      const gs = q.groupSection;
+      if (!gs) {
+        patch.groupSection = getGroupSection();
+      }
+      const section = gs || patch.groupSection;
+      if (
+        section === "matches"
+        || section === "leaderboards"
+        || section === "createMatch"
+        || section === "editMatch"
+      ) {
+        const mt = String(q.matchTab || "").toLowerCase();
+        if (mt !== "singles" && mt !== "doubles") {
+          patch.matchTab = getGroupMatchTab();
+        }
+      }
+      if (Object.keys(patch).length === 0) return;
+      this.router.replace({
+        query: { ...q, page: "badminton", section: "groups", groupId: this.groupId, ...patch },
       });
     },
     async maybeRedirectBadmintonToSection() {
@@ -160,15 +213,15 @@ export default defineComponent({
       const props = {};
       if (this.page === 'badminton' && this.section === 'groups' && this.groupId) {
         props.groupId = this.groupId;
-        props.groupSection = this.route?.query?.groupSection || 'matches';
+        props.groupSection = this.route?.query?.groupSection || getGroupSection();
         const mt = this.route?.query?.matchTab;
-        props.matchTab = mt === "singles" || mt === "doubles" ? mt : "doubles";
+        props.matchTab = mt === "singles" || mt === "doubles" ? mt : getGroupMatchTab();
         props.participantId = this.route?.query?.participantId || null;
         props.matchId = this.route?.query?.matchId || null;
       }
       if (this.page === 'badminton' && this.section === 'games') {
         const tab = this.route?.query?.tab;
-        props.gamesTab = tab === "doubles" ? "doubles" : "singles";
+        props.gamesTab = tab === "doubles" || tab === "singles" ? tab : getGamesTab();
       }
       if (this.page === 'badminton' && this.userId) {
         props.userId = this.userId;

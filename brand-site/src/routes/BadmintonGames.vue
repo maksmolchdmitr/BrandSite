@@ -158,13 +158,14 @@ import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
+import { gamesSectionTo, getGamesTab } from "@/badminton/uiPrefs.js";
 
 export default defineComponent({
   name: "BadmintonGames",
   components: { PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip },
   mixins: [matchFormatMixin],
   props: {
-    gamesTab: { type: String, default: "singles" },
+    gamesTab: { type: String, default: "" },
   },
   data() {
     return {
@@ -184,18 +185,19 @@ export default defineComponent({
   },
   computed: {
     effectiveTab() {
-      return this.gamesTab === "doubles" ? "doubles" : "singles";
+      if (this.gamesTab === "doubles" || this.gamesTab === "singles") return this.gamesTab;
+      return getGamesTab();
     },
     gamesNavItems() {
       const tab = this.effectiveTab;
       return [
         {
-          to: "/?page=badminton&section=games&tab=singles",
+          to: gamesSectionTo("singles"),
           label: this.$t("badminton.groups.mySinglesMatches"),
           active: tab === "singles",
         },
         {
-          to: "/?page=badminton&section=games&tab=doubles",
+          to: gamesSectionTo("doubles"),
           label: this.$t("badminton.groups.myDoublesMatches"),
           active: tab === "doubles",
         },

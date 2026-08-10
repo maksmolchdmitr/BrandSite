@@ -94,6 +94,10 @@ import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
+import {
+  getRatingHistoryPeriod,
+  setRatingHistoryPeriod,
+} from "@/badminton/uiPrefs.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PERIOD_OPTIONS = [
@@ -120,7 +124,7 @@ export default defineComponent({
       historyPoints: [],
       historyStartTime: null,
       historyEndTime: null,
-      historyPeriod: "1d",
+      historyPeriod: getRatingHistoryPeriod(),
       periodOptions: PERIOD_OPTIONS,
     };
   },
@@ -178,7 +182,7 @@ export default defineComponent({
     },
     async setHistoryPeriod(periodId) {
       if (this.historyPeriod === periodId) return;
-      this.historyPeriod = periodId;
+      this.historyPeriod = setRatingHistoryPeriod(periodId);
       this.resetHistoryWindow();
       await this.loadHistory();
     },
