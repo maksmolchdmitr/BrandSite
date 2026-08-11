@@ -13,6 +13,7 @@ import {
   setTokens,
   clearTokens,
   forceReauth,
+  clearTgAutoLoginTried,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { setLoggedInUserId } from "./cookies.js";
@@ -163,6 +164,7 @@ export async function logout() {
   } finally {
     clearTokens();
     setLoggedInUserId("");
+    clearTgAutoLoginTried();
   }
 }
 

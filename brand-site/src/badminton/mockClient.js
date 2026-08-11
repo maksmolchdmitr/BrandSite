@@ -5,6 +5,7 @@ import {
   invalidateParticipantSearchCache,
 } from "@/badminton/participantSearchCache.js";
 import {SINGLES_RATING_HISTORY_SAFETY_CAP} from "@/badminton/ratingHistory.js";
+import {clearTgAutoLoginTried} from "@/badminton/apiHelpers.js";
 
 function delay(ms = 180) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -319,6 +320,7 @@ export const mockClient = {
     if (typeof sessionStorage !== "undefined") {
       sessionStorage.removeItem("badminton.useMockSession");
     }
+    clearTgAutoLoginTried();
   },
 
   async getMe() {

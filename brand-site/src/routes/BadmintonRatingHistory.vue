@@ -94,6 +94,7 @@ import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
+import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 import {
   getRatingHistoryPeriod,
   setRatingHistoryPeriod,
@@ -170,6 +171,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     this.resetHistoryWindow();
     await this.loadHistory();
   },

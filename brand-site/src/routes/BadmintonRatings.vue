@@ -118,6 +118,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
+import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   components: {PersonChip, BadmintonHubCtaRow},
@@ -150,6 +151,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     await this.load();
   },
   methods: {

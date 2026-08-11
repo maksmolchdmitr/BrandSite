@@ -141,7 +141,7 @@ export default defineComponent({
       if (hasTokens || (userId && userId.trim() !== "")) {
         await this.router.replace("/?page=badminton&section=ratings");
       } else {
-        await this.router.replace("/?page=badminton&section=login");
+        await this.router.replace("/?page=badminton&section=login&autoTg=1");
       }
     },
     redirectToLoginIfTelegramCallback() {
@@ -151,6 +151,7 @@ export default defineComponent({
         const h = window.location.hash.replace(/^#/, '');
         if (!h) return false;
         const p = new URLSearchParams(h);
+        if (p.has('tgAuthResult')) return true;
         return telegramParams.filter((k) => p.has(k)).length >= 3;
       };
       const fromQuery = () => {

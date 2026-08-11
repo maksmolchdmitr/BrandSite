@@ -2,7 +2,7 @@
  * Helper functions for API client
  */
 
-import { setLoggedInUserId } from "./cookies.js";
+import { setLoggedInUserId, getLoggedInUserId } from "./cookies.js";
 
 const ACCESS_TOKEN_KEY = "badminton.accessToken";
 const REFRESH_TOKEN_KEY = "badminton.refreshToken";
@@ -70,14 +70,72 @@ export function hasAuth() {
   return Boolean(getAccessToken() || getRefreshToken());
 }
 
-const LOGIN_PATH = "/?page=badminton&section=login";
+/** App session: JWT/refresh or mock cookie login. */
+export function hasAppSession() {
+  if (hasAuth()) return true;
+  const id = getLoggedInUserId();
+  return Boolean(id && String(id).trim());
+}
+
+/** Login with silent Telegram OAuth attempt (used after 401 / missing app session). */
+export const LOGIN_PATH_AUTO_TG = "/?page=badminton&section=login&autoTg=1";
 const MOCK_SESSION_KEY = "badminton.useMockSession";
+const TG_AUTO_LOGIN_TRIED_KEY = "badminton.tgAutoLoginTried";
 
 let reauthRedirectHandler = null;
 let reauthInProgress = false;
 
 export function setReauthRedirectHandler(handler) {
   reauthRedirectHandler = typeof handler === "function" ? handler : null;
+}
+
+export function markTgAutoLoginTried() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.setItem(TG_AUTO_LOGIN_TRIED_KEY, "1");
+}
+
+export function wasTgAutoLoginTried() {
+  if (typeof sessionStorage === "undefined") return false;
+  return sessionStorage.getItem(TG_AUTO_LOGIN_TRIED_KEY) === "1";
+}
+
+export function clearTgAutoLoginTried() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(TG_AUTO_LOGIN_TRIED_KEY);
+}
+
+export function resetReauthGuard() {
+  reauthInProgress = false;
+}
+
+export function buildTelegramOAuthUrl({ returnTo } = {}) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  let url =
+    `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}` +
+    `&origin=${encodeURIComponent(origin)}` +
+    `&request_access=write`;
+  if (returnTo) {
+    url += `&return_to=${encodeURIComponent(returnTo)}`;
+  }
+  return url;
+}
+
+/**
+ * If there is no app session, navigate to login with silent Telegram OAuth.
+ * Returns true when the caller should abort (redirect started).
+ */
+export function redirectToLoginAutoTg(router) {
+  if (hasAppSession()) return false;
+  clearTgAutoLoginTried();
+  const target = LOGIN_PATH_AUTO_TG;
+  if (router && typeof router.replace === "function") {
+    router.replace(target).catch(() => {
+      if (typeof window !== "undefined") window.location.assign(target);
+    });
+  } else if (typeof window !== "undefined") {
+    window.location.assign(target);
+  }
+  return true;
 }
 
 /** Clears local auth state and redirects to the badminton login page. */
@@ -87,6 +145,7 @@ export function forceReauth() {
 
   clearTokens();
   setLoggedInUserId("");
+  clearTgAutoLoginTried();
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(MOCK_SESSION_KEY);
   }
@@ -94,10 +153,9 @@ export function forceReauth() {
   if (typeof window === "undefined") return;
 
   if (reauthRedirectHandler) {
-    reauthRedirectHandler();
+    reauthRedirectHandler({ autoTg: true });
     return;
   }
 
-  window.location.assign(LOGIN_PATH);
+  window.location.assign(LOGIN_PATH_AUTO_TG);
 }
-

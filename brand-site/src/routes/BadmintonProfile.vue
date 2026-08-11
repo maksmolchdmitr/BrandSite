@@ -46,6 +46,7 @@ import { defineComponent } from "vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import { badmintonClient } from "@/badminton/client.js";
+import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   name: "BadmintonProfile",
@@ -69,6 +70,7 @@ export default defineComponent({
     };
   },
   async mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     await this.load();
   },
   methods: {

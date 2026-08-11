@@ -837,6 +837,7 @@ import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
 import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
+import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
   и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
@@ -1147,6 +1148,7 @@ export default defineComponent({
     },
   },
   mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
   },
   beforeUnmount() {

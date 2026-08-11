@@ -48,6 +48,7 @@ import {defineComponent} from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {groupHref} from "@/badminton/uiPrefs.js";
+import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   components: {BadmintonHubCtaRow},
@@ -61,6 +62,7 @@ export default defineComponent({
     };
   },
   mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     this.load();
   },
   methods: {

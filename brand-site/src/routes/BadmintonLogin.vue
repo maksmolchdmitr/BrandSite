@@ -44,7 +44,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {TELEGRAM_OAUTH_BOT_ID, BADMINTON_DEBUG, SHOW_MOCK_USERS} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -61,8 +61,9 @@ export default defineComponent({
     }
   },
   async mounted() {
-    this.parseTelegramCallbackFromUrl();
+    resetReauthGuard();
     this.setupTelegramCallback();
+    const fromCallback = this.parseTelegramCallbackFromUrl();
     try {
       if (badmintonClient.listMockUsers) {
         this.users = await badmintonClient.listMockUsers();
@@ -74,6 +75,10 @@ export default defineComponent({
     }
     if (this.userId) {
       await this.loginAs(this.userId);
+      return;
+    }
+    if (!fromCallback) {
+      this.maybeAutoTelegramLogin();
     }
   },
   beforeUnmount() {
@@ -99,9 +104,41 @@ export default defineComponent({
     },
   },
   methods: {
+    stripAutoTgQuery() {
+      const q = this.$route?.query || {};
+      if (q.autoTg == null) return;
+      const next = { ...q };
+      delete next.autoTg;
+      this.$router.replace({ query: next }).catch(() => {});
+    },
+    maybeAutoTelegramLogin() {
+      if (typeof window === "undefined") return;
+      if (hasAppSession()) {
+        this.stripAutoTgQuery();
+        return;
+      }
+      const autoTg = this.$route?.query?.autoTg;
+      const wantAuto = autoTg === "1" || autoTg === "true";
+      if (!wantAuto) return;
+      if (wasTgAutoLoginTried()) {
+        tgLog("auto TG skipped — already tried this tab session");
+        this.stripAutoTgQuery();
+        return;
+      }
+      const origin = window.location.origin;
+      if (!origin) return;
+      markTgAutoLoginTried();
+      this.stripAutoTgQuery();
+      this.loading = true;
+      const returnTo = `${origin}/?page=badminton&section=login`;
+      const url = buildTelegramOAuthUrl({ returnTo });
+      tgLog("auto TG: top-level OAuth redirect", url);
+      window.location.assign(url);
+    },
     goToTelegramOAuth() {
+      clearTgAutoLoginTried();
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_OAUTH_BOT_ID}&origin=${encodeURIComponent(origin)}&request_access=write`;
+      const url = buildTelegramOAuthUrl();
       tgLog("1. Opening OAuth popup", { origin, url });
       if (!origin) {
         this.error = this.$t("badminton.login.errOrigin");
@@ -121,8 +158,30 @@ export default defineComponent({
         }, 800);
       }
     },
+    parseTgAuthResultPayload(raw) {
+      if (!raw || typeof raw !== "string") return null;
+      const tryParse = (s) => {
+        try {
+          const o = JSON.parse(s);
+          return o && typeof o === "object" ? o : null;
+        } catch (_) {
+          return null;
+        }
+      };
+      let parsed = tryParse(raw);
+      if (parsed) return parsed;
+      try {
+        parsed = tryParse(decodeURIComponent(raw));
+        if (parsed) return parsed;
+      } catch (_) {}
+      try {
+        parsed = tryParse(atob(raw.replace(/-/g, "+").replace(/_/g, "/")));
+        if (parsed) return parsed;
+      } catch (_) {}
+      return null;
+    },
     parseTelegramCallbackFromUrl() {
-      if (this.telegramAuthProcessed) return;
+      if (this.telegramAuthProcessed) return false;
       const telegramParams = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"];
       const fromQuery = (params) => {
         const o = {};
@@ -134,24 +193,43 @@ export default defineComponent({
         });
         return o;
       };
+      const acceptPayload = (payload, source) => {
+        if (!payload || !("id" in payload) || !("hash" in payload)) return false;
+        tgLog(`Callback from ${source}`, payload.id, payload.first_name);
+        this.telegramAuthProcessed = true;
+        this.handleTelegramAuth(payload);
+        return true;
+      };
+
+      if (typeof window !== "undefined" && window.location.hash) {
+        const hash = window.location.hash.replace(/^#/, "");
+        const hashParams = new URLSearchParams(hash);
+        if (hashParams.has("tgAuthResult")) {
+          const payload = this.parseTgAuthResultPayload(hashParams.get("tgAuthResult"));
+          const result = payload?.result && typeof payload.result === "object" ? payload.result : payload;
+          if (acceptPayload(result, "URL tgAuthResult")) {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            return true;
+          }
+        }
+      }
+
       const query = new URLSearchParams(this.$route?.query || "");
       const hasQuery = telegramParams.some((p) => query.has(p));
       if (hasQuery && Object.keys(fromQuery(query)).length >= 3) {
-        tgLog("Callback from URL query", fromQuery(query));
-        this.telegramAuthProcessed = true;
-        this.handleTelegramAuth(fromQuery(query));
-        return;
+        if (acceptPayload(fromQuery(query), "URL query")) return true;
       }
-      if (typeof window === "undefined" || !window.location.hash) return;
+      if (typeof window === "undefined" || !window.location.hash) return false;
       const hash = window.location.hash.replace(/^#/, "");
       const hashParams = new URLSearchParams(hash);
       const hasHash = telegramParams.some((p) => hashParams.has(p));
       if (hasHash && !this.telegramAuthProcessed && Object.keys(fromQuery(hashParams)).length >= 3) {
-        tgLog("Callback from URL hash", fromQuery(hashParams));
-        this.telegramAuthProcessed = true;
-        this.handleTelegramAuth(fromQuery(hashParams));
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        if (acceptPayload(fromQuery(hashParams), "URL hash")) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          return true;
+        }
       }
+      return false;
     },
     setupTelegramCallback() {
       const allowedOrigins = ["https://oauth.telegram.org", "https://t.me", "https://telegram.org"];
@@ -192,6 +270,7 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       try {
+        clearTgAutoLoginTried();
         await badmintonClient.telegramLogin(telegramData);
         tgLog("6. telegramLogin OK");
         await new Promise((r) => setTimeout(r, 150));

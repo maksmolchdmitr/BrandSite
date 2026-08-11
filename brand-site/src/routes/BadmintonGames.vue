@@ -159,6 +159,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
 import { gamesSectionTo, getGamesTab } from "@/badminton/uiPrefs.js";
+import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   name: "BadmintonGames",
@@ -248,6 +249,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    if (redirectToLoginAutoTg(this.$router)) return;
     await this.loadParticipantNames();
     await this.loadStats();
     await this.loadTabIfNeeded();
