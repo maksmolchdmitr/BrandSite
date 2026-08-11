@@ -19,7 +19,6 @@ import {
   clearTgAutoLoginTried,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
-import { setLoggedInUserId } from "./cookies.js";
 import { orderMatchTeamsForApi } from "./uuidOrder.js";
 
 const BASE_URL = getBadmintonApiBaseUrl();
