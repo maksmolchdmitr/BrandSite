@@ -44,7 +44,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -117,6 +117,11 @@ export default defineComponent({
         this.stripAutoTgQuery();
         return;
       }
+      if (shouldSkipTgAutoLogin()) {
+        tgLog("auto TG skipped — user logged out intentionally");
+        this.stripAutoTgQuery();
+        return;
+      }
       const autoTg = this.$route?.query?.autoTg;
       const wantAuto = autoTg === "1" || autoTg === "true";
       if (!wantAuto) return;
@@ -136,6 +141,7 @@ export default defineComponent({
       window.location.assign(url);
     },
     goToTelegramOAuth() {
+      clearSkipTgAutoLogin();
       clearTgAutoLoginTried();
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const url = buildTelegramOAuthUrl();
@@ -270,6 +276,7 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       try {
+        clearSkipTgAutoLogin();
         clearTgAutoLoginTried();
         await badmintonClient.telegramLogin(telegramData);
         tgLog("6. telegramLogin OK");

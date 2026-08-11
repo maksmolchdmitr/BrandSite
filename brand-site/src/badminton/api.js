@@ -13,6 +13,9 @@ import {
   setTokens,
   clearTokens,
   forceReauth,
+  clearLocalAuthState,
+  clearTelegramOAuthSession,
+  markSkipTgAutoLogin,
   clearTgAutoLoginTried,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
@@ -162,9 +165,10 @@ export async function logout() {
   } catch (_) {
     // Игнорируем ошибку сети/ответа — всегда чистим локальное состояние
   } finally {
-    clearTokens();
-    setLoggedInUserId("");
+    clearLocalAuthState();
+    markSkipTgAutoLogin();
     clearTgAutoLoginTried();
+    clearTelegramOAuthSession();
   }
 }
 

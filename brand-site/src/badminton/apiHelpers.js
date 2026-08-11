@@ -78,15 +78,33 @@ export function hasAppSession() {
 }
 
 /** Login with silent Telegram OAuth attempt (used after 401 / missing app session). */
+export const LOGIN_PATH = "/?page=badminton&section=login";
 export const LOGIN_PATH_AUTO_TG = "/?page=badminton&section=login&autoTg=1";
 const MOCK_SESSION_KEY = "badminton.useMockSession";
 const TG_AUTO_LOGIN_TRIED_KEY = "badminton.tgAutoLoginTried";
+const SKIP_TG_AUTO_LOGIN_KEY = "badminton.skipTgAutoLogin";
 
 let reauthRedirectHandler = null;
 let reauthInProgress = false;
 
 export function setReauthRedirectHandler(handler) {
   reauthRedirectHandler = typeof handler === "function" ? handler : null;
+}
+
+/** After intentional logout — do not silently bounce via Telegram OAuth. */
+export function markSkipTgAutoLogin() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.setItem(SKIP_TG_AUTO_LOGIN_KEY, "1");
+}
+
+export function shouldSkipTgAutoLogin() {
+  if (typeof sessionStorage === "undefined") return false;
+  return sessionStorage.getItem(SKIP_TG_AUTO_LOGIN_KEY) === "1";
+}
+
+export function clearSkipTgAutoLogin() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(SKIP_TG_AUTO_LOGIN_KEY);
 }
 
 export function markTgAutoLoginTried() {
@@ -120,14 +138,61 @@ export function buildTelegramOAuthUrl({ returnTo } = {}) {
   return url;
 }
 
+export function buildTelegramOAuthLogoutUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return (
+    `https://oauth.telegram.org/auth/logout?bot_id=${TELEGRAM_OAUTH_BOT_ID}` +
+    `&origin=${encodeURIComponent(origin)}`
+  );
+}
+
 /**
- * If there is no app session, navigate to login with silent Telegram OAuth.
+ * Ask Telegram to drop OAuth consent for this bot+origin (browser cookies on oauth.telegram.org).
+ * We cannot delete those cookies from our domain; this hits Telegram's logout endpoint instead.
+ */
+export function clearTelegramOAuthSession() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  const url = buildTelegramOAuthLogoutUrl();
+  const w = window.open(url, "tg_oauth_logout", "width=50,height=50,left=0,top=0");
+  if (w) {
+    setTimeout(() => {
+      try {
+        w.close();
+      } catch (_) {}
+    }, 1200);
+    return;
+  }
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", "Telegram logout");
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  setTimeout(() => {
+    try {
+      iframe.remove();
+    } catch (_) {}
+  }, 2000);
+}
+
+/** Clears local badminton auth (JWT, mock cookie, mock session flag). */
+export function clearLocalAuthState() {
+  clearTokens();
+  setLoggedInUserId("");
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(MOCK_SESSION_KEY);
+  }
+}
+
+/**
+ * If there is no app session, navigate to login (with silent Telegram OAuth unless user just logged out).
  * Returns true when the caller should abort (redirect started).
  */
 export function redirectToLoginAutoTg(router) {
   if (hasAppSession()) return false;
-  clearTgAutoLoginTried();
-  const target = LOGIN_PATH_AUTO_TG;
+  const target = shouldSkipTgAutoLogin() ? LOGIN_PATH : LOGIN_PATH_AUTO_TG;
+  if (!shouldSkipTgAutoLogin()) {
+    clearTgAutoLoginTried();
+  }
   if (router && typeof router.replace === "function") {
     router.replace(target).catch(() => {
       if (typeof window !== "undefined") window.location.assign(target);
@@ -143,19 +208,15 @@ export function forceReauth() {
   if (reauthInProgress) return;
   reauthInProgress = true;
 
-  clearTokens();
-  setLoggedInUserId("");
+  clearLocalAuthState();
   clearTgAutoLoginTried();
-  if (typeof sessionStorage !== "undefined") {
-    sessionStorage.removeItem(MOCK_SESSION_KEY);
-  }
 
   if (typeof window === "undefined") return;
 
   if (reauthRedirectHandler) {
-    reauthRedirectHandler({ autoTg: true });
+    reauthRedirectHandler({ autoTg: !shouldSkipTgAutoLogin() });
     return;
   }
 
-  window.location.assign(LOGIN_PATH_AUTO_TG);
+  window.location.assign(shouldSkipTgAutoLogin() ? LOGIN_PATH : LOGIN_PATH_AUTO_TG);
 }
