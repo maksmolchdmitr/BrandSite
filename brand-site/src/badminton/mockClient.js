@@ -260,6 +260,30 @@ function calcDoublesRatingHistory(db, userId, { startTime, endTime } = {}) {
   return { items };
 }
 
+function findEarliestSinglesMatchAt(db, userId) {
+  const pIds = new Set(db.participants.filter(p => p.userId === userId).map(p => p.id));
+  let earliest = null;
+  for (const match of db.matches || []) {
+    if (match.kind !== "singles") continue;
+    if (!pIds.has(match.teamA?.[0]) && !pIds.has(match.teamB?.[0])) continue;
+    if (!earliest || match.createdAt < earliest) earliest = match.createdAt;
+  }
+  return earliest;
+}
+
+function findEarliestDoublesMatchAt(db, userId) {
+  const myPIds = new Set(db.participants.filter(p => p.userId === userId).map(p => p.id));
+  let earliest = null;
+  for (const match of db.matches || []) {
+    if (match.kind !== "doubles") continue;
+    const a = match.teamA || [];
+    const b = match.teamB || [];
+    if (!a.some(id => myPIds.has(id)) && !b.some(id => myPIds.has(id))) continue;
+    if (!earliest || match.createdAt < earliest) earliest = match.createdAt;
+  }
+  return earliest;
+}
+
 function calcDoublesPerPartner(db, userId) {
   // Build partner Elo map: simple Elo-like value per partner (across all groups), based on wins and losses together with that partner.
   const myParticipants = db.participants.filter(p => p.userId === userId);
@@ -881,6 +905,26 @@ export const mockClient = {
       ? calcDoublesRatingHistory(db, u.id, { startTime, endTime })
       : { items: [] };
     logResponse("GET", "/api/me/ratings/doubles/history", result);
+    return result;
+  },
+
+  async getMySinglesRatingHistoryBounds() {
+    logRequest("GET", "/api/me/ratings/singles/history/bounds");
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const result = { earliestCreatedAt: findEarliestSinglesMatchAt(db, userId) };
+    logResponse("GET", "/api/me/ratings/singles/history/bounds", result);
+    return result;
+  },
+
+  async getMyDoublesRatingHistoryBounds() {
+    logRequest("GET", "/api/me/ratings/doubles/history/bounds");
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const result = { earliestCreatedAt: findEarliestDoublesMatchAt(db, userId) };
+    logResponse("GET", "/api/me/ratings/doubles/history/bounds", result);
     return result;
   },
 

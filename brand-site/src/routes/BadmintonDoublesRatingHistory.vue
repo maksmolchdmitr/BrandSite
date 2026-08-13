@@ -62,7 +62,7 @@
         <div class="pagerRow">
           <button
             class="pagerButton"
-            :disabled="loading"
+            :disabled="!canGoPrevHistory || loading"
             @click="goPrevHistory"
           >
             ←
@@ -124,11 +124,16 @@ export default defineComponent({
       historyStartTime: null,
       historyEndTime: null,
       historyPeriod: getRatingHistoryPeriod(),
+      earliestCreatedAt: null,
     };
   },
   computed: {
     historyWindowMs() {
       return ratingHistoryPeriodMs(this.historyPeriod);
+    },
+    canGoPrevHistory() {
+      if (!this.historyStartTime || !this.earliestCreatedAt) return false;
+      return Date.parse(this.historyStartTime) > Date.parse(this.earliestCreatedAt);
     },
     canGoNextHistory() {
       return !!this.historyEndTime;
@@ -174,13 +179,21 @@ export default defineComponent({
   async mounted() {
     if (redirectToLoginAutoTg(this.$router)) return;
     this.resetHistoryWindow();
-    await this.loadHistory();
+    await Promise.all([this.loadEarliestBound(), this.loadHistory()]);
   },
   methods: {
     resetHistoryWindow() {
       const now = Date.now();
       this.historyEndTime = null;
       this.historyStartTime = toIso(now - this.historyWindowMs);
+    },
+    async loadEarliestBound() {
+      try {
+        const bounds = await badmintonClient.getMyDoublesRatingHistoryBounds();
+        this.earliestCreatedAt = bounds?.earliestCreatedAt || null;
+      } catch {
+        this.earliestCreatedAt = null;
+      }
     },
     async setHistoryPeriod(periodId) {
       if (this.historyPeriod === periodId) return;
@@ -220,10 +233,15 @@ export default defineComponent({
       this.historyPeriod = setRatingHistoryPeriod(approx.id);
     },
     async goPrevHistory() {
-      if (!this.historyStartTime) return;
+      if (!this.canGoPrevHistory) return;
       const oldStart = new Date(this.historyStartTime).getTime();
+      const earliest = Date.parse(this.earliestCreatedAt);
+      let newStart = oldStart - this.historyWindowMs;
+      if (Number.isFinite(earliest) && newStart < earliest) {
+        newStart = earliest;
+      }
       this.historyEndTime = this.historyStartTime;
-      this.historyStartTime = toIso(oldStart - this.historyWindowMs);
+      this.historyStartTime = toIso(newStart);
       await this.loadHistory();
     },
     async goNextHistory() {

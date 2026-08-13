@@ -877,6 +877,25 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /api/me/ratings/singles/history/bounds:
+    get:
+      tags: [ Ratings ]
+      summary: Earliest singles rating-history bound for current user
+      description: |
+        Returns the oldest singles match `createdAt` for the current user.
+        Clients use it to disable paging further into the past on the Elo history chart.
+        `earliestCreatedAt` is null when the user has no singles matches.
+      operationId: getMySinglesRatingHistoryBounds
+      responses:
+        "200":
+          description: Bounds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingHistoryBounds"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /api/me/ratings/doubles/history:
     get:
       tags: [ Ratings ]
@@ -910,6 +929,25 @@ paths:
                 $ref: "#/components/schemas/DoublesRatingHistoryPage"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/me/ratings/doubles/history/bounds:
+    get:
+      tags: [ Ratings ]
+      summary: Earliest doubles rating-history bound for current user
+      description: |
+        Returns the oldest doubles match `createdAt` across all pairs of the current user.
+        Clients use it to disable paging further into the past on the Elo history chart.
+        `earliestCreatedAt` is null when the user has no doubles matches.
+      operationId: getMyDoublesRatingHistoryBounds
+      responses:
+        "200":
+          description: Bounds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingHistoryBounds"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -1558,6 +1596,20 @@ components:
           items:
             $ref: "#/components/schemas/RatingHistoryPoint"
       required: [ items ]
+
+    RatingHistoryBounds:
+      type: object
+      additionalProperties: false
+      description: |
+        Lower time bound for rating-history chart paging.
+        `earliestCreatedAt` is the oldest match time available for the current user.
+      properties:
+        earliestCreatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Oldest match createdAt; null when the user has no matches yet
+      required: [ earliestCreatedAt ]
 
     DoublesRatingHistoryPoint:
       type: object

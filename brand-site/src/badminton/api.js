@@ -220,6 +220,14 @@ export async function listMyDoublesRatingHistory({ startTime, endTime } = {}) {
   return apiRequest(`/api/me/ratings/doubles/history${query ? `?${query}` : ""}`);
 }
 
+export async function getMySinglesRatingHistoryBounds() {
+  return apiRequest("/api/me/ratings/singles/history/bounds");
+}
+
+export async function getMyDoublesRatingHistoryBounds() {
+  return apiRequest("/api/me/ratings/doubles/history/bounds");
+}
+
 export async function getMyGamesStats() {
   return apiRequest("/api/me/games-stats");
 }
