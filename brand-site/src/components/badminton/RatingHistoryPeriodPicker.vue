@@ -18,7 +18,11 @@
       <input
         v-model="draft"
         class="periodInput"
-        :class="{ active: isCustomActive, invalid: showInvalid }"
+        :class="{
+          active: isCustomActive,
+          invalid: showInvalid,
+          empty: isEmptyDraft,
+        }"
         type="text"
         maxlength="6"
         :disabled="disabled"
@@ -82,6 +86,9 @@ export default defineComponent({
     isCustomActive() {
       return !this.presets.some((opt) => opt.id === this.modelValue);
     },
+    isEmptyDraft() {
+      return !String(this.draft || "").trim();
+    },
   },
   watch: {
     modelValue(next) {
@@ -133,7 +140,7 @@ export default defineComponent({
       this.hideTimer = setTimeout(() => {
         this.hideTimer = null;
         this.hintVisible = false;
-      }, 1600);
+      }, 2000);
     },
     onFocus() {
       this.showInvalid = false;
@@ -194,27 +201,35 @@ export default defineComponent({
   position: relative;
   display: inline-flex;
   margin: 0;
+  z-index: 2;
 }
 .periodInput {
-  width: 48px;
-  border: none;
+  width: 56px;
+  border: 1.5px solid transparent;
   outline: none;
   background: transparent;
   color: #4F3DFF;
   border-radius: 999px;
-  padding: 8px 10px;
+  padding: 7px 10px;
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   text-align: center;
   box-sizing: border-box;
 }
+.periodInput.empty:not(:focus):not(.active):not(.invalid) {
+  border-color: rgba(79, 61, 255, 0.28);
+  border-style: dashed;
+  background: rgba(79, 61, 255, 0.04);
+}
 .periodInput.active {
   background: #4F3DFF;
+  border-color: #4F3DFF;
   color: white;
 }
 .periodInput.invalid {
   background: #ffe6e6;
+  border-color: #ffb3b3;
   color: #b00020;
 }
 .periodInput:disabled {
@@ -224,31 +239,32 @@ export default defineComponent({
 .hintBubble {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 10px);
   transform: translateX(-50%);
-  z-index: 5;
-  max-width: 220px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #2a2a3a;
+  z-index: 20;
+  width: max-content;
+  max-width: min(260px, 70vw);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #1f1c33;
   color: #fff;
   font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.35;
   white-space: normal;
   text-align: center;
   pointer-events: none;
-  box-shadow: 0 6px 18px rgba(20, 16, 48, 0.22);
+  box-shadow: 0 10px 24px rgba(20, 16, 48, 0.28);
 }
-.hintBubble::after {
+.hintBubble::before {
   content: "";
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: #2a2a3a;
+  border: 7px solid transparent;
+  border-bottom-color: #1f1c33;
 }
 .srOnly {
   position: absolute;
@@ -277,20 +293,26 @@ export default defineComponent({
   .periodInput {
     color: #c7bcff;
   }
+  .periodInput.empty:not(:focus):not(.active):not(.invalid) {
+    border-color: rgba(199, 188, 255, 0.35);
+    background: rgba(199, 188, 255, 0.06);
+  }
   .periodInput.active {
     background: #4F3DFF;
+    border-color: #4F3DFF;
     color: white;
   }
   .periodInput.invalid {
     background: #4a1f1f;
+    border-color: #8e3c3c;
     color: #ffd6d6;
   }
   .hintBubble {
-    background: #1c1b24;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    background: #0f0e16;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   }
-  .hintBubble::after {
-    border-top-color: #1c1b24;
+  .hintBubble::before {
+    border-bottom-color: #0f0e16;
   }
 }
 </style>

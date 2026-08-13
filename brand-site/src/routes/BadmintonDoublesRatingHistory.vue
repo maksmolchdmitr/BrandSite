@@ -254,6 +254,7 @@ export default defineComponent({
   gap: 12px;
   flex-wrap: wrap;
   min-width: 0;
+  overflow: visible;
 }
 .headerActions {
   display: flex;
@@ -262,6 +263,9 @@ export default defineComponent({
   flex-wrap: wrap;
   justify-content: flex-end;
   min-width: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 3;
 }
 .cardTitle {
   font-family: var(--font-display);
