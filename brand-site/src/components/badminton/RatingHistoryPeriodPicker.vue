@@ -236,7 +236,8 @@ export default defineComponent({
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
   pointer-events: none;
   box-shadow: 0 6px 18px rgba(20, 16, 48, 0.22);
 }
