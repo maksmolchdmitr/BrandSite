@@ -95,7 +95,9 @@ import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import {
+  approxRatingHistoryPeriodFromMs,
   ratingHistoryPeriodMs,
+  ratingHistoryShownPeriodMs,
   ratingHistoryShownPeriodPercent,
   SINGLES_RATING_HISTORY_SAFETY_CAP,
 } from "@/badminton/ratingHistory.js";
@@ -208,12 +210,24 @@ export default defineComponent({
           endTime: this.historyEndTime || undefined,
         });
         this.historyPoints = page?.items || [];
+        this.syncCustomPeriodToShown();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.ratings.historyErrLoad");
         this.historyPoints = [];
       } finally {
         this.loading = false;
       }
+    },
+    syncCustomPeriodToShown() {
+      if (this.historyPoints.length < SINGLES_RATING_HISTORY_SAFETY_CAP) return;
+      const shownMs = ratingHistoryShownPeriodMs(
+        this.historyPoints,
+        this.historyStartTime,
+        this.historyEndTime,
+      );
+      const approx = approxRatingHistoryPeriodFromMs(shownMs);
+      if (!approx || approx.id === this.historyPeriod) return;
+      this.historyPeriod = setRatingHistoryPeriod(approx.id);
     },
     async goPrevHistory() {
       if (!this.historyStartTime) return;

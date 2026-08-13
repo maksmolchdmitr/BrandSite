@@ -44,11 +44,11 @@ export function ratingHistoryPeriodMs(periodId, fallbackMs = 30 * DAY_MS) {
 }
 
 /**
- * Share of the requested window covered up to the latest returned point.
- * Matches oldest-first safety-cap (right edge of the chart is cut when truncated).
- * @returns {number | null} integer 1..100, or null if not computable
+ * Duration of the returned series within the requested window (oldest-first cap:
+ * from window start to the latest returned point).
+ * @returns {number | null} milliseconds, or null if not computable
  */
-export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
+export function ratingHistoryShownPeriodMs(points, startTime, endTime) {
   const startMs = Date.parse(startTime);
   const endMs = endTime == null || endTime === ""
     ? Date.now()
@@ -63,8 +63,62 @@ export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
   }
   if (!Number.isFinite(lastMs)) return null;
   const clampedLast = Math.min(Math.max(lastMs, startMs), endMs);
-  const percent = Math.round((100 * (clampedLast - startMs)) / (endMs - startMs));
+  const shownMs = clampedLast - startMs;
+  return shownMs > 0 ? shownMs : null;
+}
+
+/**
+ * Share of the requested window covered by {@link ratingHistoryShownPeriodMs}.
+ * @returns {number | null} integer 1..100, or null if not computable
+ */
+export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
+  const startMs = Date.parse(startTime);
+  const endMs = endTime == null || endTime === ""
+    ? Date.now()
+    : Date.parse(endTime);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    return null;
+  }
+  const shownMs = ratingHistoryShownPeriodMs(points, startTime, endTime);
+  if (shownMs == null) return null;
+  const percent = Math.round((100 * shownMs) / (endMs - startMs));
   return Math.min(100, Math.max(1, percent));
+}
+
+/**
+ * Rounds a duration to a short period token (`3m`, `2w`, `14d`, …).
+ * @returns {{ id: string, ms: number } | null}
+ */
+export function approxRatingHistoryPeriodFromMs(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  const days = Math.max(1, Math.round(ms / DAY_MS));
+  const candidates = [
+    { unit: "y", size: UNIT_DAYS.y },
+    { unit: "m", size: UNIT_DAYS.m },
+    { unit: "w", size: UNIT_DAYS.w },
+    { unit: "d", size: UNIT_DAYS.d },
+  ];
+  let best = null;
+  for (const { unit, size } of candidates) {
+    const amount = Math.max(1, Math.round(days / size));
+    if (amount > 999) continue;
+    const approxDays = amount * size;
+    const err = Math.abs(approxDays - days) / days;
+    const candidate = {
+      id: `${amount}${unit}`,
+      ms: approxDays * DAY_MS,
+      err,
+      size,
+    };
+    if (
+      !best
+      || err < best.err - 0.02
+      || (Math.abs(err - best.err) <= 0.02 && size > best.size)
+    ) {
+      best = candidate;
+    }
+  }
+  return best ? { id: best.id, ms: best.ms } : null;
 }
 
 const SERIES_COLORS = [

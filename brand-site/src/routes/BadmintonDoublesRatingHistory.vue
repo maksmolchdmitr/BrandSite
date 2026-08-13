@@ -89,8 +89,10 @@ import RatingHistoryPeriodPicker from "@/components/badminton/RatingHistoryPerio
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import {
+  approxRatingHistoryPeriodFromMs,
   DOUBLES_RATING_HISTORY_SAFETY_CAP,
   ratingHistoryPeriodMs,
+  ratingHistoryShownPeriodMs,
   ratingHistoryShownPeriodPercent,
 } from "@/badminton/ratingHistory.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
