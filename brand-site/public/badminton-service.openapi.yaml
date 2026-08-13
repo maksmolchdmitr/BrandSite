@@ -877,6 +877,42 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /api/me/ratings/doubles/history:
+    get:
+      tags: [ Ratings ]
+      summary: Doubles Elo history for current user across all pairs in a time window
+      description: |
+        Returns chronological Elo points for doubles matches of all pairs where the current
+        user is a member, in `[startTime, endTime)` (`endTime` omitted → open-ended up to now).
+
+        Each item includes `teamId` and partner identity so clients can draw one colored series
+        per pair. Server applies a fixed safety-cap of **200** points per response (oldest-first
+        via match `created_at ASC`). There is no client `limit` parameter.
+        If the response contains exactly 200 items, the series for this window may be truncated.
+      operationId: listMyDoublesRatingHistory
+      parameters:
+        - in: query
+          name: startTime
+          required: true
+          description: Inclusive lower bound of the time window
+          schema: { type: string, format: date-time }
+        - in: query
+          name: endTime
+          required: false
+          description: Exclusive upper bound; omit for open-ended window up to now
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Doubles rating history points (at most 200), chronological
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoublesRatingHistoryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /api/groups/{groupId}/ratings/singles:
     get:
       tags: [ Ratings ]
@@ -1521,4 +1557,32 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RatingHistoryPoint"
+      required: [ items ]
+
+    DoublesRatingHistoryPoint:
+      type: object
+      additionalProperties: false
+      description: |
+        Doubles Elo after the match for the caller's pair; `elo` is null if not rated yet.
+      properties:
+        matchId: { type: string }
+        teamId: { type: string, description: double_team id (series key) }
+        partnerUserId: { type: string }
+        partnerName: { type: string }
+        partnerUsername: { type: string }
+        elo:
+          type: number
+          format: double
+          description: Pair Elo after this match; null when rating is not calculated yet
+        createdAt: { type: string, format: date-time }
+      required: [ matchId, teamId, partnerUserId, partnerName, partnerUsername, createdAt ]
+
+    DoublesRatingHistoryPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DoublesRatingHistoryPoint"
       required: [ items ]

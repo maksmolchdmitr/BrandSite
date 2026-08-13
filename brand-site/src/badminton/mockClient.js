@@ -4,7 +4,10 @@ import {
   cachedSearchParticipants,
   invalidateParticipantSearchCache,
 } from "@/badminton/participantSearchCache.js";
-import {SINGLES_RATING_HISTORY_SAFETY_CAP} from "@/badminton/ratingHistory.js";
+import {
+  DOUBLES_RATING_HISTORY_SAFETY_CAP,
+  SINGLES_RATING_HISTORY_SAFETY_CAP,
+} from "@/badminton/ratingHistory.js";
 import {clearTgAutoLoginTried, clearLocalAuthState, clearTelegramOAuthSession, markSkipTgAutoLogin} from "@/badminton/apiHelpers.js";
 
 function delay(ms = 180) {
@@ -190,6 +193,63 @@ function calcSinglesRatingHistory(db, userId, { startTime, endTime } = {}) {
       createdAt: match.createdAt,
     });
     if (items.length >= SINGLES_RATING_HISTORY_SAFETY_CAP) {
+      break;
+    }
+  }
+  return { items };
+}
+
+function calcDoublesRatingHistory(db, userId, { startTime, endTime } = {}) {
+  const myParticipants = db.participants.filter(p => p.userId === userId);
+  const myPIds = new Set(myParticipants.map(p => p.id));
+  const startMs = startTime ? new Date(startTime).getTime() : Number.NEGATIVE_INFINITY;
+  const endMs = endTime ? new Date(endTime).getTime() : Number.POSITIVE_INFINITY;
+  const chronological = (db.matches || [])
+    .filter(m => m.kind === "doubles")
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+
+  const K = 8;
+  const eloByPartner = new Map();
+  const items = [];
+  for (const match of chronological) {
+    const a = match.teamA || [];
+    const b = match.teamB || [];
+    const myInA = a.some(id => myPIds.has(id));
+    const myInB = b.some(id => myPIds.has(id));
+    if (!myInA && !myInB) continue;
+
+    const myTeam = myInA ? a : b;
+    const partnerPid = myTeam.find(id => !myPIds.has(id));
+    if (!partnerPid) continue;
+    const partner = db.participants.find(p => p.id === partnerPid);
+    const partnerUser = partner?.userId ? db.users.find(u => u.id === partner.userId) : null;
+    const partnerUserId = partner?.userId || `unlinked:${partnerPid}`;
+    const partnerName = partner?.name || partnerPid;
+    const partnerUsername = partnerUser?.username || partner?.username || "";
+    const teamId = [userId, partnerUserId].sort().join(":");
+
+    const win = didTeamWin(match, myInA ? "A" : "B");
+    const cur = eloByPartner.get(partnerUserId) || { wins: 0, losses: 0 };
+    if (win === true) cur.wins += 1;
+    else if (win === false) cur.losses += 1;
+    eloByPartner.set(partnerUserId, cur);
+    const elo = Math.round(1100 + K * (cur.wins - cur.losses));
+
+    const createdMs = new Date(match.createdAt).getTime();
+    if (Number.isNaN(createdMs) || createdMs < startMs || createdMs >= endMs) {
+      continue;
+    }
+    items.push({
+      matchId: match.id,
+      teamId,
+      partnerUserId,
+      partnerName,
+      partnerUsername,
+      elo,
+      createdAt: match.createdAt,
+    });
+    if (items.length >= DOUBLES_RATING_HISTORY_SAFETY_CAP) {
       break;
     }
   }
@@ -804,6 +864,19 @@ export const mockClient = {
       ? calcSinglesRatingHistory(db, u.id, { startTime, endTime })
       : { items: [] };
     logResponse("GET", "/api/me/ratings/singles/history", result);
+    return result;
+  },
+
+  async listMyDoublesRatingHistory({ startTime, endTime } = {}) {
+    logRequest("GET", "/api/me/ratings/doubles/history", { startTime, endTime });
+    await delay();
+    const db = loadDb();
+    const userId = getLoggedInUserId() || "u_alex";
+    const u = db.users.find(x => x.id === userId) || db.users[0];
+    const result = u
+      ? calcDoublesRatingHistory(db, u.id, { startTime, endTime })
+      : { items: [] };
+    logResponse("GET", "/api/me/ratings/doubles/history", result);
     return result;
   },
 

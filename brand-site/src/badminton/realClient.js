@@ -41,6 +41,10 @@ export const realClient = {
     return api.listMySinglesRatingHistory({ startTime, endTime });
   },
 
+  async listMyDoublesRatingHistory({ startTime, endTime } = {}) {
+    return api.listMyDoublesRatingHistory({ startTime, endTime });
+  },
+
   async getMyGamesStats() {
     return api.getMyGamesStats();
   },

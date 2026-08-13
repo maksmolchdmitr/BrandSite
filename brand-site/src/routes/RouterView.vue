@@ -13,6 +13,7 @@ import BadmintonGroups from "@/routes/BadmintonGroups.vue";
 import BadmintonGroup from "@/routes/BadmintonGroup.vue";
 import BadmintonRatings from "@/routes/BadmintonRatings.vue";
 import BadmintonRatingHistory from "@/routes/BadmintonRatingHistory.vue";
+import BadmintonDoublesRatingHistory from "@/routes/BadmintonDoublesRatingHistory.vue";
 import BadmintonGames from "@/routes/BadmintonGames.vue";
 import BadmintonProfile from "@/routes/BadmintonProfile.vue";
 import {
@@ -194,6 +195,8 @@ export default defineComponent({
           return markRaw(BadmintonRatings);
         } else if (this.section === 'rating-history') {
           return markRaw(BadmintonRatingHistory);
+        } else if (this.section === 'doubles-rating-history') {
+          return markRaw(BadmintonDoublesRatingHistory);
         } else if (this.section === 'profile') {
           return markRaw(BadmintonProfile);
         } else if (this.section === "games") {

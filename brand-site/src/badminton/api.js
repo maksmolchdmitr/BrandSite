@@ -212,6 +212,14 @@ export async function listMySinglesRatingHistory({ startTime, endTime } = {}) {
   return apiRequest(`/api/me/ratings/singles/history${query ? `?${query}` : ""}`);
 }
 
+export async function listMyDoublesRatingHistory({ startTime, endTime } = {}) {
+  const params = new URLSearchParams();
+  if (startTime) params.append("startTime", startTime);
+  if (endTime) params.append("endTime", endTime);
+  const query = params.toString();
+  return apiRequest(`/api/me/ratings/doubles/history${query ? `?${query}` : ""}`);
+}
+
 export async function getMyGamesStats() {
   return apiRequest("/api/me/games-stats");
 }

@@ -15,6 +15,13 @@
       <span class="ctaText">{{ $t("badminton.ratings.historyNav") }}</span>
     </RouterLink>
     <RouterLink
+      v-if="current !== 'doubles-rating-history'"
+      class="cta secondary cta-doubles-rating-history"
+      to="/?page=badminton&section=doubles-rating-history"
+    >
+      <span class="ctaText">{{ $t("badminton.ratings.doublesHistoryNav") }}</span>
+    </RouterLink>
+    <RouterLink
       v-if="current !== 'games'"
       class="cta secondary cta-games-hub"
       :to="gamesTo"
@@ -59,7 +66,7 @@ export default defineComponent({
     current: {
       type: String,
       required: true,
-      validator: (v) => ["ratings", "rating-history", "games", "profile", "groups"].includes(v),
+      validator: (v) => ["ratings", "rating-history", "doubles-rating-history", "games", "profile", "groups"].includes(v),
     },
     disabled: { type: Boolean, default: false },
   },
@@ -112,6 +119,14 @@ export default defineComponent({
 }
 .cta-rating-history.secondary .ctaText {
   color: #C2185B;
+}
+
+.cta-doubles-rating-history.secondary {
+  background-color: #E0F7FA;
+  border-color: #00ACC1;
+}
+.cta-doubles-rating-history.secondary .ctaText {
+  color: #00838F;
 }
 
 .cta-games-hub.secondary {
