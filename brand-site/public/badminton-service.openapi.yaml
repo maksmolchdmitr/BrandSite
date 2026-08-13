@@ -849,9 +849,8 @@ paths:
         Returns chronological Elo points for singles matches in `[startTime, endTime)`
         (`endTime` omitted → open-ended up to now).
 
-        Server applies a fixed safety-cap of **200** points per response (newest matches in
-        the window; response items are chronological via match `created_at ASC`). There is no
-        client `limit` parameter.
+        Server applies a fixed safety-cap of **200** points per response (oldest-first within
+        the window via match `created_at ASC`). There is no client `limit` parameter.
         If the response contains exactly 200 items, the series for this window may be truncated —
         clients should warn the user and/or narrow the time window.
       operationId: listMySinglesRatingHistory
@@ -887,9 +886,8 @@ paths:
         user is a member, in `[startTime, endTime)` (`endTime` omitted → open-ended up to now).
 
         Each item includes `teamId` and partner identity so clients can draw one colored series
-        per pair. Server applies a fixed safety-cap of **200** points per response (newest
-        matches in the window; response items are chronological). There is no client `limit`
-        parameter.
+        per pair. Server applies a fixed safety-cap of **200** points per response (oldest-first
+        via match `created_at ASC`). There is no client `limit` parameter.
         If the response contains exactly 200 items, the series for this window may be truncated.
       operationId: listMyDoublesRatingHistory
       parameters:

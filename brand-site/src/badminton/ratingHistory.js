@@ -44,8 +44,8 @@ export function ratingHistoryPeriodMs(periodId, fallbackMs = 30 * DAY_MS) {
 }
 
 /**
- * Share of the requested window that lies at/after the earliest returned point.
- * Meaningful when the safety-cap keeps the newest points (left edge of the chart is cut).
+ * Share of the requested window covered up to the latest returned point.
+ * Matches oldest-first safety-cap (right edge of the chart is cut when truncated).
  * @returns {number | null} integer 1..100, or null if not computable
  */
 export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
@@ -56,14 +56,14 @@ export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
     return null;
   }
-  let firstMs = Infinity;
+  let lastMs = -Infinity;
   for (const point of points || []) {
     const t = Date.parse(point?.createdAt);
-    if (Number.isFinite(t) && t < firstMs) firstMs = t;
+    if (Number.isFinite(t) && t > lastMs) lastMs = t;
   }
-  if (!Number.isFinite(firstMs)) return null;
-  const clampedFirst = Math.min(Math.max(firstMs, startMs), endMs);
-  const percent = Math.round((100 * (endMs - clampedFirst)) / (endMs - startMs));
+  if (!Number.isFinite(lastMs)) return null;
+  const clampedLast = Math.min(Math.max(lastMs, startMs), endMs);
+  const percent = Math.round((100 * (clampedLast - startMs)) / (endMs - startMs));
   return Math.min(100, Math.max(1, percent));
 }
 
