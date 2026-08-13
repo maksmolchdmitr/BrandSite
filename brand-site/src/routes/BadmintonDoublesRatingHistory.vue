@@ -47,7 +47,10 @@
         </div>
 
         <div v-if="historyTruncated" class="warnBox">
-          {{ $t('badminton.ratings.historyTruncated', { max: historySafetyCap }) }}
+          {{ $t('badminton.ratings.historyTruncated', {
+            max: historySafetyCap,
+            percent: historyShownPeriodPercent,
+          }) }}
         </div>
 
         <DoublesRatingHistoryChart
@@ -88,6 +91,7 @@ import { badmintonClient } from "@/badminton/client.js";
 import {
   DOUBLES_RATING_HISTORY_SAFETY_CAP,
   ratingHistoryPeriodMs,
+  ratingHistoryShownPeriodPercent,
 } from "@/badminton/ratingHistory.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 import {
@@ -132,6 +136,13 @@ export default defineComponent({
     },
     historyTruncated() {
       return this.historyPoints.length >= DOUBLES_RATING_HISTORY_SAFETY_CAP;
+    },
+    historyShownPeriodPercent() {
+      return ratingHistoryShownPeriodPercent(
+        this.historyPoints,
+        this.historyStartTime,
+        this.historyEndTime,
+      ) ?? 100;
     },
     historyWindowLabel() {
       if (!this.historyStartTime) return "";

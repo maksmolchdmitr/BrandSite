@@ -43,6 +43,30 @@ export function ratingHistoryPeriodMs(periodId, fallbackMs = 30 * DAY_MS) {
   return parseRatingHistoryPeriod(periodId)?.ms ?? fallbackMs;
 }
 
+/**
+ * Share of the requested window that lies at/after the earliest returned point.
+ * Meaningful when the safety-cap keeps the newest points (left edge of the chart is cut).
+ * @returns {number | null} integer 1..100, or null if not computable
+ */
+export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
+  const startMs = Date.parse(startTime);
+  const endMs = endTime == null || endTime === ""
+    ? Date.now()
+    : Date.parse(endTime);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    return null;
+  }
+  let firstMs = Infinity;
+  for (const point of points || []) {
+    const t = Date.parse(point?.createdAt);
+    if (Number.isFinite(t) && t < firstMs) firstMs = t;
+  }
+  if (!Number.isFinite(firstMs)) return null;
+  const clampedFirst = Math.min(Math.max(firstMs, startMs), endMs);
+  const percent = Math.round((100 * (endMs - clampedFirst)) / (endMs - startMs));
+  return Math.min(100, Math.max(1, percent));
+}
+
 const SERIES_COLORS = [
   "#4F3DFF",
   "#E91E63",

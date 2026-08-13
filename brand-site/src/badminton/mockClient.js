@@ -192,9 +192,9 @@ function calcSinglesRatingHistory(db, userId, { startTime, endTime } = {}) {
       elo,
       createdAt: match.createdAt,
     });
-    if (items.length >= SINGLES_RATING_HISTORY_SAFETY_CAP) {
-      break;
-    }
+  }
+  if (items.length > SINGLES_RATING_HISTORY_SAFETY_CAP) {
+    return { items: items.slice(-SINGLES_RATING_HISTORY_SAFETY_CAP) };
   }
   return { items };
 }
@@ -253,9 +253,9 @@ function calcDoublesRatingHistory(db, userId, { startTime, endTime } = {}) {
       elo,
       createdAt: match.createdAt,
     });
-    if (items.length >= DOUBLES_RATING_HISTORY_SAFETY_CAP) {
-      break;
-    }
+  }
+  if (items.length > DOUBLES_RATING_HISTORY_SAFETY_CAP) {
+    return { items: items.slice(-DOUBLES_RATING_HISTORY_SAFETY_CAP) };
   }
   return { items };
 }
