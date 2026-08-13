@@ -64,6 +64,20 @@
               :style="dotStyle(point)"
             />
             <div
+              v-for="label in selectedPointLabels"
+              :key="'label-' + label.key"
+              class="pointLabel"
+              :class="{ nearTop: label.nearTop }"
+              :style="pointLabelStyle(label)"
+            >
+              <span class="pointLabelElo">{{ formatElo(label.elo) }}</span>
+              <span
+                v-if="label.delta != null && label.delta !== 0"
+                class="pointLabelDelta"
+                :class="label.delta > 0 ? 'up' : 'down'"
+              >{{ label.delta > 0 ? '+' : '' }}{{ formatElo(label.delta) }}</span>
+            </div>
+            <div
               v-if="hoverPoint"
               class="tooltip"
               :style="tooltipStyle"
@@ -288,6 +302,25 @@ export default defineComponent({
     hasSelection() {
       return !!this.selectedTeamId;
     },
+    selectedPointLabels() {
+      if (!this.selectedTeamId) return [];
+      const series = this.seriesPlotted.find((item) => item.teamId === this.selectedTeamId);
+      if (!series) return [];
+      const rated = series.points.filter((point) => !point.pending && point.elo != null);
+      return rated.map((point, index) => {
+        const prev = index > 0 ? rated[index - 1] : null;
+        const delta = prev != null ? point.elo - prev.elo : null;
+        return {
+          key: point.key,
+          elo: point.elo,
+          delta,
+          color: point.color,
+          leftPercent: point.leftPercent,
+          topPercent: point.topPercent,
+          nearTop: point.topPercent < 18,
+        };
+      });
+    },
     hoverPoint() {
       if (this.hoverKey == null) return null;
       return this.flatPlotted.find((point) => point.key === this.hoverKey) || null;
@@ -367,6 +400,13 @@ export default defineComponent({
     onPlotClick() {
       if (!this.hoverPoint?.teamId) return;
       this.toggleSeries(this.hoverPoint.teamId);
+    },
+    pointLabelStyle(label) {
+      return {
+        left: `${label.leftPercent}%`,
+        top: `${label.topPercent}%`,
+        color: label.color,
+      };
     },
     dotStyle(point) {
       const focused = this.hoverKey === point.key || this.isSeriesSelected(point.teamId);
@@ -554,6 +594,36 @@ export default defineComponent({
   background: rgba(79, 61, 255, 0.12) !important;
   border-style: solid;
 }
+.pointLabel {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+  z-index: 3;
+  font-family: var(--font-display);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92),
+    0 0 8px rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+.pointLabel.nearTop {
+  transform: translate(-50%, 12px);
+}
+.pointLabelElo {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.pointLabelDelta {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.pointLabelDelta.up { color: #1f9d57; }
+.pointLabelDelta.down { color: #d64545; }
 .crosshair {
   stroke-width: 1.5;
   stroke-dasharray: 5 5;
