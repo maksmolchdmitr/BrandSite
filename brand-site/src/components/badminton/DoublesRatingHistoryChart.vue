@@ -14,7 +14,7 @@
           </span>
         </div>
         <div class="plotCol">
-          <div ref="plot" class="plot" @mousemove="onMove">
+          <div ref="plot" class="plot" @mousemove="onMove" @click="onPlotClick">
             <svg
               class="svg"
               :viewBox="`0 0 ${width} ${height}`"
@@ -33,6 +33,10 @@
                 v-for="series in seriesPlotted"
                 :key="'line-' + series.teamId"
                 class="line"
+                :class="{
+                  dimmed: isSeriesDimmed(series.teamId),
+                  selected: isSeriesSelected(series.teamId),
+                }"
                 fill="none"
                 :points="series.linePoints"
                 :stroke="series.color"
@@ -54,6 +58,8 @@
               :class="{
                 active: hoverKey === point.key,
                 hollow: point.pending,
+                dimmed: isSeriesDimmed(point.teamId),
+                selected: isSeriesSelected(point.teamId),
               }"
               :style="dotStyle(point)"
             />
@@ -93,10 +99,17 @@
         </div>
       </div>
       <div v-if="legendItems.length" class="legend">
-        <span
+        <button
           v-for="item in legendItems"
           :key="item.teamId"
+          type="button"
           class="legendItem"
+          :class="{
+            selected: isSeriesSelected(item.teamId),
+            dimmed: isSeriesDimmed(item.teamId),
+          }"
+          :aria-pressed="isSeriesSelected(item.teamId)"
+          @click="toggleSeries(item.teamId)"
         >
           <span class="legendAvatarRing" :style="{ borderColor: item.color }">
             <PersonChip
@@ -107,7 +120,7 @@
               :photo-crop="item.partnerPhotoCrop"
             />
           </span>
-        </span>
+        </button>
         <span v-if="pendingCount" class="legendItem pendingItem">
           <span class="legendDot hollow" />
           <span>{{ pendingLabel }}</span>
@@ -152,7 +165,14 @@ export default defineComponent({
       width: WIDTH,
       height: HEIGHT,
       hoverKey: null,
+      selectedTeamId: null,
     };
+  },
+  watch: {
+    points() {
+      this.selectedTeamId = null;
+      this.hoverKey = null;
+    },
   },
   computed: {
     hasPoints() {
@@ -244,13 +264,29 @@ export default defineComponent({
         };
       });
 
+      if (this.selectedTeamId) {
+        series.sort((a, b) => {
+          if (a.teamId === this.selectedTeamId) return 1;
+          if (b.teamId === this.selectedTeamId) return -1;
+          return 0;
+        });
+      }
+
       return { flat, series, minElo, maxElo };
     },
     flatPlotted() {
-      return this.layout.flat;
+      const flat = this.layout.flat;
+      if (!this.selectedTeamId) return flat;
+      return [
+        ...flat.filter((point) => point.teamId !== this.selectedTeamId),
+        ...flat.filter((point) => point.teamId === this.selectedTeamId),
+      ];
     },
     seriesPlotted() {
       return this.layout.series;
+    },
+    hasSelection() {
+      return !!this.selectedTeamId;
     },
     hoverPoint() {
       if (this.hoverKey == null) return null;
@@ -319,8 +355,22 @@ export default defineComponent({
   },
   methods: {
     formatElo,
+    isSeriesSelected(teamId) {
+      return this.selectedTeamId != null && this.selectedTeamId === teamId;
+    },
+    isSeriesDimmed(teamId) {
+      return this.selectedTeamId != null && this.selectedTeamId !== teamId;
+    },
+    toggleSeries(teamId) {
+      this.selectedTeamId = this.selectedTeamId === teamId ? null : teamId;
+    },
+    onPlotClick() {
+      if (!this.hoverPoint?.teamId) return;
+      this.toggleSeries(this.hoverPoint.teamId);
+    },
     dotStyle(point) {
-      const size = this.hoverKey === point.key
+      const focused = this.hoverKey === point.key || this.isSeriesSelected(point.teamId);
+      const size = focused
         ? (point.pending ? 12 : 14)
         : (point.pending ? 9 : 11);
       return {
@@ -344,7 +394,11 @@ export default defineComponent({
       const svgY = ratioY * this.height;
       let bestKey = null;
       let bestDistance = Infinity;
-      this.flatPlotted.forEach((point) => {
+      const candidates = this.hasSelection
+        ? this.flatPlotted.filter((point) => point.teamId === this.selectedTeamId)
+        : this.flatPlotted;
+      const pool = candidates.length ? candidates : this.flatPlotted;
+      pool.forEach((point) => {
         const dx = point.x - svgX;
         const dy = point.y - svgY;
         const distance = dx * dx + dy * dy;
@@ -456,6 +510,15 @@ export default defineComponent({
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+  transition: opacity 0.15s ease, stroke-width 0.15s ease;
+}
+.line.dimmed {
+  opacity: 0.18;
+  stroke-width: 2.5;
+}
+.line.selected {
+  opacity: 1;
+  stroke-width: 5;
 }
 .dot {
   position: absolute;
@@ -467,7 +530,15 @@ export default defineComponent({
   pointer-events: none;
   z-index: 1;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
-  transition: width 0.12s ease, height 0.12s ease;
+  transition: width 0.12s ease, height 0.12s ease, opacity 0.15s ease;
+}
+.dot.dimmed {
+  opacity: 0.18;
+}
+.dot.selected {
+  opacity: 1;
+  z-index: 2;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(28, 26, 46, 0.18);
 }
 .dot.hollow {
   background: transparent !important;
@@ -526,6 +597,26 @@ export default defineComponent({
   align-items: center;
   gap: 8px;
   min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+button.legendItem:hover {
+  transform: translateY(-1px);
+}
+button.legendItem.dimmed {
+  opacity: 0.35;
+}
+button.legendItem.selected {
+  opacity: 1;
+}
+button.legendItem.selected .legendAvatarRing {
+  box-shadow: 0 0 0 2px rgba(79, 61, 255, 0.22);
 }
 .legendAvatarRing {
   display: inline-flex;
@@ -536,6 +627,7 @@ export default defineComponent({
   background: rgba(79, 61, 255, 0.04);
   max-width: 100%;
   box-sizing: border-box;
+  transition: box-shadow 0.15s ease;
 }
 .legendPerson {
   min-width: 0;
