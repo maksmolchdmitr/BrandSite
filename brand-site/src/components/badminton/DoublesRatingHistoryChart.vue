@@ -808,6 +808,13 @@ button.legendItem.selected .legendAvatarRing {
   .legendAvatarRing {
     background: rgba(255, 255, 255, 0.04);
   }
+  .pointLabel {
+    text-shadow:
+      0 1px 0 rgba(20, 18, 32, 0.95),
+      0 0 10px rgba(20, 18, 32, 0.85);
+  }
+  .pointLabelDelta.up { color: #7dffa6; }
+  .pointLabelDelta.down { color: #ff9b9b; }
   .tooltip {
     background: #12111a;
   }
