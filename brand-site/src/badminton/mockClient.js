@@ -227,6 +227,8 @@ function calcDoublesRatingHistory(db, userId, { startTime, endTime } = {}) {
     const partnerUserId = partner?.userId || `unlinked:${partnerPid}`;
     const partnerName = partner?.name || partnerPid;
     const partnerUsername = partnerUser?.username || partner?.username || "";
+    const partnerPhotoUrl = partnerUser?.photoUrl || partner?.photoUrl || undefined;
+    const partnerPhotoCrop = partnerUser?.photoCrop || partner?.photoCrop || undefined;
     const teamId = [userId, partnerUserId].sort().join(":");
 
     const win = didTeamWin(match, myInA ? "A" : "B");
@@ -246,6 +248,8 @@ function calcDoublesRatingHistory(db, userId, { startTime, endTime } = {}) {
       partnerUserId,
       partnerName,
       partnerUsername,
+      partnerPhotoUrl,
+      partnerPhotoCrop,
       elo,
       createdAt: match.createdAt,
     });

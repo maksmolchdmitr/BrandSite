@@ -98,10 +98,17 @@
           :key="item.teamId"
           class="legendItem"
         >
-          <span class="legendDot" :style="{ background: item.color, borderColor: item.color }" />
-          <span>{{ item.label }}</span>
+          <span class="legendAvatarRing" :style="{ borderColor: item.color }">
+            <PersonChip
+              class="legendPerson"
+              :name="item.partnerName"
+              :username="item.partnerUsername"
+              :photo-url="item.partnerPhotoUrl"
+              :photo-crop="item.partnerPhotoCrop"
+            />
+          </span>
         </span>
-        <span v-if="pendingCount" class="legendItem">
+        <span v-if="pendingCount" class="legendItem pendingItem">
           <span class="legendDot hollow" />
           <span>{{ pendingLabel }}</span>
         </span>
@@ -114,6 +121,7 @@
 import { defineComponent } from "vue";
 import { formatElo } from "@/badminton/formatElo.js";
 import { colorForSeriesKey } from "@/badminton/ratingHistory.js";
+import PersonChip from "@/components/badminton/PersonChip.vue";
 
 const WIDTH = 1000;
 const HEIGHT = 360;
@@ -133,6 +141,7 @@ function partnerLabel(point) {
 
 export default defineComponent({
   name: "DoublesRatingHistoryChart",
+  components: { PersonChip },
   props: {
     points: { type: Array, default: () => [] },
     emptyText: { type: String, default: "" },
@@ -160,6 +169,10 @@ export default defineComponent({
           teamId: point.teamId,
           color: colorForSeriesKey(point.teamId),
           label: partnerLabel(point),
+          partnerName: point.partnerName || "—",
+          partnerUsername: point.partnerUsername || "",
+          partnerPhotoUrl: point.partnerPhotoUrl || "",
+          partnerPhotoCrop: point.partnerPhotoCrop || null,
         });
       }
       return [...map.values()];
@@ -512,6 +525,34 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.legendAvatarRing {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  padding: 2px 10px 2px 2px;
+  background: rgba(79, 61, 255, 0.04);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.legendPerson {
+  min-width: 0;
+}
+.legendPerson :deep(.avatar),
+.legendPerson :deep(.avatarFallback) {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+.legendPerson :deep(.personName) {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a2a3a;
+}
+.legendPerson :deep(.personUsername) {
+  font-size: 11px;
 }
 .legendDot {
   width: 10px;
@@ -524,6 +565,9 @@ export default defineComponent({
   background: transparent;
   border-color: #9a92ff;
   border-style: dashed;
+}
+.pendingItem {
+  opacity: 0.85;
 }
 .empty {
   font-family: var(--font-display);
@@ -595,6 +639,12 @@ export default defineComponent({
   .xLabel,
   .legend {
     color: #b8b5d0;
+  }
+  .legendPerson :deep(.personName) {
+    color: #e8e8e8;
+  }
+  .legendAvatarRing {
+    background: rgba(255, 255, 255, 0.04);
   }
   .tooltip {
     background: #12111a;

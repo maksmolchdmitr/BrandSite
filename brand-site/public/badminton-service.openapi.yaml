@@ -1570,6 +1570,11 @@ components:
         partnerUserId: { type: string }
         partnerName: { type: string }
         partnerUsername: { type: string }
+        partnerPhotoUrl:
+          type: string
+          description: Partner profile photo URL (if available)
+        partnerPhotoCrop:
+          $ref: "#/components/schemas/PhotoCrop"
         elo:
           type: number
           format: double
