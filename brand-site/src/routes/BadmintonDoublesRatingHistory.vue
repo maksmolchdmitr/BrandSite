@@ -194,8 +194,10 @@ export default defineComponent({
       try {
         const bounds = await badmintonClient.getMyDoublesRatingHistoryBounds();
         this.earliestCreatedAt = bounds?.earliestCreatedAt || null;
+        this.earliestBoundLoaded = true;
       } catch {
         this.earliestCreatedAt = null;
+        this.earliestBoundLoaded = false;
       }
     },
     async setHistoryPeriod(periodId) {
