@@ -21,7 +21,7 @@
               :disabled="loading"
               :aria-label="$t('badminton.ratings.historyPeriod')"
               :custom-label="$t('badminton.ratings.historyPeriodCustom')"
-              :placeholder="$t('badminton.ratings.historyPeriodPlaceholder')"
+              :hint="$t('badminton.ratings.historyPeriodHint')"
               @update:model-value="setHistoryPeriod"
             />
             <button class="btn secondary small" :disabled="loading" @click="loadHistory">
