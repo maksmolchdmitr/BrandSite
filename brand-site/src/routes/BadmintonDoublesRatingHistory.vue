@@ -200,12 +200,24 @@ export default defineComponent({
           endTime: this.historyEndTime || undefined,
         });
         this.historyPoints = page?.items || [];
+        this.syncCustomPeriodToShown();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.ratings.doublesHistoryErrLoad");
         this.historyPoints = [];
       } finally {
         this.loading = false;
       }
+    },
+    syncCustomPeriodToShown() {
+      if (this.historyPoints.length < DOUBLES_RATING_HISTORY_SAFETY_CAP) return;
+      const shownMs = ratingHistoryShownPeriodMs(
+        this.historyPoints,
+        this.historyStartTime,
+        this.historyEndTime,
+      );
+      const approx = approxRatingHistoryPeriodFromMs(shownMs);
+      if (!approx || approx.id === this.historyPeriod) return;
+      this.historyPeriod = setRatingHistoryPeriod(approx.id);
     },
     async goPrevHistory() {
       if (!this.historyStartTime) return;
