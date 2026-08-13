@@ -44,11 +44,11 @@ export function ratingHistoryPeriodMs(periodId, fallbackMs = 30 * DAY_MS) {
 }
 
 /**
- * Duration of the returned series within the requested window (oldest-first cap:
- * from window start to the latest returned point).
- * @returns {number | null} milliseconds, or null if not computable
+ * Earliest / latest createdAt among points, clamped to the requested window.
+ * Open-ended windows use Date.now() as the exclusive end.
+ * @returns {{ startMs: number, endMs: number, firstMs: number, lastMs: number } | null}
  */
-export function ratingHistoryShownPeriodMs(points, startTime, endTime) {
+export function ratingHistoryWindowPointBounds(points, startTime, endTime) {
   const startMs = Date.parse(startTime);
   const endMs = endTime == null || endTime === ""
     ? Date.now()
@@ -56,33 +56,69 @@ export function ratingHistoryShownPeriodMs(points, startTime, endTime) {
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
     return null;
   }
+  let firstMs = Infinity;
   let lastMs = -Infinity;
   for (const point of points || []) {
     const t = Date.parse(point?.createdAt);
-    if (Number.isFinite(t) && t > lastMs) lastMs = t;
+    if (!Number.isFinite(t)) continue;
+    if (t < firstMs) firstMs = t;
+    if (t > lastMs) lastMs = t;
   }
-  if (!Number.isFinite(lastMs)) return null;
-  const clampedLast = Math.min(Math.max(lastMs, startMs), endMs);
-  const shownMs = clampedLast - startMs;
+  if (!Number.isFinite(firstMs) || !Number.isFinite(lastMs)) return null;
+  return {
+    startMs,
+    endMs,
+    firstMs: Math.min(Math.max(firstMs, startMs), endMs),
+    lastMs: Math.min(Math.max(lastMs, startMs), endMs),
+  };
+}
+
+/**
+ * Covered duration from window start to the latest returned point (oldest-first cap).
+ * @returns {number | null} milliseconds
+ */
+export function ratingHistoryShownPeriodMs(points, startTime, endTime) {
+  const bounds = ratingHistoryWindowPointBounds(points, startTime, endTime);
+  if (!bounds) return null;
+  const shownMs = bounds.lastMs - bounds.startMs;
   return shownMs > 0 ? shownMs : null;
 }
 
 /**
- * Share of the requested window covered by {@link ratingHistoryShownPeriodMs}.
- * @returns {number | null} integer 1..100, or null if not computable
+ * Duration actually drawn on the chart (first → last point).
+ * @returns {number | null} milliseconds
+ */
+export function ratingHistoryDrawnPeriodMs(points, startTime, endTime) {
+  const bounds = ratingHistoryWindowPointBounds(points, startTime, endTime);
+  if (!bounds) return null;
+  const drawnMs = bounds.lastMs - bounds.firstMs;
+  return drawnMs > 0 ? drawnMs : null;
+}
+
+/**
+ * Share of the requested window covered up to the latest returned point.
+ * Always measures against window end = now when endTime is omitted.
+ * @returns {number | null} integer 1..100
  */
 export function ratingHistoryShownPeriodPercent(points, startTime, endTime) {
-  const startMs = Date.parse(startTime);
-  const endMs = endTime == null || endTime === ""
-    ? Date.now()
-    : Date.parse(endTime);
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
-    return null;
-  }
-  const shownMs = ratingHistoryShownPeriodMs(points, startTime, endTime);
-  if (shownMs == null) return null;
-  const percent = Math.round((100 * shownMs) / (endMs - startMs));
+  const bounds = ratingHistoryWindowPointBounds(points, startTime, endTime);
+  if (!bounds) return null;
+  const shownMs = bounds.lastMs - bounds.startMs;
+  if (shownMs <= 0) return null;
+  const percent = Math.round((100 * shownMs) / (bounds.endMs - bounds.startMs));
   return Math.min(100, Math.max(1, percent));
+}
+
+/**
+ * Period token to suggest when the safety-cap truncates a preset window.
+ * Uses the drawn span (first→last), slightly shortened so a reload from "now"
+ * is less likely to hit the cap again.
+ * @returns {{ id: string, ms: number } | null}
+ */
+export function approxRatingHistoryPeriodForTruncation(points, startTime, endTime) {
+  const drawnMs = ratingHistoryDrawnPeriodMs(points, startTime, endTime);
+  if (drawnMs == null) return null;
+  return approxRatingHistoryPeriodFromMs(drawnMs * 0.9);
 }
 
 /**
@@ -119,6 +155,10 @@ export function approxRatingHistoryPeriodFromMs(ms) {
     }
   }
   return best ? { id: best.id, ms: best.ms } : null;
+}
+
+export function isRatingHistoryPeriodPreset(periodId) {
+  return RATING_HISTORY_PERIOD_PRESETS.some((opt) => opt.id === periodId);
 }
 
 const SERIES_COLORS = [

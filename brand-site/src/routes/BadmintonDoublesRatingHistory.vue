@@ -89,10 +89,10 @@ import RatingHistoryPeriodPicker from "@/components/badminton/RatingHistoryPerio
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import {
-  approxRatingHistoryPeriodFromMs,
+  approxRatingHistoryPeriodForTruncation,
   DOUBLES_RATING_HISTORY_SAFETY_CAP,
+  isRatingHistoryPeriodPreset,
   ratingHistoryPeriodMs,
-  ratingHistoryShownPeriodMs,
   ratingHistoryShownPeriodPercent,
 } from "@/badminton/ratingHistory.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
@@ -210,12 +210,12 @@ export default defineComponent({
     },
     syncCustomPeriodToShown() {
       if (this.historyPoints.length < DOUBLES_RATING_HISTORY_SAFETY_CAP) return;
-      const shownMs = ratingHistoryShownPeriodMs(
+      if (!isRatingHistoryPeriodPreset(this.historyPeriod)) return;
+      const approx = approxRatingHistoryPeriodForTruncation(
         this.historyPoints,
         this.historyStartTime,
         this.historyEndTime,
       );
-      const approx = approxRatingHistoryPeriodFromMs(shownMs);
       if (!approx || approx.id === this.historyPeriod) return;
       this.historyPeriod = setRatingHistoryPeriod(approx.id);
     },
