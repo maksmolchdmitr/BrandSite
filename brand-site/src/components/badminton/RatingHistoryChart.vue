@@ -51,19 +51,17 @@
                 :y1="0"
                 :y2="height"
               />
-              <circle
-                v-for="(point, index) in plotted"
-                :key="point.matchId || index"
-                class="dot"
-                :class="{
-                  active: hoverIndex === index,
-                  hollow: point.pending,
-                }"
-                :cx="point.x"
-                :cy="point.y"
-                :r="dotRadius(point, index)"
-              />
             </svg>
+            <div
+              v-for="(point, index) in plotted"
+              :key="point.matchId || index"
+              class="dot"
+              :class="{
+                active: hoverIndex === index,
+                hollow: point.pending,
+              }"
+              :style="dotStyle(point, index)"
+            />
             <div
               v-if="hoverPoint"
               class="tooltip"
@@ -262,10 +260,17 @@ export default defineComponent({
   },
   methods: {
     formatElo,
-    dotRadius(point, index) {
+    dotStyle(point, index) {
       const active = this.hoverIndex === index;
-      if (point.pending) return active ? 5 : 3.5;
-      return active ? 6 : 4.5;
+      const size = active
+        ? (point.pending ? 12 : 14)
+        : (point.pending ? 9 : 11);
+      return {
+        left: `${point.leftPercent}%`,
+        top: `${point.topPercent}%`,
+        width: `${size}px`,
+        height: `${size}px`,
+      };
     },
     clearHover() {
       this.hoverIndex = null;
@@ -390,26 +395,31 @@ export default defineComponent({
   vector-effect: non-scaling-stroke;
 }
 .dot {
-  fill: #4f3dff;
-  stroke: #fff;
-  stroke-width: 2.5;
-  vector-effect: non-scaling-stroke;
-  transition: r 0.12s ease;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  background: #4f3dff;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 0 1px rgba(79, 61, 255, 0.18);
+  transition: width 0.12s ease, height 0.12s ease;
 }
 .dot.hollow {
-  fill: transparent;
-  stroke: #9a92ff;
-  stroke-width: 2;
-  stroke-dasharray: 2.5 2;
+  background: transparent;
+  border: 2px dashed #9a92ff;
+  box-shadow: none;
 }
 .dot.active {
-  fill: #2f1fd0;
-  stroke: #fff;
+  background: #2f1fd0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(40, 30, 120, 0.22);
+  z-index: 2;
 }
 .dot.hollow.active {
-  fill: rgba(79, 61, 255, 0.18);
-  stroke: #4f3dff;
-  stroke-dasharray: none;
+  background: rgba(79, 61, 255, 0.18);
+  border-style: solid;
+  border-color: #4f3dff;
 }
 .crosshair {
   stroke: #4f3dff;
@@ -523,10 +533,10 @@ export default defineComponent({
     color: #b8b5d0;
   }
   .dot {
-    stroke: #2c2b36;
+    border-color: #2c2b36;
   }
   .dot.hollow {
-    stroke: #a59dff;
+    border-color: #a59dff;
   }
   .tooltip {
     background: #12111a;
