@@ -125,6 +125,7 @@ export default defineComponent({
       historyEndTime: null,
       historyPeriod: getRatingHistoryPeriod(),
       earliestCreatedAt: null,
+      earliestBoundLoaded: false,
     };
   },
   computed: {
@@ -132,7 +133,9 @@ export default defineComponent({
       return ratingHistoryPeriodMs(this.historyPeriod);
     },
     canGoPrevHistory() {
-      if (!this.historyStartTime || !this.earliestCreatedAt) return false;
+      if (!this.historyStartTime) return false;
+      if (!this.earliestBoundLoaded) return true;
+      if (!this.earliestCreatedAt) return false;
       return Date.parse(this.historyStartTime) > Date.parse(this.earliestCreatedAt);
     },
     canGoNextHistory() {

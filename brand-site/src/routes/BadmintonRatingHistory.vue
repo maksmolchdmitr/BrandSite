@@ -131,6 +131,7 @@ export default defineComponent({
       historyEndTime: null,
       historyPeriod: getRatingHistoryPeriod(),
       earliestCreatedAt: null,
+      earliestBoundLoaded: false,
     };
   },
   computed: {
@@ -138,7 +139,9 @@ export default defineComponent({
       return ratingHistoryPeriodMs(this.historyPeriod);
     },
     canGoPrevHistory() {
-      if (!this.historyStartTime || !this.earliestCreatedAt) return false;
+      if (!this.historyStartTime) return false;
+      if (!this.earliestBoundLoaded) return true;
+      if (!this.earliestCreatedAt) return false;
       return Date.parse(this.historyStartTime) > Date.parse(this.earliestCreatedAt);
     },
     canGoNextHistory() {
@@ -201,8 +204,10 @@ export default defineComponent({
       try {
         const bounds = await badmintonClient.getMySinglesRatingHistoryBounds();
         this.earliestCreatedAt = bounds?.earliestCreatedAt || null;
+        this.earliestBoundLoaded = true;
       } catch {
         this.earliestCreatedAt = null;
+        this.earliestBoundLoaded = false;
       }
     },
     async setHistoryPeriod(periodId) {
