@@ -1,3 +1,5 @@
+import { parseRatingHistoryPeriod } from "@/badminton/ratingHistory.js";
+
 const STORAGE_KEY = "badminton.uiPrefs";
 
 const DEFAULTS = Object.freeze({
@@ -10,7 +12,6 @@ const DEFAULTS = Object.freeze({
 const GAMES_TABS = new Set(["singles", "doubles"]);
 const GROUP_MATCH_TABS = new Set(["singles", "doubles"]);
 const GROUP_SECTIONS = new Set(["matches", "participants", "leaderboards"]);
-const HISTORY_PERIODS = new Set(["1d", "1w", "1m", "1y"]);
 
 function readAll() {
   if (typeof localStorage === "undefined") return { ...DEFAULTS };
@@ -75,13 +76,15 @@ export function setGroupSection(section) {
 
 export function getRatingHistoryPeriod() {
   const period = readAll().ratingHistoryPeriod;
-  return HISTORY_PERIODS.has(period) ? period : DEFAULTS.ratingHistoryPeriod;
+  const parsed = parseRatingHistoryPeriod(period);
+  return parsed ? parsed.id : DEFAULTS.ratingHistoryPeriod;
 }
 
 export function setRatingHistoryPeriod(period) {
-  if (!HISTORY_PERIODS.has(period)) return getRatingHistoryPeriod();
-  patch({ ratingHistoryPeriod: period });
-  return period;
+  const parsed = parseRatingHistoryPeriod(period);
+  if (!parsed) return getRatingHistoryPeriod();
+  patch({ ratingHistoryPeriod: parsed.id });
+  return parsed.id;
 }
 
 export function gamesSectionTo(tab = getGamesTab()) {

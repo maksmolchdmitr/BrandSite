@@ -16,17 +16,14 @@
             <p class="hint">{{ historyWindowLabel }}</p>
           </div>
           <div class="headerActions">
-            <div class="periodRow" role="group" :aria-label="$t('badminton.ratings.historyPeriod')">
-              <button
-                v-for="opt in periodOptions"
-                :key="opt.id"
-                type="button"
-                class="periodBtn"
-                :class="{ active: historyPeriod === opt.id }"
-                :disabled="loading"
-                @click="setHistoryPeriod(opt.id)"
-              >{{ opt.id }}</button>
-            </div>
+            <RatingHistoryPeriodPicker
+              :model-value="historyPeriod"
+              :disabled="loading"
+              :aria-label="$t('badminton.ratings.historyPeriod')"
+              :custom-label="$t('badminton.ratings.historyPeriodCustom')"
+              :placeholder="$t('badminton.ratings.historyPeriodPlaceholder')"
+              @update:model-value="setHistoryPeriod"
+            />
             <button class="btn secondary small" :disabled="loading" @click="loadHistory">
               <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
               <template v-else>{{ $t('common.actions.refresh') }}</template>
@@ -90,23 +87,19 @@
 import { defineComponent } from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import RatingHistoryChart from "@/components/badminton/RatingHistoryChart.vue";
+import RatingHistoryPeriodPicker from "@/components/badminton/RatingHistoryPeriodPicker.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
-import { SINGLES_RATING_HISTORY_SAFETY_CAP } from "@/badminton/ratingHistory.js";
+import {
+  ratingHistoryPeriodMs,
+  SINGLES_RATING_HISTORY_SAFETY_CAP,
+} from "@/badminton/ratingHistory.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 import {
   getRatingHistoryPeriod,
   setRatingHistoryPeriod,
 } from "@/badminton/uiPrefs.js";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const PERIOD_OPTIONS = [
-  { id: "1d", ms: 1 * DAY_MS },
-  { id: "1w", ms: 7 * DAY_MS },
-  { id: "1m", ms: 30 * DAY_MS },
-  { id: "1y", ms: 365 * DAY_MS },
-];
 
 function toIso(date) {
   return new Date(date).toISOString();
@@ -117,7 +110,12 @@ function isRated(point) {
 }
 
 export default defineComponent({
-  components: { BadmintonHubCtaRow, RatingHistoryChart, LoadingPhrase },
+  components: {
+    BadmintonHubCtaRow,
+    RatingHistoryChart,
+    RatingHistoryPeriodPicker,
+    LoadingPhrase,
+  },
   data() {
     return {
       loading: false,
@@ -126,12 +124,11 @@ export default defineComponent({
       historyStartTime: null,
       historyEndTime: null,
       historyPeriod: getRatingHistoryPeriod(),
-      periodOptions: PERIOD_OPTIONS,
     };
   },
   computed: {
     historyWindowMs() {
-      return PERIOD_OPTIONS.find((opt) => opt.id === this.historyPeriod)?.ms || PERIOD_OPTIONS[2].ms;
+      return ratingHistoryPeriodMs(this.historyPeriod);
     },
     canGoNextHistory() {
       return !!this.historyEndTime;
@@ -276,34 +273,6 @@ export default defineComponent({
   justify-content: flex-end;
   min-width: 0;
 }
-.periodRow {
-  display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 4px;
-  border-radius: 999px;
-  background: #f3f1ff;
-  border: 1px solid rgba(79, 61, 255, 0.12);
-}
-.periodBtn {
-  border: none;
-  cursor: pointer;
-  background: transparent;
-  color: #4F3DFF;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-}
-.periodBtn.active {
-  background: #4F3DFF;
-  color: white;
-}
-.periodBtn:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
 .cardTitle {
   font-family: var(--font-display);
   font-weight: 700;
@@ -430,20 +399,6 @@ export default defineComponent({
   .pagerButton,
   .btn.secondary {
     background-color: #2d2d2d;
-  }
-
-  .periodRow {
-    background: #34323f;
-    border-color: #4a4860;
-  }
-
-  .periodBtn {
-    color: #c7bcff;
-  }
-
-  .periodBtn.active {
-    background: #4F3DFF;
-    color: white;
   }
 
   .pagerPage { color: #c7c4de; }
