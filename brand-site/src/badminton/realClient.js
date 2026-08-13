@@ -45,12 +45,12 @@ export const realClient = {
     return api.listMyDoublesRatingHistory({ startTime, endTime });
   },
 
-  async getMySinglesRatingHistoryBounds() {
-    return api.getMySinglesRatingHistoryBounds();
+  async getMySinglesMatchBounds() {
+    return api.getMySinglesMatchBounds();
   },
 
-  async getMyDoublesRatingHistoryBounds() {
-    return api.getMyDoublesRatingHistoryBounds();
+  async getMyDoublesMatchBounds() {
+    return api.getMyDoublesMatchBounds();
   },
 
   async getMyGamesStats() {

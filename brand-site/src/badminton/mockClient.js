@@ -908,23 +908,23 @@ export const mockClient = {
     return result;
   },
 
-  async getMySinglesRatingHistoryBounds() {
-    logRequest("GET", "/api/me/ratings/singles/history/bounds");
+  async getMySinglesMatchBounds() {
+    logRequest("GET", "/api/me/matches/singles/bounds");
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
     const result = { earliestCreatedAt: findEarliestSinglesMatchAt(db, userId) };
-    logResponse("GET", "/api/me/ratings/singles/history/bounds", result);
+    logResponse("GET", "/api/me/matches/singles/bounds", result);
     return result;
   },
 
-  async getMyDoublesRatingHistoryBounds() {
-    logRequest("GET", "/api/me/ratings/doubles/history/bounds");
+  async getMyDoublesMatchBounds() {
+    logRequest("GET", "/api/me/matches/doubles/bounds");
     await delay();
     const db = loadDb();
     const userId = getLoggedInUserId() || "u_alex";
     const result = { earliestCreatedAt: findEarliestDoublesMatchAt(db, userId) };
-    logResponse("GET", "/api/me/ratings/doubles/history/bounds", result);
+    logResponse("GET", "/api/me/matches/doubles/bounds", result);
     return result;
   },
 

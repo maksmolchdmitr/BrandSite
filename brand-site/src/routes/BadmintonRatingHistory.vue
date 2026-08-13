@@ -202,7 +202,7 @@ export default defineComponent({
     },
     async loadEarliestBound() {
       try {
-        const bounds = await badmintonClient.getMySinglesRatingHistoryBounds();
+        const bounds = await badmintonClient.getMySinglesMatchBounds();
         this.earliestCreatedAt = bounds?.earliestCreatedAt || null;
         this.earliestBoundLoaded = true;
       } catch {
