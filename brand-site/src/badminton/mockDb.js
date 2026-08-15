@@ -1,6 +1,6 @@
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 
-const DB_KEY = "badminton.mockdb.v5"; // v5: owner / editor group roles
+const DB_KEY = "badminton.mockdb.v6"; // v6: ownership via createdByUserId; roles admin/editor/member
 
 function uuid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
@@ -104,18 +104,18 @@ function seedDb() {
 
   const memberships = [
     // Weekend Warriors
-    {groupId: "g_weekend_warriors", userId: "u_alex", role: "owner"},
+    {groupId: "g_weekend_warriors", userId: "u_alex", role: "admin"},
     {groupId: "g_weekend_warriors", userId: "u_sophia", role: "admin"},
     {groupId: "g_weekend_warriors", userId: "u_liam", role: "member"},
     {groupId: "g_weekend_warriors", userId: "u_emma", role: "member"},
     {groupId: "g_weekend_warriors", userId: "u_noah", role: "member"},
     // City Champions
-    {groupId: "g_city_champions", userId: "u_sophia", role: "owner"},
+    {groupId: "g_city_champions", userId: "u_sophia", role: "admin"},
     {groupId: "g_city_champions", userId: "u_olivia", role: "member"},
     {groupId: "g_city_champions", userId: "u_james", role: "member"},
     {groupId: "g_city_champions", userId: "u_ava", role: "member"},
     // Casual Players
-    {groupId: "g_casual_players", userId: "u_liam", role: "owner"},
+    {groupId: "g_casual_players", userId: "u_liam", role: "admin"},
     {groupId: "g_casual_players", userId: "u_emma", role: "member"},
     {groupId: "g_casual_players", userId: "u_noah", role: "member"},
   ];
@@ -297,6 +297,7 @@ function seedDb() {
     memberships,
     participants,
     matches,
+    invitations: [],
     createdAt: nowIso(),
   };
 }
@@ -310,6 +311,7 @@ export function loadDb() {
     return db;
   }
   const db = safeParse(raw, seedDb());
+  if (!Array.isArray(db.invitations)) db.invitations = [];
   // Ensure we have all required data
   if (!db.users || db.users.length === 0 || !db.groups || db.groups.length === 0) {
     const freshDb = seedDb();

@@ -38,16 +38,21 @@ function requireMember(db, groupId) {
 
 function requireStaff(db, groupId) {
   const role = requireMember(db, groupId);
-  if (role !== "owner" && role !== "admin") throw new Error("Forbidden: admin or owner only");
+  if (role !== "admin") throw new Error("Forbidden: admin only");
   return role;
 }
 
 function requireMatchEditor(db, groupId) {
   const role = requireMember(db, groupId);
-  if (role !== "owner" && role !== "admin" && role !== "editor") {
+  if (role !== "admin" && role !== "editor") {
     throw new Error("Forbidden: editor role required");
   }
   return role;
+}
+
+function isGroupOwner(db, groupId, userId) {
+  const g = db.groups.find(x => x.id === groupId);
+  return Boolean(g && g.createdByUserId === userId);
 }
 
 function participantNameMap(db, groupId) {
@@ -129,8 +134,13 @@ function participantToClientDto(p, db) {
   };
 }
 
-function groupToClientDto(g, myRole) {
-  return { id: g.id, name: g.name, myRole };
+function groupToClientDto(g, myRole, viewerUserId) {
+  return {
+    id: g.id,
+    name: g.name,
+    myRole,
+    isOwner: Boolean(viewerUserId && g.createdByUserId === viewerUserId),
+  };
 }
 
 function matchToClientDto(m) {
@@ -504,7 +514,7 @@ export const mockClient = {
     const start = pageToken && pageToken.startsWith("offset_")
       ? parseInt(pageToken.slice("offset_".length), 10) || 0
       : 0;
-    const pageItems = all.slice(start, start + limit).map((g) => groupToClientDto(g, g.myRole));
+    const pageItems = all.slice(start, start + limit).map((g) => groupToClientDto(g, g.myRole, u.id));
     const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
     const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", "/api/groups", result);
@@ -518,9 +528,9 @@ export const mockClient = {
     const u = requireAuth(db);
     const g = {id: uuid("g"), name, createdAt: nowIso(), createdByUserId: u.id};
     db.groups.unshift(g);
-    db.memberships.push({groupId: g.id, userId: u.id, role: "owner"});
+    db.memberships.push({groupId: g.id, userId: u.id, role: "admin"});
     saveDb(db);
-    const result = groupToClientDto(g, "owner");
+    const result = groupToClientDto(g, "admin", u.id);
     logResponse("POST", "/api/groups", result, 201);
     return result;
   },
@@ -544,11 +554,29 @@ export const mockClient = {
       // Auto-add as member for default user
       db.memberships.push({groupId, userId: u.id, role: "member"});
       saveDb(db);
-      result = groupToClientDto(g, "member");
+      result = groupToClientDto(g, "member", u.id);
     } else {
-      result = groupToClientDto(g, role);
+      result = groupToClientDto(g, role, u.id);
     }
     logResponse("GET", `/api/groups/${groupId}`, result);
+    return result;
+  },
+
+  async transferGroupOwnership(groupId, {userId: newOwnerUserId}) {
+    logRequest("POST", `/api/groups/${groupId}/transfer-ownership`, {userId: newOwnerUserId});
+    await delay();
+    const db = loadDb();
+    const actor = requireAuth(db);
+    if (!isGroupOwner(db, groupId, actor.id)) throw new Error("Forbidden: owner required");
+    if (actor.id === newOwnerUserId) throw new Error("New owner must differ from current owner");
+    const membership = db.memberships.find(m => m.groupId === groupId && m.userId === newOwnerUserId);
+    if (!membership) throw new Error("Participant not found");
+    if (membership.role !== "admin") membership.role = "admin";
+    const g = db.groups.find(x => x.id === groupId);
+    g.createdByUserId = newOwnerUserId;
+    saveDb(db);
+    const result = groupToClientDto(g, requireMember(db, groupId), actor.id);
+    logResponse("POST", `/api/groups/${groupId}/transfer-ownership`, result);
     return result;
   },
 
@@ -646,14 +674,39 @@ export const mockClient = {
     logRequest("POST", `/api/groups/${groupId}/participants`, {name});
     await delay();
     const db = loadDb();
-    requireAuth(db);
+    const actor = requireAuth(db);
     requireStaff(db, groupId);
-    const p = {id: uuid("p"), groupId, name, userId: null, createdAt: nowIso()};
-    db.participants.unshift(p);
+    const invitee = db.users.find(u =>
+      String(u.username || "").toLowerCase() === String(name || "").trim().toLowerCase()
+      && (u.telegramId != null || u.tgId != null)
+      && !u.groupId
+    );
+    if (!invitee) throw new Error("User not found by name");
+    if (db.memberships.some(m => m.groupId === groupId && m.userId === invitee.id)) {
+      throw new Error("User is already a member of this group");
+    }
+    if ((db.invitations || []).some(i =>
+      i.status === "pending" && i.kind === "group_join" && i.groupId === groupId && i.inviteeUserId === invitee.id
+    )) {
+      throw new Error("Invitation already pending");
+    }
+    const group = db.groups.find(g => g.id === groupId);
+    const invitation = {
+      id: uuid("inv"),
+      kind: "group_join",
+      status: "pending",
+      groupId,
+      groupName: group?.name || "",
+      inviteeUserId: invitee.id,
+      invitedByUserId: actor.id,
+      unlinkedUserId: null,
+      createdAt: nowIso(),
+    };
+    db.invitations = db.invitations || [];
+    db.invitations.unshift(invitation);
     saveDb(db);
-    invalidateParticipantSearchCache(groupId);
-    logResponse("POST", `/api/groups/${groupId}/participants`, participantToClientDto(p, db), 201);
-    return participantToClientDto(p, db);
+    logResponse("POST", `/api/groups/${groupId}/participants`, invitation, 201);
+    return invitation;
   },
 
   async createUnlinkedParticipant(groupId, {username, firstName, lastName, photoUrl, photoCrop}) {
@@ -780,41 +833,130 @@ export const mockClient = {
     logRequest("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, {userId});
     await delay();
     const db = loadDb();
-    requireAuth(db);
+    const actor = requireAuth(db);
     requireStaff(db, groupId);
     if (participantId === userId) throw new Error("Participant id must differ from registered user id");
     const registered = db.users.find(x => x.id === userId);
     if (!registered) throw new Error("User not found");
     if (registered.tgId == null && registered.groupId) throw new Error("Target user must be a registered Telegram user");
-    const unlinkedIdx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
-    if (unlinkedIdx < 0) throw new Error("Participant not found");
     const unlinkedUser = db.users.find(u => u.id === participantId);
     if (!unlinkedUser || unlinkedUser.tgId != null) throw new Error("Only unlinked participants can be linked");
     if (db.memberships.some(m => m.groupId === groupId && m.userId === userId)) {
       throw new Error("User is already a member of this group");
     }
-    for (const match of db.matches) {
-      if (match.groupId !== groupId) continue;
-      match.teamA = (match.teamA || []).map(id => id === participantId ? userId : id);
-      match.teamB = (match.teamB || []).map(id => id === participantId ? userId : id);
+    if ((db.invitations || []).some(i =>
+      i.status === "pending" && i.kind === "link_user" && i.groupId === groupId && i.unlinkedUserId === participantId
+    )) {
+      throw new Error("Link invitation already pending");
     }
-    db.participants.splice(unlinkedIdx, 1);
-    db.users = db.users.filter(u => u.id !== participantId);
-    if (!db.participants.some(p => p.id === userId && p.groupId === groupId)) {
-      db.participants.unshift({
-        id: userId,
-        groupId,
-        name: [registered.firstName, registered.lastName].filter(Boolean).join(" ") || registered.username,
-        userId,
-        createdAt: nowIso(),
-      });
-    }
-    db.memberships.push({groupId, userId, role: "member"});
+    const group = db.groups.find(g => g.id === groupId);
+    const invitation = {
+      id: uuid("inv"),
+      kind: "link_user",
+      status: "pending",
+      groupId,
+      groupName: group?.name || "",
+      inviteeUserId: userId,
+      invitedByUserId: actor.id,
+      unlinkedUserId: participantId,
+      createdAt: nowIso(),
+    };
+    db.invitations = db.invitations || [];
+    db.invitations.unshift(invitation);
     saveDb(db);
-    invalidateParticipantSearchCache(groupId);
-    const dto = participantToClientDto(db.participants.find(p => p.id === userId && p.groupId === groupId), db);
-    logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, dto);
-    return dto;
+    logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, invitation, 201);
+    return invitation;
+  },
+
+  async listMyInvitations() {
+    logRequest("GET", "/api/me/invitations");
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const items = (db.invitations || [])
+      .filter(i => i.inviteeUserId === u.id && i.status === "pending")
+      .map(i => ({
+        ...i,
+        groupName: db.groups.find(g => g.id === i.groupId)?.name || i.groupName || "",
+      }));
+    const result = {items};
+    logResponse("GET", "/api/me/invitations", result);
+    return result;
+  },
+
+  async acceptInvitation(invitationId) {
+    logRequest("POST", `/api/invitations/${invitationId}/accept`);
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const invitation = (db.invitations || []).find(i => i.id === invitationId);
+    if (!invitation) throw new Error("Invitation not found");
+    if (invitation.inviteeUserId !== u.id) throw new Error("Forbidden");
+    if (invitation.status !== "pending") throw new Error("Invitation is not pending");
+    if (invitation.kind === "group_join") {
+      if (db.memberships.some(m => m.groupId === invitation.groupId && m.userId === u.id)) {
+        throw new Error("User is already a member of this group");
+      }
+      db.memberships.push({groupId: invitation.groupId, userId: u.id, role: "member"});
+      if (!db.participants.some(p => p.groupId === invitation.groupId && (p.id === u.id || p.userId === u.id))) {
+        db.participants.unshift({
+          id: u.id,
+          groupId: invitation.groupId,
+          name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username,
+          userId: u.id,
+          createdAt: nowIso(),
+        });
+      }
+    } else if (invitation.kind === "link_user") {
+      const participantId = invitation.unlinkedUserId;
+      const userId = invitation.inviteeUserId;
+      const unlinkedIdx = db.participants.findIndex(p => p.id === participantId && p.groupId === invitation.groupId);
+      if (unlinkedIdx < 0) throw new Error("Participant not found");
+      for (const match of db.matches) {
+        if (match.groupId !== invitation.groupId) continue;
+        match.teamA = (match.teamA || []).map(id => id === participantId ? userId : id);
+        match.teamB = (match.teamB || []).map(id => id === participantId ? userId : id);
+      }
+      db.participants.splice(unlinkedIdx, 1);
+      db.users = db.users.filter(row => row.id !== participantId);
+      db.memberships = db.memberships.filter(m => !(m.groupId === invitation.groupId && m.userId === participantId));
+      if (!db.participants.some(p => p.id === userId && p.groupId === invitation.groupId)) {
+        const registered = db.users.find(row => row.id === userId);
+        db.participants.unshift({
+          id: userId,
+          groupId: invitation.groupId,
+          name: [registered?.firstName, registered?.lastName].filter(Boolean).join(" ") || registered?.username,
+          userId,
+          createdAt: nowIso(),
+        });
+      }
+      if (!db.memberships.some(m => m.groupId === invitation.groupId && m.userId === userId)) {
+        db.memberships.push({groupId: invitation.groupId, userId, role: "member"});
+      }
+      invitation.unlinkedUserId = null;
+      invalidateParticipantSearchCache(invitation.groupId);
+    }
+    invitation.status = "accepted";
+    invitation.resolvedAt = nowIso();
+    saveDb(db);
+    logResponse("POST", `/api/invitations/${invitationId}/accept`, invitation);
+    return invitation;
+  },
+
+  async rejectInvitation(invitationId) {
+    logRequest("POST", `/api/invitations/${invitationId}/reject`);
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const invitation = (db.invitations || []).find(i => i.id === invitationId);
+    if (!invitation) throw new Error("Invitation not found");
+    if (invitation.inviteeUserId !== u.id) throw new Error("Forbidden");
+    if (invitation.status !== "pending") throw new Error("Invitation is not pending");
+    invitation.status = "rejected";
+    invitation.resolvedAt = nowIso();
+    saveDb(db);
+    logResponse("POST", `/api/invitations/${invitationId}/reject`, invitation);
+    return invitation;
   },
 
   async updateParticipantRole(groupId, participantId, {role}) {
@@ -822,7 +964,8 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     const actor = requireAuth(db);
-    const actorRole = requireStaff(db, groupId);
+    requireStaff(db, groupId);
+    if (role === "owner") throw new Error("Ownership is transferred via transfer-ownership, not role");
     const p = db.participants.find(row =>
       row.groupId === groupId && (row.id === participantId || row.userId === participantId)
     );
@@ -831,20 +974,12 @@ export const mockClient = {
     if (!membership) throw new Error("Not found");
     const user = db.users.find(u => u.id === memberUserId);
     if (user?.groupId) throw new Error("Only registered users can have a role assigned");
+    const actorIsOwner = isGroupOwner(db, groupId, actor.id);
     if (membership.role !== role) {
-      const sameUser = actor.id === memberUserId;
-      if (actorRole === "owner") {
-        if (sameUser) throw new Error("Cannot demote the only owner");
-        if (role === "owner") {
-          const currentOwner = db.memberships.find(m => m.groupId === groupId && m.userId === actor.id);
-          if (currentOwner) currentOwner.role = "admin";
-        }
-        membership.role = role;
-      } else if (["owner", "admin"].includes(membership.role) || ["owner", "admin"].includes(role)) {
-        throw new Error("Admin cannot change admin or owner roles");
-      } else {
-        membership.role = role;
+      if (!actorIsOwner && (membership.role === "admin" || role === "admin")) {
+        throw new Error("Admin cannot change admin roles");
       }
+      membership.role = role;
       saveDb(db);
     }
     const dto = participantToClientDto(

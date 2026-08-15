@@ -18,6 +18,7 @@ tags:
   - name: Users
   - name: Groups
   - name: Participants
+  - name: Invitations
   - name: Matches
   - name: Stats
   - name: Ratings
@@ -115,6 +116,70 @@ paths:
           description: Logged out
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /api/me/invitations:
+    get:
+      tags: [ Invitations ]
+      summary: List pending invitations for current user
+      operationId: listMyInvitations
+      responses:
+        "200":
+          description: Pending invitations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvitationPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/invitations/{invitationId}/accept:
+    post:
+      tags: [ Invitations ]
+      summary: Accept invitation (invitee-only)
+      operationId: acceptInvitation
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "200":
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvitation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/invitations/{invitationId}/reject:
+    post:
+      tags: [ Invitations ]
+      summary: Reject invitation (invitee-only)
+      operationId: rejectInvitation
+      description: |
+        Rejects the invitation and notifies the inviting admin in Telegram
+        (registered user, optional unlinked participant, group).
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "200":
+          description: Invitation rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvitation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /api/me:
     get:
@@ -253,6 +318,39 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/groups/{groupId}/transfer-ownership:
+    post:
+      tags: [ Groups ]
+      summary: Transfer group ownership (owner-only)
+      operationId: transferGroupOwnership
+      description: |
+        Sets `group_table.created_by_user_id` to another registered member.
+        The new owner is promoted to `admin` if needed. Caller must be the current owner.
+        Roles stay ADMIN for both; ownership is only the created_by column.
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupOwnershipTransferRequest"
+      responses:
+        "200":
+          description: Group after ownership transfer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/groups/{groupId}/participants:
     get:
       tags: [ Participants ]
@@ -284,6 +382,9 @@ paths:
       tags: [ Participants ]
       summary: Invite registered user to group (owner/admin)
       operationId: createParticipant
+      description: |
+        Creates a pending GROUP_JOIN invitation and notifies the registered user in Telegram.
+        Membership is added only after the invitee accepts.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -294,11 +395,11 @@ paths:
               $ref: "#/components/schemas/ParticipantCreateRequest"
       responses:
         "201":
-          description: Participant created
+          description: Invitation created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Participant"
+                $ref: "#/components/schemas/GroupInvitation"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -308,11 +409,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Conflict (e.g. participant with such name already exists in group)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Conflict"
 
   /api/groups/{groupId}/participants/search:
     get:
@@ -475,13 +572,12 @@ paths:
   /api/groups/{groupId}/participants/{participantId}/link-user:
     post:
       tags: [ Participants ]
-      summary: Link registered user to participant (owner/admin)
+      summary: Request link of registered user to unlinked participant (owner/admin)
       operationId: linkParticipantUser
       description: |
-        Merges an unlinked participant (`participantId`) into a registered Telegram user (`userId`).
-        Replaces the unlinked user in singles/doubles matches (remapping doubles teams),
-        adds the registered user to the group, deletes the unlinked user, and rewinds
-        global rating-history `last` to the earliest affected singles/doubles games.
+        Creates a pending LINK_USER invitation for the registered Telegram user (`userId`)
+        and notifies them in Telegram. The merge of the unlinked participant happens only
+        after the invitee accepts.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"
@@ -492,12 +588,12 @@ paths:
             schema:
               $ref: "#/components/schemas/LinkUserRequest"
       responses:
-        "200":
-          description: Linked participant
+        "201":
+          description: Link invitation created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Participant"
+                $ref: "#/components/schemas/GroupInvitation"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -507,11 +603,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Conflict (e.g. user already linked to another participant in the same group)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Conflict"
 
   /api/groups/{groupId}/participants/{participantId}/role:
     patch:
@@ -519,15 +611,12 @@ paths:
       summary: Change participant role (owner/admin)
       operationId: updateParticipantRole
       description: |
-        Changes the group role of a registered participant.
+        Changes the group role of a registered participant (`member` / `editor` / `admin`).
         Unlinked participants always stay `member` and cannot be assigned another role.
 
-        Owner may assign any role. Assigning `owner` to another member transfers
-        ownership: the previous owner becomes `admin`. The current owner cannot
-        demote themselves.
-
-        Admin may assign only `member` and `editor`, and cannot change
-        `admin` or `owner` participants.
+        Group owner (`created_by_user_id`) may assign any of these roles, including `admin`.
+        Admin who is not the owner may assign only `member` and `editor`, and cannot
+        change other admins. To transfer ownership use `POST …/transfer-ownership`.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"
@@ -1065,6 +1154,11 @@ components:
       name: participantId
       required: true
       schema: { type: string }
+    InvitationId:
+      in: path
+      name: invitationId
+      required: true
+      schema: { type: string }
     MatchId:
       in: path
       name: matchId
@@ -1092,6 +1186,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict
       content:
         application/json:
           schema:
@@ -1216,8 +1316,10 @@ components:
 
     GroupMemberRole:
       type: string
-      description: Role of a registered participant in the group
-      enum: [ member, editor, admin, owner ]
+      description: |
+        Role of a registered participant in the group.
+        Group owner is not a role: it is `group_table.created_by_user_id` (see Group.isOwner).
+      enum: [ member, editor, admin ]
 
     ParticipantRoleUpdateRequest:
       type: object
@@ -1227,6 +1329,54 @@ components:
           $ref: "#/components/schemas/GroupMemberRole"
       required: [ role ]
 
+    GroupOwnershipTransferRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+          description: Registered group member who becomes the new owner
+      required: [ userId ]
+
+    GroupInvitationKind:
+      type: string
+      enum: [ group_join, link_user ]
+
+    GroupInvitationStatus:
+      type: string
+      enum: [ pending, accepted, rejected ]
+
+    GroupInvitation:
+      type: object
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        kind:
+          $ref: "#/components/schemas/GroupInvitationKind"
+        status:
+          $ref: "#/components/schemas/GroupInvitationStatus"
+        groupId: { type: string }
+        groupName: { type: string }
+        inviteeUserId: { type: string }
+        invitedByUserId: { type: string }
+        unlinkedUserId:
+          type: string
+          description: Present for link_user invitations
+        createdAt:
+          type: string
+          format: date-time
+      required: [ id, kind, status, groupId, inviteeUserId, invitedByUserId, createdAt ]
+
+    GroupInvitationPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupInvitation"
+      required: [ items ]
+
     Group:
       type: object
       additionalProperties: false
@@ -1235,7 +1385,10 @@ components:
         name: { type: string, example: Friday Badminton }
         myRole:
           $ref: "#/components/schemas/GroupMemberRole"
-      required: [ id, name ]
+        isOwner:
+          type: boolean
+          description: True when current user is group_table.created_by_user_id
+      required: [ id, name, isOwner ]
 
     GroupCreateRequest:
       type: object

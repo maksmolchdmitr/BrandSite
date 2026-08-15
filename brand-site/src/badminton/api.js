@@ -278,8 +278,31 @@ export async function createGroup({name}) {
   });
 }
 
+export async function transferGroupOwnership(groupId, {userId}) {
+  return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/transfer-ownership`, {
+    method: "POST",
+    body: {userId},
+  });
+}
+
 export async function getGroup(groupId) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}`);
+}
+
+export async function listMyInvitations() {
+  return apiRequest("/api/me/invitations");
+}
+
+export async function acceptInvitation(invitationId) {
+  return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/accept`, {
+    method: "POST",
+  });
+}
+
+export async function rejectInvitation(invitationId) {
+  return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/reject`, {
+    method: "POST",
+  });
 }
 
 // Participant endpoints

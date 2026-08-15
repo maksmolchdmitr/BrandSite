@@ -36,6 +36,13 @@
       <span class="ctaText">{{ $t("badminton.profile.title") }}</span>
     </RouterLink>
     <RouterLink
+      v-if="current !== 'invitations'"
+      class="cta secondary cta-invitations"
+      to="/?page=badminton&section=invitations"
+    >
+      <span class="ctaText">{{ $t("badminton.invitations.title") }}</span>
+    </RouterLink>
+    <RouterLink
       v-if="current !== 'groups'"
       class="cta secondary cta-groups"
       to="/?page=badminton&section=groups"
@@ -66,7 +73,7 @@ export default defineComponent({
     current: {
       type: String,
       required: true,
-      validator: (v) => ["ratings", "rating-history", "doubles-rating-history", "games", "profile", "groups"].includes(v),
+      validator: (v) => ["ratings", "rating-history", "doubles-rating-history", "games", "profile", "groups", "invitations"].includes(v),
     },
     disabled: { type: Boolean, default: false },
   },

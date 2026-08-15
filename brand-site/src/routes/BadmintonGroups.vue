@@ -34,7 +34,8 @@
           <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="groupTo(g.id)">
             <div class="groupName">{{ g.name }}</div>
             <div class="groupMeta">
-              <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' || g.myRole === 'owner' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
+              <span v-if="g.isOwner" class="pill admin">{{ formatRole('owner') }}</span>
+              <span v-else-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
               <span class="arrow">→</span>
             </div>
           </RouterLink>

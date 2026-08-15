@@ -78,8 +78,26 @@ export const realClient = {
     return api.createGroup({name});
   },
 
+  async transferGroupOwnership(groupId, {userId}) {
+    return api.transferGroupOwnership(groupId, {userId});
+  },
+
   async getGroup(groupId) {
     return api.getGroup(groupId);
+  },
+
+  async listMyInvitations() {
+    return api.listMyInvitations();
+  },
+
+  async acceptInvitation(invitationId) {
+    const result = await api.acceptInvitation(invitationId);
+    invalidateParticipantSearchCache();
+    return result;
+  },
+
+  async rejectInvitation(invitationId) {
+    return api.rejectInvitation(invitationId);
   },
 
   // Participant endpoints

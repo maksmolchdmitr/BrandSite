@@ -13,7 +13,8 @@
 
         <div class="topActions">
           <LocaleSwitcher />
-          <span v-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
+          <span v-if="group?.isOwner" class="pill">{{ formatRole('owner') }}</span>
+          <span v-else-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
           <button class="btn secondary" :disabled="loading" @click="refresh">
             <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
             <template v-else>{{ $t('common.actions.refresh') }}</template>
@@ -22,6 +23,7 @@
       </div>
 
       <div v-if="error" class="errorBox">{{ error }}</div>
+      <div v-if="inviteNotice" class="noticeBox">{{ inviteNotice }}</div>
 
       <nav class="groupNav">
         <RouterLink
@@ -245,6 +247,12 @@
                         class="btn secondary small"
                         :to="linkUserTo(p.id)"
                       >{{ $t('common.actions.link') }}</RouterLink>
+                      <button
+                        v-if="group?.isOwner && !isUnlinkedParticipant(p) && p.id !== meId"
+                        class="btn secondary small"
+                        :disabled="formSaving"
+                        @click="transferOwnership(p)"
+                      >{{ $t('badminton.group.makeOwner') }}</button>
                       <button class="btn danger small" @click="removeParticipant(p)">{{ $t('common.actions.delete') }}</button>
                     </td>
                   </tr>
@@ -851,6 +859,7 @@ import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
 import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import { badmintonClient } from "@/badminton/client.js";
+import { getLoggedInUserId } from "@/badminton/cookies.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
 import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
@@ -877,6 +886,7 @@ export default defineComponent({
     return {
       loading: false,
       error: "",
+      inviteNotice: "",
       group: null,
       participantNameMap: {},
       participantPhotoMap: {},
@@ -952,14 +962,17 @@ export default defineComponent({
   },
   computed: {
     isStaff() {
-      return this.group?.myRole === "owner" || this.group?.myRole === "admin";
+      return this.group?.myRole === "admin";
     },
     isMatchEditor() {
       return this.isStaff || this.group?.myRole === "editor";
     },
     assignableRoles() {
-      if (this.group?.myRole === "owner") return ["member", "editor", "admin", "owner"];
+      if (this.group?.isOwner) return ["member", "editor", "admin"];
       return ["member", "editor"];
+    },
+    meId() {
+      return getLoggedInUserId() || null;
     },
     matchSelectedParticipantIds() {
       const p = this.matchForm || {};
@@ -1206,7 +1219,9 @@ export default defineComponent({
     },
     canAssignRole(participant) {
       if (this.isUnlinkedParticipant(participant)) return false;
-      if (this.group?.myRole === "owner") return participant.role !== "owner";
+      if (this.group?.isOwner) {
+        return participant.id !== this.meId;
+      }
       if (this.group?.myRole === "admin") {
         return participant.role === "member" || participant.role === "editor";
       }
@@ -1214,10 +1229,6 @@ export default defineComponent({
     },
     async onParticipantRoleChange(participant, role) {
       if (!this.groupId || !participant?.id || role === participant.role) return;
-      if (role === "owner" && !window.confirm(this.$t("badminton.group.confirmTransferOwner"))) {
-        await this.reloadParticipantsFirstPage();
-        return;
-      }
       this.formSaving = true;
       this.error = "";
       try {
@@ -1227,6 +1238,20 @@ export default defineComponent({
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
         await this.reloadParticipantsFirstPage();
+      } finally {
+        this.formSaving = false;
+      }
+    },
+    async transferOwnership(participant) {
+      if (!this.groupId || !participant?.id) return;
+      if (!window.confirm(this.$t("badminton.group.confirmTransferOwner"))) return;
+      this.formSaving = true;
+      this.error = "";
+      try {
+        this.group = await badmintonClient.transferGroupOwnership(this.groupId, {userId: participant.id});
+        await this.reloadParticipantsFirstPage();
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errTransferOwner");
       } finally {
         this.formSaving = false;
       }
@@ -1806,14 +1831,10 @@ export default defineComponent({
       this.error = "";
       this.inviteUserSearch.open = false;
       try {
-        const p = await badmintonClient.createParticipant(this.groupId, {name: this.newParticipantName});
+        await badmintonClient.createParticipant(this.groupId, {name: this.newParticipantName});
         this.newParticipantName = "";
         this.inviteUserSearch = { items: [], nextPageToken: null, loading: false, open: false };
-        this.mergeParticipantNames([p]);
-        if (this.participantsPages.length && this.participantsPageIndex === 0) {
-          const first = this.participantsPages[0];
-          this.participantsPages = [{ ...first, items: [p, ...(first.items || [])] }];
-        }
+        this.inviteNotice = this.$t("badminton.group.inviteSent");
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errAddParticipant");
       } finally {
@@ -2124,6 +2145,7 @@ export default defineComponent({
       this.error = "";
       try {
         await badmintonClient.linkUserToParticipant(this.groupId, this.participantId, { userId: this.linkUserForm.userId });
+        this.inviteNotice = this.$t("badminton.group.linkInviteSent");
         this.cancelToParticipants();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.group.errLinkUser");
@@ -2283,6 +2305,7 @@ export default defineComponent({
 .pill.tiny { padding: 3px 8px; font-size: 12px; }
 
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
+.noticeBox { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); margin-bottom: 12px; }
 
 .groupNav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .groupNavLink {
