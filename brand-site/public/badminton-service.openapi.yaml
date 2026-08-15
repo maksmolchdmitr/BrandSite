@@ -478,8 +478,10 @@ paths:
       summary: Link registered user to participant (admin-only)
       operationId: linkParticipantUser
       description: |
-        Binds a registered user (by id) to a participant entry in a group.
-        Useful when participant was created before user registration.
+        Merges an unlinked participant (`participantId`) into a registered Telegram user (`userId`).
+        Replaces the unlinked user in singles/doubles matches (remapping doubles teams),
+        adds the registered user to the group, deletes the unlinked user, and rewinds
+        global rating-history `last` to the earliest affected singles/doubles games.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"

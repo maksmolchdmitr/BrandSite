@@ -772,17 +772,37 @@ export const mockClient = {
     const db = loadDb();
     requireAuth(db);
     requireAdmin(db, groupId);
-    const u = db.users.find(x => x.id === userId);
-    if (!u) throw new Error("User not found");
-    const idx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
-    if (idx < 0) throw new Error("Participant not found");
-    db.participants[idx] = {...db.participants[idx], userId: u.id};
-    // ensure membership for linked user (so linked user can see group after "login")
-    const exists = db.memberships.some(m => m.groupId === groupId && m.userId === u.id);
-    if (!exists) db.memberships.push({groupId, userId: u.id, role: "member"});
+    if (participantId === userId) throw new Error("Participant id must differ from registered user id");
+    const registered = db.users.find(x => x.id === userId);
+    if (!registered) throw new Error("User not found");
+    if (registered.tgId == null && registered.groupId) throw new Error("Target user must be a registered Telegram user");
+    const unlinkedIdx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
+    if (unlinkedIdx < 0) throw new Error("Participant not found");
+    const unlinkedUser = db.users.find(u => u.id === participantId);
+    if (!unlinkedUser || unlinkedUser.tgId != null) throw new Error("Only unlinked participants can be linked");
+    if (db.memberships.some(m => m.groupId === groupId && m.userId === userId)) {
+      throw new Error("User is already a member of this group");
+    }
+    for (const match of db.matches) {
+      if (match.groupId !== groupId) continue;
+      match.teamA = (match.teamA || []).map(id => id === participantId ? userId : id);
+      match.teamB = (match.teamB || []).map(id => id === participantId ? userId : id);
+    }
+    db.participants.splice(unlinkedIdx, 1);
+    db.users = db.users.filter(u => u.id !== participantId);
+    if (!db.participants.some(p => p.id === userId && p.groupId === groupId)) {
+      db.participants.unshift({
+        id: userId,
+        groupId,
+        name: [registered.firstName, registered.lastName].filter(Boolean).join(" ") || registered.username,
+        userId,
+        createdAt: nowIso(),
+      });
+    }
+    db.memberships.push({groupId, userId, role: "member"});
     saveDb(db);
     invalidateParticipantSearchCache(groupId);
-    const dto = participantToClientDto(db.participants[idx], db);
+    const dto = participantToClientDto(db.participants.find(p => p.id === userId && p.groupId === groupId), db);
     logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, dto);
     return dto;
   },
