@@ -55,6 +55,35 @@ function isGroupOwner(db, groupId, userId) {
   return Boolean(g && g.createdByUserId === userId);
 }
 
+function pushNotification(db, {userId, kind, groupId, invitationId}) {
+  db.notifications = db.notifications || [];
+  db.notifications.unshift({
+    id: uuid("n"),
+    userId,
+    kind,
+    groupId,
+    invitationId: invitationId || null,
+    createdAt: nowIso(),
+  });
+}
+
+function notificationToDto(n, db) {
+  const invitation = n.invitationId
+    ? (db.invitations || []).find(i => i.id === n.invitationId)
+    : null;
+  const group = db.groups.find(g => g.id === n.groupId);
+  return {
+    id: n.id,
+    kind: n.kind,
+    groupId: n.groupId,
+    groupName: group?.name || "",
+    invitationId: n.invitationId || undefined,
+    invitationStatus: invitation?.status || undefined,
+    unlinkedUserId: invitation?.unlinkedUserId || undefined,
+    createdAt: n.createdAt,
+  };
+}
+
 function participantNameMap(db, groupId) {
   const map = new Map();
   db.participants.filter(p => p.groupId === groupId).forEach(p => map.set(p.id, p.name));
@@ -704,6 +733,12 @@ export const mockClient = {
     };
     db.invitations = db.invitations || [];
     db.invitations.unshift(invitation);
+    pushNotification(db, {
+      userId: invitee.id,
+      kind: "group_join_invite",
+      groupId,
+      invitationId: invitation.id,
+    });
     saveDb(db);
     logResponse("POST", `/api/groups/${groupId}/participants`, invitation, 201);
     return invitation;
@@ -863,24 +898,27 @@ export const mockClient = {
     };
     db.invitations = db.invitations || [];
     db.invitations.unshift(invitation);
+    pushNotification(db, {
+      userId,
+      kind: "link_user_invite",
+      groupId,
+      invitationId: invitation.id,
+    });
     saveDb(db);
     logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, invitation, 201);
     return invitation;
   },
 
-  async listMyInvitations() {
-    logRequest("GET", "/api/me/invitations");
+  async listMyNotifications() {
+    logRequest("GET", "/api/me/notifications");
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
-    const items = (db.invitations || [])
-      .filter(i => i.inviteeUserId === u.id && i.status === "pending")
-      .map(i => ({
-        ...i,
-        groupName: db.groups.find(g => g.id === i.groupId)?.name || i.groupName || "",
-      }));
+    const items = (db.notifications || [])
+      .filter(n => n.userId === u.id)
+      .map(n => notificationToDto(n, db));
     const result = {items};
-    logResponse("GET", "/api/me/invitations", result);
+    logResponse("GET", "/api/me/notifications", result);
     return result;
   },
 
@@ -954,6 +992,12 @@ export const mockClient = {
     if (invitation.status !== "pending") throw new Error("Invitation is not pending");
     invitation.status = "rejected";
     invitation.resolvedAt = nowIso();
+    pushNotification(db, {
+      userId: invitation.invitedByUserId,
+      kind: invitation.kind === "group_join" ? "group_join_rejected" : "link_user_rejected",
+      groupId: invitation.groupId,
+      invitationId: invitation.id,
+    });
     saveDb(db);
     logResponse("POST", `/api/invitations/${invitationId}/reject`, invitation);
     return invitation;

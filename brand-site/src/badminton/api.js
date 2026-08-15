@@ -289,8 +289,8 @@ export async function getGroup(groupId) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}`);
 }
 
-export async function listMyInvitations() {
-  return apiRequest("/api/me/invitations");
+export async function listMyNotifications() {
+  return apiRequest("/api/me/notifications");
 }
 
 export async function acceptInvitation(invitationId) {

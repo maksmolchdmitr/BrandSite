@@ -86,8 +86,8 @@ export const realClient = {
     return api.getGroup(groupId);
   },
 
-  async listMyInvitations() {
-    return api.listMyInvitations();
+  async listMyNotifications() {
+    return api.listMyNotifications();
   },
 
   async acceptInvitation(invitationId) {

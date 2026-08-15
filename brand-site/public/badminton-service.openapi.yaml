@@ -19,6 +19,7 @@ tags:
   - name: Groups
   - name: Participants
   - name: Invitations
+  - name: Notifications
   - name: Matches
   - name: Stats
   - name: Ratings
@@ -117,18 +118,18 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /api/me/invitations:
+  /api/me/notifications:
     get:
-      tags: [ Invitations ]
-      summary: List pending invitations for current user
-      operationId: listMyInvitations
+      tags: [ Notifications ]
+      summary: List notifications for current user
+      operationId: listMyNotifications
       responses:
         "200":
-          description: Pending invitations
+          description: User notifications (newest first)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GroupInvitationPage"
+                $ref: "#/components/schemas/UserNotificationPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -1367,14 +1368,40 @@ components:
           format: date-time
       required: [ id, kind, status, groupId, inviteeUserId, invitedByUserId, createdAt ]
 
-    GroupInvitationPage:
+    UserNotificationKind:
+      type: string
+      enum: [ group_join_invite, link_user_invite, group_join_rejected, link_user_rejected ]
+
+    UserNotification:
+      type: object
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        kind:
+          $ref: "#/components/schemas/UserNotificationKind"
+        groupId: { type: string }
+        groupName: { type: string }
+        invitationId:
+          type: string
+          description: Present when the notification is tied to an invitation; use accept/reject endpoints
+        invitationStatus:
+          $ref: "#/components/schemas/GroupInvitationStatus"
+        unlinkedUserId:
+          type: string
+          description: Present for link_user notifications
+        createdAt:
+          type: string
+          format: date-time
+      required: [ id, kind, groupId, createdAt ]
+
+    UserNotificationPage:
       type: object
       additionalProperties: false
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/GroupInvitation"
+            $ref: "#/components/schemas/UserNotification"
       required: [ items ]
 
     Group:

@@ -1,6 +1,6 @@
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 
-const DB_KEY = "badminton.mockdb.v6"; // v6: ownership via createdByUserId; roles admin/editor/member
+const DB_KEY = "badminton.mockdb.v7"; // v7: user notifications inbox
 
 function uuid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
@@ -298,6 +298,7 @@ function seedDb() {
     participants,
     matches,
     invitations: [],
+    notifications: [],
     createdAt: nowIso(),
   };
 }
@@ -312,6 +313,7 @@ export function loadDb() {
   }
   const db = safeParse(raw, seedDb());
   if (!Array.isArray(db.invitations)) db.invitations = [];
+  if (!Array.isArray(db.notifications)) db.notifications = [];
   // Ensure we have all required data
   if (!db.users || db.users.length === 0 || !db.groups || db.groups.length === 0) {
     const freshDb = seedDb();

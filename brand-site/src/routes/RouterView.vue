@@ -16,7 +16,7 @@ import BadmintonRatingHistory from "@/routes/BadmintonRatingHistory.vue";
 import BadmintonDoublesRatingHistory from "@/routes/BadmintonDoublesRatingHistory.vue";
 import BadmintonGames from "@/routes/BadmintonGames.vue";
 import BadmintonProfile from "@/routes/BadmintonProfile.vue";
-import BadmintonInvitations from "@/routes/BadmintonInvitations.vue";
+import BadmintonNotifications from "@/routes/BadmintonNotifications.vue";
 import {
   getGamesTab,
   getGroupMatchTab,
@@ -187,8 +187,8 @@ export default defineComponent({
       if (this.page === 'badminton') {
         if (this.section === 'login') {
           return markRaw(BadmintonLogin);
-        } else if (this.section === 'invitations') {
-          return markRaw(BadmintonInvitations);
+        } else if (this.section === 'notifications' || this.section === 'invitations') {
+          return markRaw(BadmintonNotifications);
         } else if (this.section === 'groups') {
           if (this.groupId) {
             return markRaw(BadmintonGroup);
