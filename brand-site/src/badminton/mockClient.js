@@ -55,58 +55,61 @@ function isGroupOwner(db, groupId, userId) {
   return Boolean(g && g.createdByUserId === userId);
 }
 
-function pushNotification(db, {userId, kind, groupId, invitationId}) {
+function pushNotification(db, {receiverUserId, senderUserId, kind, payload}) {
   db.notifications = db.notifications || [];
   db.notifications.unshift({
     id: uuid("n"),
-    userId,
+    receiverUserId,
+    senderUserId,
     kind,
-    groupId,
-    invitationId: invitationId || null,
+    payload: payload || {},
+    unread: true,
     createdAt: nowIso(),
   });
 }
 
 function notificationToDto(n, db) {
-  const invitation = n.invitationId
-    ? (db.invitations || []).find(i => i.id === n.invitationId)
+  const invitation = n.payload?.invitationId
+    ? (db.invitations || []).find(i => i.id === n.payload.invitationId)
     : null;
-  const group = db.groups.find(g => g.id === n.groupId);
+  const group = db.groups.find(g => g.id === n.payload?.groupId);
   const base = {
     id: n.id,
     kind: n.kind,
-    groupId: n.groupId,
+    senderUserId: n.senderUserId,
+    groupId: n.payload?.groupId,
     groupName: group?.name || "",
+    unread: n.unread !== false,
     createdAt: n.createdAt,
   };
   if (n.kind === "group_join_invite") {
     return {
       ...base,
-      invitationId: n.invitationId,
+      invitationId: n.payload.invitationId,
       invitationStatus: invitation?.status || "pending",
     };
   }
   if (n.kind === "link_user_invite") {
     return {
       ...base,
-      invitationId: n.invitationId,
+      invitationId: n.payload.invitationId,
       invitationStatus: invitation?.status || "pending",
-      unlinkedUserId: invitation?.unlinkedUserId,
+      unlinkedUserId: n.payload.unlinkedUserId,
     };
   }
   if (n.kind === "group_join_rejected") {
     return {
       ...base,
-      invitationId: n.invitationId,
-      inviteeUserId: invitation?.inviteeUserId,
+      invitationId: n.payload.invitationId,
+      inviteeUserId: n.payload.inviteeUserId,
     };
   }
   if (n.kind === "link_user_rejected") {
     return {
       ...base,
-      invitationId: n.invitationId,
-      inviteeUserId: invitation?.inviteeUserId,
-      unlinkedUserId: invitation?.unlinkedUserId,
+      invitationId: n.payload.invitationId,
+      inviteeUserId: n.payload.inviteeUserId,
+      unlinkedUserId: n.payload.unlinkedUserId,
     };
   }
   return base;
@@ -762,10 +765,10 @@ export const mockClient = {
     db.invitations = db.invitations || [];
     db.invitations.unshift(invitation);
     pushNotification(db, {
-      userId: invitee.id,
+      receiverUserId: invitee.id,
+      senderUserId: userId,
       kind: "group_join_invite",
-      groupId,
-      invitationId: invitation.id,
+      payload: {groupId, invitationId: invitation.id},
     });
     saveDb(db);
     logResponse("POST", `/api/groups/${groupId}/participants`, invitation, 201);
@@ -927,10 +930,10 @@ export const mockClient = {
     db.invitations = db.invitations || [];
     db.invitations.unshift(invitation);
     pushNotification(db, {
-      userId,
+      receiverUserId: userId,
+      senderUserId: actor.id,
       kind: "link_user_invite",
-      groupId,
-      invitationId: invitation.id,
+      payload: {groupId, invitationId: invitation.id, unlinkedUserId: participantId},
     });
     saveDb(db);
     logResponse("POST", `/api/groups/${groupId}/participants/${participantId}/link-user`, invitation, 201);
@@ -943,7 +946,7 @@ export const mockClient = {
     const db = loadDb();
     const u = requireAuth(db);
     const items = (db.notifications || [])
-      .filter(n => n.userId === u.id)
+      .filter(n => (n.receiverUserId || n.userId) === u.id)
       .map(n => notificationToDto(n, db));
     const result = {items};
     logResponse("GET", "/api/me/notifications", result);
@@ -1013,10 +1016,21 @@ export const mockClient = {
       invitation.status = "rejected";
       invitation.resolvedAt = nowIso();
       pushNotification(db, {
-        userId: invitation.invitedByUserId,
+        receiverUserId: invitation.invitedByUserId,
+        senderUserId: u.id,
         kind: invitation.kind === "group_join" ? "group_join_rejected" : "link_user_rejected",
-        groupId: invitation.groupId,
-        invitationId: invitation.id,
+        payload: invitation.kind === "group_join"
+          ? {
+            groupId: invitation.groupId,
+            invitationId: invitation.id,
+            inviteeUserId: invitation.inviteeUserId,
+          }
+          : {
+            groupId: invitation.groupId,
+            invitationId: invitation.id,
+            inviteeUserId: invitation.inviteeUserId,
+            unlinkedUserId: invitation.unlinkedUserId,
+          },
       });
       saveDb(db);
       logResponse("POST", `/api/invitations/${invitationId}/respond`, invitation);

@@ -1383,12 +1383,14 @@ components:
         id: { type: string }
         kind:
           $ref: "#/components/schemas/UserNotificationKind"
+        senderUserId: { type: string }
         groupId: { type: string }
         groupName: { type: string }
+        unread: { type: boolean }
         createdAt:
           type: string
           format: date-time
-      required: [ id, kind, groupId, createdAt ]
+      required: [ id, kind, senderUserId, groupId, unread, createdAt ]
 
     GroupJoinInviteNotification:
       allOf:
