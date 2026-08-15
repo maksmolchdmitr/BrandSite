@@ -1,6 +1,6 @@
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 
-const DB_KEY = "badminton.mockdb.v4"; // v4: extra doubles for Alex Chen to test Doubles Elo pagination
+const DB_KEY = "badminton.mockdb.v5"; // v5: owner / editor group roles
 
 function uuid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
@@ -104,18 +104,18 @@ function seedDb() {
 
   const memberships = [
     // Weekend Warriors
-    {groupId: "g_weekend_warriors", userId: "u_alex", role: "admin"},
+    {groupId: "g_weekend_warriors", userId: "u_alex", role: "owner"},
     {groupId: "g_weekend_warriors", userId: "u_sophia", role: "admin"},
     {groupId: "g_weekend_warriors", userId: "u_liam", role: "member"},
     {groupId: "g_weekend_warriors", userId: "u_emma", role: "member"},
     {groupId: "g_weekend_warriors", userId: "u_noah", role: "member"},
     // City Champions
-    {groupId: "g_city_champions", userId: "u_sophia", role: "admin"},
+    {groupId: "g_city_champions", userId: "u_sophia", role: "owner"},
     {groupId: "g_city_champions", userId: "u_olivia", role: "member"},
     {groupId: "g_city_champions", userId: "u_james", role: "member"},
     {groupId: "g_city_champions", userId: "u_ava", role: "member"},
     // Casual Players
-    {groupId: "g_casual_players", userId: "u_liam", role: "admin"},
+    {groupId: "g_casual_players", userId: "u_liam", role: "owner"},
     {groupId: "g_casual_players", userId: "u_emma", role: "member"},
     {groupId: "g_casual_players", userId: "u_noah", role: "member"},
   ];

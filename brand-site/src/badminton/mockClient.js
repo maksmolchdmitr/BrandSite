@@ -36,9 +36,17 @@ function requireMember(db, groupId) {
   return role;
 }
 
-function requireAdmin(db, groupId) {
+function requireStaff(db, groupId) {
   const role = requireMember(db, groupId);
-  if (role !== "admin") throw new Error("Forbidden: admin only");
+  if (role !== "owner" && role !== "admin") throw new Error("Forbidden: admin or owner only");
+  return role;
+}
+
+function requireMatchEditor(db, groupId) {
+  const role = requireMember(db, groupId);
+  if (role !== "owner" && role !== "admin" && role !== "editor") {
+    throw new Error("Forbidden: editor role required");
+  }
   return role;
 }
 
@@ -116,6 +124,8 @@ function participantToClientDto(p, db) {
     groupId: groupId || null,
     photoUrl: linkedUser?.photoUrl || p.photoUrl || undefined,
     photoCrop: linkedUser?.photoCrop || p.photoCrop || undefined,
+    role: (db?.memberships || []).find(m => m.groupId === (groupId || p.groupId) && m.userId === (p.userId || p.id))?.role
+      || "member",
   };
 }
 
@@ -508,9 +518,9 @@ export const mockClient = {
     const u = requireAuth(db);
     const g = {id: uuid("g"), name, createdAt: nowIso(), createdByUserId: u.id};
     db.groups.unshift(g);
-    db.memberships.push({groupId: g.id, userId: u.id, role: "admin"});
+    db.memberships.push({groupId: g.id, userId: u.id, role: "owner"});
     saveDb(db);
-    const result = groupToClientDto(g, "admin");
+    const result = groupToClientDto(g, "owner");
     logResponse("POST", "/api/groups", result, 201);
     return result;
   },
@@ -637,7 +647,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     const p = {id: uuid("p"), groupId, name, userId: null, createdAt: nowIso()};
     db.participants.unshift(p);
     saveDb(db);
@@ -651,7 +661,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     const login = String(username || "").trim();
     if (!login) throw new Error("username is required");
     const userId = uuid("u");
@@ -689,7 +699,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     const idx = db.participants.findIndex(p => p.id === participantId && p.groupId === groupId);
     if (idx < 0) throw new Error("Not found");
     if (firstName == null && lastName == null && photoUrl === undefined && photoCrop === undefined) {
@@ -732,7 +742,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     const objectKey = `participants/${groupId}/mock-${Date.now()}.jpg`;
     const publicUrl = `https://picsum.photos/seed/${encodeURIComponent(objectKey)}/200`;
     const response = {
@@ -757,7 +767,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     db.participants = db.participants.filter(p => !(p.groupId === groupId && p.id === participantId));
     // Also remove from matches
     db.matches = db.matches.filter(m => !((m.groupId === groupId) && ((m.teamA || []).includes(participantId) || (m.teamB || []).includes(participantId))));
@@ -771,7 +781,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     if (participantId === userId) throw new Error("Participant id must differ from registered user id");
     const registered = db.users.find(x => x.id === userId);
     if (!registered) throw new Error("User not found");
@@ -807,6 +817,44 @@ export const mockClient = {
     return dto;
   },
 
+  async updateParticipantRole(groupId, participantId, {role}) {
+    logRequest("PATCH", `/api/groups/${groupId}/participants/${participantId}/role`, {role});
+    await delay();
+    const db = loadDb();
+    const actor = requireAuth(db);
+    const actorRole = requireStaff(db, groupId);
+    const p = db.participants.find(row =>
+      row.groupId === groupId && (row.id === participantId || row.userId === participantId)
+    );
+    const memberUserId = p?.userId || participantId;
+    const membership = db.memberships.find(m => m.groupId === groupId && m.userId === memberUserId);
+    if (!membership) throw new Error("Not found");
+    const user = db.users.find(u => u.id === memberUserId);
+    if (user?.groupId) throw new Error("Only registered users can have a role assigned");
+    if (membership.role !== role) {
+      const sameUser = actor.id === memberUserId;
+      if (actorRole === "owner") {
+        if (sameUser) throw new Error("Cannot demote the only owner");
+        if (role === "owner") {
+          const currentOwner = db.memberships.find(m => m.groupId === groupId && m.userId === actor.id);
+          if (currentOwner) currentOwner.role = "admin";
+        }
+        membership.role = role;
+      } else if (["owner", "admin"].includes(membership.role) || ["owner", "admin"].includes(role)) {
+        throw new Error("Admin cannot change admin or owner roles");
+      } else {
+        membership.role = role;
+      }
+      saveDb(db);
+    }
+    const dto = participantToClientDto(
+      p || {id: memberUserId, userId: memberUserId, groupId},
+      db
+    );
+    logResponse("PATCH", `/api/groups/${groupId}/participants/${participantId}/role`, dto);
+    return dto;
+  },
+
   async createMatch(groupId, match) {
     const { kind, ...rest } = match;
     const segment = kind === "doubles" ? "doubles" : "singles";
@@ -814,7 +862,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
-    requireAdmin(db, groupId);
+    requireMatchEditor(db, groupId);
     const games = (rest.score && rest.score.games) || (match.score && match.score.games) || [];
     const matchKind = kind || (segment === "doubles" ? "doubles" : "singles");
     const teamA = rest.teamA || match.teamA || [];
@@ -845,7 +893,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireMatchEditor(db, groupId);
     const idx = db.matches.findIndex(
       m => m.id === matchId && m.groupId === groupId && m.kind === (kind === "doubles" ? "doubles" : "singles")
     );
@@ -863,7 +911,7 @@ export const mockClient = {
     await delay();
     const db = loadDb();
     requireAuth(db);
-    requireAdmin(db, groupId);
+    requireStaff(db, groupId);
     const expectedKind = kind === "doubles" ? "doubles" : "singles";
     const before = db.matches.length;
     db.matches = db.matches.filter(

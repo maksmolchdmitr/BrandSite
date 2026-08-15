@@ -62,7 +62,7 @@
         <div class="card">
           <div class="cardTitle">{{ $t('badminton.group.participants') }}</div>
 
-          <div v-if="isAdmin" class="addParticipantBlock">
+          <div v-if="isStaff" class="addParticipantBlock">
             <div v-if="participants.length === 0" class="hint">{{ $t('badminton.group.createUnlinkedHint') }}</div>
 
             <div class="addParticipantSection">
@@ -206,7 +206,8 @@
                 <thead>
                   <tr>
                     <th>{{ $t('badminton.group.name') }}</th>
-                    <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
+                    <th>{{ $t('badminton.group.role') }}</th>
+                    <th v-if="isStaff">{{ $t('badminton.group.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -219,7 +220,21 @@
                         :username="p.username || getParticipantUsername(p.id)"
                       />
                     </td>
-                    <td v-if="isAdmin" class="actionsCell">
+                    <td>
+                      <select
+                        v-if="canAssignRole(p)"
+                        class="input"
+                        :value="p.role || 'member'"
+                        :disabled="formSaving"
+                        @change="onParticipantRoleChange(p, $event.target.value)"
+                      >
+                        <option v-for="role in assignableRoles" :key="role" :value="role">
+                          {{ formatRole(role) }}
+                        </option>
+                      </select>
+                      <span v-else>{{ formatRole(p.role || 'member') }}</span>
+                    </td>
+                    <td v-if="isStaff" class="actionsCell">
                       <RouterLink
                         v-if="isUnlinkedParticipant(p)"
                         class="btn secondary small"
@@ -265,7 +280,7 @@
         <div class="cardTitleRow">
           <div class="cardTitle">{{ $t('badminton.group.matches') }}</div>
           <RouterLink
-            v-if="isAdmin"
+            v-if="isMatchEditor"
             class="btn iconPlus"
             :to="createMatchTo(effectiveMatchTab)"
             :aria-label="createMatchLabel"
@@ -287,7 +302,7 @@
                   <th>{{ $t('badminton.singles.player2') }}</th>
                   <th>{{ $t('badminton.singles.score') }}</th>
                   <th>{{ $t('badminton.singles.date') }}</th>
-                  <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
+                  <th v-if="isMatchEditor">{{ $t('badminton.group.actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,9 +326,9 @@
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
-                  <td v-if="isAdmin" class="actionsCell">
+                  <td v-if="isMatchEditor" class="actionsCell">
                     <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
-                    <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
+                    <button v-if="isStaff" class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
               </tbody>
@@ -345,7 +360,7 @@
                   <th>{{ $t('badminton.doubles.team2p2') }}</th>
                   <th>{{ $t('badminton.doubles.score') }}</th>
                   <th>{{ $t('badminton.doubles.date') }}</th>
-                  <th v-if="isAdmin">{{ $t('badminton.group.actions') }}</th>
+                  <th v-if="isMatchEditor">{{ $t('badminton.group.actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -385,9 +400,9 @@
                   </td>
                   <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
-                  <td v-if="isAdmin" class="actionsCell">
+                  <td v-if="isMatchEditor" class="actionsCell">
                     <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
-                    <button class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
+                    <button v-if="isStaff" class="btn danger small" @click="removeMatch(m)">{{ $t('common.actions.delete') }}</button>
                   </td>
                 </tr>
               </tbody>
@@ -936,8 +951,15 @@ export default defineComponent({
     };
   },
   computed: {
-    isAdmin() {
-      return this.group?.myRole === "admin";
+    isStaff() {
+      return this.group?.myRole === "owner" || this.group?.myRole === "admin";
+    },
+    isMatchEditor() {
+      return this.isStaff || this.group?.myRole === "editor";
+    },
+    assignableRoles() {
+      if (this.group?.myRole === "owner") return ["member", "editor", "admin", "owner"];
+      return ["member", "editor"];
     },
     matchSelectedParticipantIds() {
       const p = this.matchForm || {};
@@ -1178,9 +1200,36 @@ export default defineComponent({
       this.participantUsernameMap = usernameMap;
     },
     formatRole(role) {
-      if (role === "admin") return this.$t("badminton.roles.admin");
-      if (role === "member") return this.$t("badminton.roles.member");
-      return role;
+      const key = `badminton.roles.${role}`;
+      const translated = this.$t(key);
+      return translated === key ? role : translated;
+    },
+    canAssignRole(participant) {
+      if (this.isUnlinkedParticipant(participant)) return false;
+      if (this.group?.myRole === "owner") return participant.role !== "owner";
+      if (this.group?.myRole === "admin") {
+        return participant.role === "member" || participant.role === "editor";
+      }
+      return false;
+    },
+    async onParticipantRoleChange(participant, role) {
+      if (!this.groupId || !participant?.id || role === participant.role) return;
+      if (role === "owner" && !window.confirm(this.$t("badminton.group.confirmTransferOwner"))) {
+        await this.reloadParticipantsFirstPage();
+        return;
+      }
+      this.formSaving = true;
+      this.error = "";
+      try {
+        await badmintonClient.updateParticipantRole(this.groupId, participant.id, {role});
+        await this.reloadParticipantsFirstPage();
+        this.group = await badmintonClient.getGroup(this.groupId);
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.group.errUpdateParticipant");
+        await this.reloadParticipantsFirstPage();
+      } finally {
+        this.formSaving = false;
+      }
     },
     participantsListTo() {
       const gid = encodeURIComponent(this.groupId);
@@ -1800,7 +1849,7 @@ export default defineComponent({
     },
 
     async loadInviteUsers(append = false) {
-      if (!this.groupId || !this.isAdmin) return;
+      if (!this.groupId || !this.isStaff) return;
       if (this.inviteUserSearch.loading) return;
       if (append && !this.inviteUserSearch.nextPageToken) return;
       this.inviteUserSearch.loading = true;

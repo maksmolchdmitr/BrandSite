@@ -132,6 +132,12 @@ export const realClient = {
     return result;
   },
 
+  async updateParticipantRole(groupId, participantId, {role}) {
+    const result = await api.updateParticipantRole(groupId, participantId, {role});
+    invalidateParticipantSearchCache(groupId);
+    return result;
+  },
+
   async createPhotoUploadUrl(groupId, {contentType, contentLength}) {
     return api.createPhotoUploadUrl(groupId, {contentType, contentLength});
   },

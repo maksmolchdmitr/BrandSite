@@ -282,7 +282,7 @@ paths:
 
     post:
       tags: [ Participants ]
-      summary: Create participant (admin-only)
+      summary: Invite registered user to group (owner/admin)
       operationId: createParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -354,7 +354,7 @@ paths:
   /api/groups/{groupId}/photo-upload-url:
     post:
       tags: [ Participants ]
-      summary: Create presigned URL for participant photo upload (admin-only)
+      summary: Create presigned URL for participant photo upload (owner/admin)
       operationId: createPhotoUploadUrl
       description: |
         Returns a short-lived presigned PUT URL for Yandex Object Storage.
@@ -387,7 +387,7 @@ paths:
   /api/groups/{groupId}/participants/unlinked:
     post:
       tags: [ Participants ]
-      summary: Create unlinked participant (admin-only)
+      summary: Create unlinked participant (owner/admin)
       operationId: createUnlinkedParticipant
       description: |
         Creates a user without Telegram (`tg_id` null) and adds them to the group as a member.
@@ -425,7 +425,7 @@ paths:
   /api/groups/{groupId}/participants/{participantId}:
     patch:
       tags: [ Participants ]
-      summary: Update unlinked participant (admin-only)
+      summary: Update unlinked participant (owner/admin)
       description: |
         Updates firstName / lastName / photoUrl of an unlinked participant
         (`groupId` set, no Telegram). Forbidden for registered Telegram users.
@@ -457,7 +457,7 @@ paths:
 
     delete:
       tags: [ Participants ]
-      summary: Delete participant (admin-only)
+      summary: Delete participant (owner/admin)
       operationId: deleteParticipant
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -475,7 +475,7 @@ paths:
   /api/groups/{groupId}/participants/{participantId}/link-user:
     post:
       tags: [ Participants ]
-      summary: Link registered user to participant (admin-only)
+      summary: Link registered user to participant (owner/admin)
       operationId: linkParticipantUser
       description: |
         Merges an unlinked participant (`participantId`) into a registered Telegram user (`userId`).
@@ -513,6 +513,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/groups/{groupId}/participants/{participantId}/role:
+    patch:
+      tags: [ Participants ]
+      summary: Change participant role (owner/admin)
+      operationId: updateParticipantRole
+      description: |
+        Changes the group role of a registered participant.
+        Unlinked participants always stay `member` and cannot be assigned another role.
+
+        Owner may assign any role. Assigning `owner` to another member transfers
+        ownership: the previous owner becomes `admin`. The current owner cannot
+        demote themselves.
+
+        Admin may assign only `member` and `editor`, and cannot change
+        `admin` or `owner` participants.
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/ParticipantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipantRoleUpdateRequest"
+      responses:
+        "200":
+          description: Updated participant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participant"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/groups/{groupId}/matches/singles:
     get:
       tags: [ Matches ]
@@ -544,7 +584,7 @@ paths:
           $ref: "#/components/responses/NotFound"
     post:
       tags: [ Matches ]
-      summary: Create singles match (admin-only)
+      summary: Create singles match (owner/admin/editor)
       operationId: createSinglesMatch
       description: |
         Create a singles match. Body is the same as before without `kind` (singles is implied by the path).
@@ -574,7 +614,7 @@ paths:
   /api/groups/{groupId}/matches/singles/{matchId}:
     patch:
       tags: [ Matches ]
-      summary: Update singles match result (admin-only)
+      summary: Update singles match result (owner/admin/editor)
       operationId: updateSinglesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -603,7 +643,7 @@ paths:
 
     delete:
       tags: [ Matches ]
-      summary: Delete singles match result (admin-only)
+      summary: Delete singles match result (owner/admin)
       operationId: deleteSinglesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -649,7 +689,7 @@ paths:
           $ref: "#/components/responses/NotFound"
     post:
       tags: [ Matches ]
-      summary: Create doubles match (admin-only)
+      summary: Create doubles match (owner/admin/editor)
       operationId: createDoublesMatch
       description: |
         Create a doubles match. Body is the same as before without `kind`.
@@ -679,7 +719,7 @@ paths:
   /api/groups/{groupId}/matches/doubles/{matchId}:
     patch:
       tags: [ Matches ]
-      summary: Update doubles match result (admin-only)
+      summary: Update doubles match result (owner/admin/editor)
       operationId: updateDoublesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -708,7 +748,7 @@ paths:
 
     delete:
       tags: [ Matches ]
-      summary: Delete doubles match result (admin-only)
+      summary: Delete doubles match result (owner/admin)
       operationId: deleteDoublesMatch
       parameters:
         - $ref: "#/components/parameters/GroupId"
@@ -1174,6 +1214,19 @@ components:
         photoCrop:
           $ref: "#/components/schemas/PhotoCrop"
 
+    GroupMemberRole:
+      type: string
+      description: Role of a registered participant in the group
+      enum: [ member, editor, admin, owner ]
+
+    ParticipantRoleUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        role:
+          $ref: "#/components/schemas/GroupMemberRole"
+      required: [ role ]
+
     Group:
       type: object
       additionalProperties: false
@@ -1181,9 +1234,7 @@ components:
         id: { type: string }
         name: { type: string, example: Friday Badminton }
         myRole:
-          type: string
-          description: Role of current user in this group
-          enum: [ member, admin ]
+          $ref: "#/components/schemas/GroupMemberRole"
       required: [ id, name ]
 
     GroupCreateRequest:
@@ -1241,7 +1292,9 @@ components:
           description: Profile photo URL (http/https; Telegram or external)
         photoCrop:
           $ref: "#/components/schemas/PhotoCrop"
-      required: [ id, name, username ]
+        role:
+          $ref: "#/components/schemas/GroupMemberRole"
+      required: [ id, name, username, role ]
 
     ParticipantCreateRequest:
       type: object

@@ -34,7 +34,7 @@
           <RouterLink v-for="g in groups" :key="g.id" class="groupRow" :to="groupTo(g.id)">
             <div class="groupName">{{ g.name }}</div>
             <div class="groupMeta">
-              <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
+              <span v-if="g.myRole" class="pill" :class="g.myRole === 'admin' || g.myRole === 'owner' ? 'admin' : ''">{{ formatRole(g.myRole) }}</span>
               <span class="arrow">→</span>
             </div>
           </RouterLink>
@@ -72,9 +72,9 @@ export default defineComponent({
       return groupHref(groupId);
     },
     formatRole(role) {
-      if (role === "admin") return this.$t("badminton.roles.admin");
-      if (role === "member") return this.$t("badminton.roles.member");
-      return role;
+      const key = `badminton.roles.${role}`;
+      const translated = this.$t(key);
+      return translated === key ? role : translated;
     },
     async load() {
       this.loading = true;

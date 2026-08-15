@@ -354,6 +354,16 @@ export async function updateParticipant(groupId, participantId, {firstName, last
   });
 }
 
+export async function updateParticipantRole(groupId, participantId, {role}) {
+  return apiRequest(
+    `/api/groups/${encodeURIComponent(groupId)}/participants/${encodeURIComponent(participantId)}/role`,
+    {
+      method: "PATCH",
+      body: {role},
+    }
+  );
+}
+
 export async function createPhotoUploadUrl(groupId, {contentType, contentLength}) {
   const body = {contentType};
   if (contentLength != null) body.contentLength = contentLength;
