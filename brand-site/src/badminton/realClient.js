@@ -90,14 +90,12 @@ export const realClient = {
     return api.listMyNotifications();
   },
 
-  async acceptInvitation(invitationId) {
-    const result = await api.acceptInvitation(invitationId);
-    invalidateParticipantSearchCache();
+  async respondToInvitation(invitationId, decision) {
+    const result = await api.respondToInvitation(invitationId, decision);
+    if (decision === "accept") {
+      invalidateParticipantSearchCache();
+    }
     return result;
-  },
-
-  async rejectInvitation(invitationId) {
-    return api.rejectInvitation(invitationId);
   },
 
   // Participant endpoints

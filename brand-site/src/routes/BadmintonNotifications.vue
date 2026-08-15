@@ -96,7 +96,7 @@ export default defineComponent({
       this.busyId = item.id;
       this.error = "";
       try {
-        await badmintonClient.acceptInvitation(item.invitationId);
+        await badmintonClient.respondToInvitation(item.invitationId, "accept");
         await this.refresh();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errAccept");
@@ -109,7 +109,7 @@ export default defineComponent({
       this.busyId = item.id;
       this.error = "";
       try {
-        await badmintonClient.rejectInvitation(item.invitationId);
+        await badmintonClient.respondToInvitation(item.invitationId, "reject");
         await this.refresh();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errReject");

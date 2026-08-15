@@ -133,46 +133,31 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /api/invitations/{invitationId}/accept:
+  /api/invitations/{invitationId}/respond:
     post:
       tags: [ Invitations ]
-      summary: Accept invitation (invitee-only)
-      operationId: acceptInvitation
-      parameters:
-        - $ref: "#/components/parameters/InvitationId"
-      responses:
-        "200":
-          description: Invitation accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GroupInvitation"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-
-  /api/invitations/{invitationId}/reject:
-    post:
-      tags: [ Invitations ]
-      summary: Reject invitation (invitee-only)
-      operationId: rejectInvitation
+      summary: Accept or reject invitation (invitee-only)
+      operationId: respondToInvitation
       description: |
-        Rejects the invitation and notifies the inviting admin in Telegram
-        (registered user, optional unlinked participant, group).
+        Resolves a pending invitation. On reject, notifies the inviting admin
+        (in-app + Telegram).
       parameters:
         - $ref: "#/components/parameters/InvitationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationRespondRequest"
       responses:
         "200":
-          description: Invitation rejected
+          description: Invitation resolved
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupInvitation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1347,6 +1332,18 @@ components:
       type: string
       enum: [ pending, accepted, rejected ]
 
+    InvitationDecision:
+      type: string
+      enum: [ accept, reject ]
+
+    InvitationRespondRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        decision:
+          $ref: "#/components/schemas/InvitationDecision"
+      required: [ decision ]
+
     GroupInvitation:
       type: object
       additionalProperties: false
@@ -1401,7 +1398,7 @@ components:
           properties:
             invitationId:
               type: string
-              description: Use accept/reject invitation endpoints
+              description: Use respondToInvitation endpoint
             invitationStatus:
               $ref: "#/components/schemas/GroupInvitationStatus"
           required: [ invitationId, invitationStatus ]
@@ -1414,7 +1411,7 @@ components:
           properties:
             invitationId:
               type: string
-              description: Use accept/reject invitation endpoints
+              description: Use respondToInvitation endpoint
             invitationStatus:
               $ref: "#/components/schemas/GroupInvitationStatus"
             unlinkedUserId:

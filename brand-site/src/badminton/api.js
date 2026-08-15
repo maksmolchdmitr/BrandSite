@@ -293,15 +293,10 @@ export async function listMyNotifications() {
   return apiRequest("/api/me/notifications");
 }
 
-export async function acceptInvitation(invitationId) {
-  return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/accept`, {
+export async function respondToInvitation(invitationId, decision) {
+  return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/respond`, {
     method: "POST",
-  });
-}
-
-export async function rejectInvitation(invitationId) {
-  return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/reject`, {
-    method: "POST",
+    body: JSON.stringify({decision}),
   });
 }
 

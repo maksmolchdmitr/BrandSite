@@ -950,8 +950,8 @@ export const mockClient = {
     return result;
   },
 
-  async acceptInvitation(invitationId) {
-    logRequest("POST", `/api/invitations/${invitationId}/accept`);
+  async respondToInvitation(invitationId, decision) {
+    logRequest("POST", `/api/invitations/${invitationId}/respond`, {decision});
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
@@ -959,76 +959,70 @@ export const mockClient = {
     if (!invitation) throw new Error("Invitation not found");
     if (invitation.inviteeUserId !== u.id) throw new Error("Forbidden");
     if (invitation.status !== "pending") throw new Error("Invitation is not pending");
-    if (invitation.kind === "group_join") {
-      if (db.memberships.some(m => m.groupId === invitation.groupId && m.userId === u.id)) {
-        throw new Error("User is already a member of this group");
+    if (decision === "accept") {
+      if (invitation.kind === "group_join") {
+        if (db.memberships.some(m => m.groupId === invitation.groupId && m.userId === u.id)) {
+          throw new Error("User is already a member of this group");
+        }
+        db.memberships.push({groupId: invitation.groupId, userId: u.id, role: "member"});
+        if (!db.participants.some(p => p.groupId === invitation.groupId && (p.id === u.id || p.userId === u.id))) {
+          db.participants.unshift({
+            id: u.id,
+            groupId: invitation.groupId,
+            name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username,
+            userId: u.id,
+            createdAt: nowIso(),
+          });
+        }
+      } else if (invitation.kind === "link_user") {
+        const participantId = invitation.unlinkedUserId;
+        const userId = invitation.inviteeUserId;
+        const unlinkedIdx = db.participants.findIndex(p => p.id === participantId && p.groupId === invitation.groupId);
+        if (unlinkedIdx < 0) throw new Error("Participant not found");
+        for (const match of db.matches) {
+          if (match.groupId !== invitation.groupId) continue;
+          match.teamA = (match.teamA || []).map(id => id === participantId ? userId : id);
+          match.teamB = (match.teamB || []).map(id => id === participantId ? userId : id);
+        }
+        db.participants.splice(unlinkedIdx, 1);
+        db.users = db.users.filter(row => row.id !== participantId);
+        db.memberships = db.memberships.filter(m => !(m.groupId === invitation.groupId && m.userId === participantId));
+        if (!db.participants.some(p => p.id === userId && p.groupId === invitation.groupId)) {
+          const registered = db.users.find(row => row.id === userId);
+          db.participants.unshift({
+            id: userId,
+            groupId: invitation.groupId,
+            name: [registered?.firstName, registered?.lastName].filter(Boolean).join(" ") || registered?.username,
+            userId,
+            createdAt: nowIso(),
+          });
+        }
+        if (!db.memberships.some(m => m.groupId === invitation.groupId && m.userId === userId)) {
+          db.memberships.push({groupId: invitation.groupId, userId, role: "member"});
+        }
+        invitation.unlinkedUserId = null;
+        invalidateParticipantSearchCache(invitation.groupId);
       }
-      db.memberships.push({groupId: invitation.groupId, userId: u.id, role: "member"});
-      if (!db.participants.some(p => p.groupId === invitation.groupId && (p.id === u.id || p.userId === u.id))) {
-        db.participants.unshift({
-          id: u.id,
-          groupId: invitation.groupId,
-          name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username,
-          userId: u.id,
-          createdAt: nowIso(),
-        });
-      }
-    } else if (invitation.kind === "link_user") {
-      const participantId = invitation.unlinkedUserId;
-      const userId = invitation.inviteeUserId;
-      const unlinkedIdx = db.participants.findIndex(p => p.id === participantId && p.groupId === invitation.groupId);
-      if (unlinkedIdx < 0) throw new Error("Participant not found");
-      for (const match of db.matches) {
-        if (match.groupId !== invitation.groupId) continue;
-        match.teamA = (match.teamA || []).map(id => id === participantId ? userId : id);
-        match.teamB = (match.teamB || []).map(id => id === participantId ? userId : id);
-      }
-      db.participants.splice(unlinkedIdx, 1);
-      db.users = db.users.filter(row => row.id !== participantId);
-      db.memberships = db.memberships.filter(m => !(m.groupId === invitation.groupId && m.userId === participantId));
-      if (!db.participants.some(p => p.id === userId && p.groupId === invitation.groupId)) {
-        const registered = db.users.find(row => row.id === userId);
-        db.participants.unshift({
-          id: userId,
-          groupId: invitation.groupId,
-          name: [registered?.firstName, registered?.lastName].filter(Boolean).join(" ") || registered?.username,
-          userId,
-          createdAt: nowIso(),
-        });
-      }
-      if (!db.memberships.some(m => m.groupId === invitation.groupId && m.userId === userId)) {
-        db.memberships.push({groupId: invitation.groupId, userId, role: "member"});
-      }
-      invitation.unlinkedUserId = null;
-      invalidateParticipantSearchCache(invitation.groupId);
+      invitation.status = "accepted";
+      invitation.resolvedAt = nowIso();
+      saveDb(db);
+      logResponse("POST", `/api/invitations/${invitationId}/respond`, invitation);
+      return invitation;
     }
-    invitation.status = "accepted";
-    invitation.resolvedAt = nowIso();
-    saveDb(db);
-    logResponse("POST", `/api/invitations/${invitationId}/accept`, invitation);
-    return invitation;
-  },
-
-  async rejectInvitation(invitationId) {
-    logRequest("POST", `/api/invitations/${invitationId}/reject`);
-    await delay();
-    const db = loadDb();
-    const u = requireAuth(db);
-    const invitation = (db.invitations || []).find(i => i.id === invitationId);
-    if (!invitation) throw new Error("Invitation not found");
-    if (invitation.inviteeUserId !== u.id) throw new Error("Forbidden");
-    if (invitation.status !== "pending") throw new Error("Invitation is not pending");
-    invitation.status = "rejected";
-    invitation.resolvedAt = nowIso();
-    pushNotification(db, {
-      userId: invitation.invitedByUserId,
-      kind: invitation.kind === "group_join" ? "group_join_rejected" : "link_user_rejected",
-      groupId: invitation.groupId,
-      invitationId: invitation.id,
-    });
-    saveDb(db);
-    logResponse("POST", `/api/invitations/${invitationId}/reject`, invitation);
-    return invitation;
+    if (decision === "reject") {
+      invitation.status = "rejected";
+      invitation.resolvedAt = nowIso();
+      pushNotification(db, {
+        userId: invitation.invitedByUserId,
+        kind: invitation.kind === "group_join" ? "group_join_rejected" : "link_user_rejected",
+        groupId: invitation.groupId,
+        invitationId: invitation.id,
+      });
+      saveDb(db);
+      logResponse("POST", `/api/invitations/${invitationId}/respond`, invitation);
+      return invitation;
+    }
+    throw new Error("Invalid decision");
   },
 
   async updateParticipantRole(groupId, participantId, {role}) {
