@@ -26,6 +26,7 @@
         type="text"
         maxlength="6"
         :disabled="disabled"
+        :placeholder="placeholder"
         :aria-label="customLabel"
         :aria-describedby="hintId"
         autocomplete="off"
@@ -69,6 +70,7 @@ export default defineComponent({
     ariaLabel: { type: String, default: "" },
     customLabel: { type: String, default: "" },
     hint: { type: String, default: "" },
+    placeholder: { type: String, default: "…" },
   },
   emits: ["update:modelValue", "invalid"],
   data() {
@@ -217,6 +219,11 @@ export default defineComponent({
   text-align: center;
   box-sizing: border-box;
 }
+.periodInput::placeholder {
+  color: rgba(79, 61, 255, 0.4);
+  font-weight: 700;
+  opacity: 1;
+}
 .periodInput.empty:not(:focus):not(.active):not(.invalid) {
   border-color: rgba(79, 61, 255, 0.28);
   border-style: dashed;
@@ -292,6 +299,9 @@ export default defineComponent({
   }
   .periodInput {
     color: #c7bcff;
+  }
+  .periodInput::placeholder {
+    color: rgba(199, 188, 255, 0.45);
   }
   .periodInput.empty:not(:focus):not(.active):not(.invalid) {
     border-color: rgba(199, 188, 255, 0.35);
