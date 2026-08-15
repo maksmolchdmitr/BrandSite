@@ -72,16 +72,44 @@ function notificationToDto(n, db) {
     ? (db.invitations || []).find(i => i.id === n.invitationId)
     : null;
   const group = db.groups.find(g => g.id === n.groupId);
-  return {
+  const base = {
     id: n.id,
     kind: n.kind,
     groupId: n.groupId,
     groupName: group?.name || "",
-    invitationId: n.invitationId || undefined,
-    invitationStatus: invitation?.status || undefined,
-    unlinkedUserId: invitation?.unlinkedUserId || undefined,
     createdAt: n.createdAt,
   };
+  if (n.kind === "group_join_invite") {
+    return {
+      ...base,
+      invitationId: n.invitationId,
+      invitationStatus: invitation?.status || "pending",
+    };
+  }
+  if (n.kind === "link_user_invite") {
+    return {
+      ...base,
+      invitationId: n.invitationId,
+      invitationStatus: invitation?.status || "pending",
+      unlinkedUserId: invitation?.unlinkedUserId,
+    };
+  }
+  if (n.kind === "group_join_rejected") {
+    return {
+      ...base,
+      invitationId: n.invitationId,
+      inviteeUserId: invitation?.inviteeUserId,
+    };
+  }
+  if (n.kind === "link_user_rejected") {
+    return {
+      ...base,
+      invitationId: n.invitationId,
+      inviteeUserId: invitation?.inviteeUserId,
+      unlinkedUserId: invitation?.unlinkedUserId,
+    };
+  }
+  return base;
 }
 
 function participantNameMap(db, groupId) {

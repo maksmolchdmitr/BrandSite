@@ -74,9 +74,9 @@ export default defineComponent({
       return translated === key ? kind : translated;
     },
     canResolve(item) {
-      return Boolean(item?.invitationId)
+      return (item.kind === "group_join_invite" || item.kind === "link_user_invite")
         && item.invitationStatus === "pending"
-        && (item.kind === "group_join_invite" || item.kind === "link_user_invite");
+        && Boolean(item.invitationId);
     },
     async refresh() {
       this.loading = true;

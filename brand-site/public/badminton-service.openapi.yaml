@@ -1374,25 +1374,80 @@ components:
 
     UserNotification:
       type: object
-      additionalProperties: false
+      description: Base user notification; concrete shape depends on `kind`
+      discriminator:
+        propertyName: kind
+        mapping:
+          group_join_invite: "#/components/schemas/GroupJoinInviteNotification"
+          link_user_invite: "#/components/schemas/LinkUserInviteNotification"
+          group_join_rejected: "#/components/schemas/GroupJoinRejectedNotification"
+          link_user_rejected: "#/components/schemas/LinkUserRejectedNotification"
       properties:
         id: { type: string }
         kind:
           $ref: "#/components/schemas/UserNotificationKind"
         groupId: { type: string }
         groupName: { type: string }
-        invitationId:
-          type: string
-          description: Present when the notification is tied to an invitation; use accept/reject endpoints
-        invitationStatus:
-          $ref: "#/components/schemas/GroupInvitationStatus"
-        unlinkedUserId:
-          type: string
-          description: Present for link_user notifications
         createdAt:
           type: string
           format: date-time
       required: [ id, kind, groupId, createdAt ]
+
+    GroupJoinInviteNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId:
+              type: string
+              description: Use accept/reject invitation endpoints
+            invitationStatus:
+              $ref: "#/components/schemas/GroupInvitationStatus"
+          required: [ invitationId, invitationStatus ]
+
+    LinkUserInviteNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId:
+              type: string
+              description: Use accept/reject invitation endpoints
+            invitationStatus:
+              $ref: "#/components/schemas/GroupInvitationStatus"
+            unlinkedUserId:
+              type: string
+              description: Unlinked participant to merge into invitee's account
+          required: [ invitationId, invitationStatus, unlinkedUserId ]
+
+    GroupJoinRejectedNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId: { type: string }
+            inviteeUserId:
+              type: string
+              description: User who declined the group invitation
+          required: [ invitationId, inviteeUserId ]
+
+    LinkUserRejectedNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId: { type: string }
+            inviteeUserId:
+              type: string
+              description: User who declined the account link request
+            unlinkedUserId:
+              type: string
+              description: Unlinked participant that was requested to be linked
+          required: [ invitationId, inviteeUserId, unlinkedUserId ]
 
     UserNotificationPage:
       type: object
