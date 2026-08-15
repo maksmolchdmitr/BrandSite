@@ -317,7 +317,7 @@ export default defineComponent({
           color: point.color,
           leftPercent: point.leftPercent,
           topPercent: point.topPercent,
-          nearTop: point.topPercent < 18,
+          nearTop: point.topPercent < 28,
         };
       });
     },
@@ -337,14 +337,18 @@ export default defineComponent({
     tooltipStyle() {
       if (!this.hoverPoint) return {};
       const left = Math.min(Math.max(this.hoverPoint.leftPercent, 16), 84);
-      const nearTop = this.hoverPoint.topPercent < 22;
-      const top = nearTop
-        ? Math.min(this.hoverPoint.topPercent + 10, 72)
-        : Math.max(this.hoverPoint.topPercent - 10, 10);
+      const nearTop = this.hoverPoint.topPercent < 42;
+      if (nearTop) {
+        return {
+          left: `${left}%`,
+          top: `${this.hoverPoint.topPercent}%`,
+          transform: "translate(-50%, 16px)",
+        };
+      }
       return {
         left: `${left}%`,
-        top: `${top}%`,
-        transform: nearTop ? "translate(-50%, 12%)" : "translate(-50%, -115%)",
+        top: `${this.hoverPoint.topPercent}%`,
+        transform: "translate(-50%, calc(-100% - 14px))",
       };
     },
     yTicks() {
