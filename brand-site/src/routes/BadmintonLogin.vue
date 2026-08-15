@@ -1,6 +1,10 @@
 <template>
   <div class="page">
     <div class="content">
+      <div class="topRow">
+        <LocaleSwitcher />
+      </div>
+
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="widgetBox">
@@ -41,6 +45,7 @@
 <script>
 import {defineComponent} from "vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
+import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
@@ -53,7 +58,7 @@ function tgLog(...args) {
 }
 
 export default defineComponent({
-  components: {PersonChip},
+  components: {PersonChip, LocaleSwitcher},
   props: {
     userId: {
       type: String,
@@ -356,6 +361,14 @@ export default defineComponent({
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
+}
+
+.topRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .title {

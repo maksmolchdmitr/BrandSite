@@ -12,6 +12,7 @@
         </div>
 
         <div class="topActions">
+          <LocaleSwitcher />
           <span v-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
           <button class="btn secondary" :disabled="loading" @click="refresh">
             <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
@@ -833,6 +834,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
+import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { formatElo } from "@/badminton/formatElo.js";
 import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
@@ -847,7 +849,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect },
+  components: { PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect, LocaleSwitcher },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "matches" },
