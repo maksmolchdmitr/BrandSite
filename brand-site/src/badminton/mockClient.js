@@ -1045,7 +1045,6 @@ export const mockClient = {
     const db = loadDb();
     const actor = requireAuth(db);
     requireStaff(db, groupId);
-    if (role === "owner") throw new Error("Ownership is transferred via transfer-ownership, not role");
     const p = db.participants.find(row =>
       row.groupId === groupId && (row.id === participantId || row.userId === participantId)
     );
