@@ -3,7 +3,7 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t('badminton.groups.title') }}</h1>
-        <LocaleSwitcher />
+        <BadmintonTopActions />
       </div>
 
       <BadmintonHubCtaRow current="groups" :disabled="loading" @logout="logout" />
@@ -48,13 +48,13 @@
 <script>
 import {defineComponent} from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
-import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
+import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {groupHref} from "@/badminton/uiPrefs.js";
 import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
-  components: {BadmintonHubCtaRow, LocaleSwitcher},
+  components: {BadmintonHubCtaRow, BadmintonTopActions},
   data() {
     return {
       loading: false,

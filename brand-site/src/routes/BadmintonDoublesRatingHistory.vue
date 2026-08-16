@@ -3,7 +3,7 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t('badminton.ratings.doublesHistoryTitle') }}</h1>
-        <LocaleSwitcher />
+        <BadmintonTopActions />
       </div>
 
       <BadmintonHubCtaRow current="doubles-rating-history" :disabled="loading" @logout="handleLogout" />
@@ -89,7 +89,7 @@ import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import DoublesRatingHistoryChart from "@/components/badminton/DoublesRatingHistoryChart.vue";
 import RatingHistoryPeriodPicker from "@/components/badminton/RatingHistoryPeriodPicker.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
-import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
+import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import {
   approxRatingHistoryPeriodForTruncation,
@@ -118,7 +118,7 @@ export default defineComponent({
     DoublesRatingHistoryChart,
     RatingHistoryPeriodPicker,
     LoadingPhrase,
-    LocaleSwitcher,
+    BadmintonTopActions,
   },
   data() {
     return {

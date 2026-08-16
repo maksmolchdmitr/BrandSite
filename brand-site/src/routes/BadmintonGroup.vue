@@ -12,6 +12,7 @@
         </div>
 
         <div class="topActions">
+          <BadmintonNotificationBell />
           <LocaleSwitcher />
           <span v-if="group?.isOwner" class="pill">{{ formatRole('owner') }}</span>
           <span v-else-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
@@ -857,6 +858,7 @@ import PersonChip from "@/components/badminton/PersonChip.vue";
 import PhotoHoldPreview from "@/components/badminton/PhotoHoldPreview.vue";
 import ProfileEditForm from "@/components/badminton/ProfileEditForm.vue";
 import ParticipantSearchSelect from "@/components/badminton/ParticipantSearchSelect.vue";
+import BadmintonNotificationBell from "@/components/badminton/BadmintonNotificationBell.vue";
 import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { getLoggedInUserId } from "@/badminton/cookies.js";
@@ -873,7 +875,7 @@ const CYRILLIC_TO_LATIN = {
 
 export default defineComponent({
   name: "BadmintonGroup",
-  components: { PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect, LocaleSwitcher },
+  components: { PagerBar, BadmintonPillNav, PersonChip, PhotoHoldPreview, ProfileEditForm, ParticipantSearchSelect, BadmintonNotificationBell, LocaleSwitcher },
   props: {
     groupId: { type: String, required: true },
     groupSection: { type: String, default: "matches" },

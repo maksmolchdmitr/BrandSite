@@ -36,13 +36,6 @@
       <span class="ctaText">{{ $t("badminton.profile.title") }}</span>
     </RouterLink>
     <RouterLink
-      v-if="current !== 'notifications'"
-      class="cta secondary cta-notifications"
-      to="/?page=badminton&section=notifications"
-    >
-      <span class="ctaText">{{ $t("badminton.notifications.title") }}</span>
-    </RouterLink>
-    <RouterLink
       v-if="current !== 'groups'"
       class="cta secondary cta-groups"
       to="/?page=badminton&section=groups"
@@ -150,14 +143,6 @@ export default defineComponent({
 }
 .cta-profile.secondary .ctaText {
   color: #1976D2;
-}
-
-.cta-notifications.secondary {
-  background-color: #FFF8E1;
-  border-color: #FFB300;
-}
-.cta-notifications.secondary .ctaText {
-  color: #F57C00;
 }
 
 .cta-groups.secondary {

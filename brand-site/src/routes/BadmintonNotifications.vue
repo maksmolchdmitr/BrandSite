@@ -6,7 +6,7 @@
           <h1 class="title">{{ $t('badminton.notifications.title') }}</h1>
           <p class="subtitle">{{ $t('badminton.notifications.subtitle') }}</p>
         </div>
-        <LocaleSwitcher />
+        <BadmintonTopActions />
       </div>
 
       <BadmintonHubCtaRow current="notifications" :disabled="loading" @logout="logout" />
@@ -47,14 +47,14 @@
 <script>
 import {defineComponent} from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
-import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
+import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   name: "BadmintonNotifications",
-  components: {BadmintonHubCtaRow, LocaleSwitcher, LoadingPhrase},
+  components: {BadmintonHubCtaRow, BadmintonTopActions, LoadingPhrase},
   data() {
     return {
       loading: false,

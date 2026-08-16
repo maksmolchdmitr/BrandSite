@@ -3,7 +3,7 @@
     <div class="content">
       <div class="topRow">
         <h1 class="title">{{ $t("badminton.gamesHub.title") }}</h1>
-        <LocaleSwitcher />
+        <BadmintonTopActions />
       </div>
       <BadmintonHubCtaRow current="games" :disabled="loading" @logout="logout" />
       <BadmintonPillNav :items="gamesNavItems" aria-label="games kind" />
@@ -157,7 +157,7 @@ import PagerBar from "@/components/badminton/PagerBar.vue";
 import BadmintonPillNav from "@/components/badminton/BadmintonPillNav.vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
 import PersonChip from "@/components/badminton/PersonChip.vue";
-import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
+import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue";
 import { badmintonClient } from "@/badminton/client.js";
 import { matchFormatMixin } from "@/routes/badminton/matchFormatMixin.js";
 import { gamesSectionTo, getGamesTab } from "@/badminton/uiPrefs.js";
@@ -165,7 +165,7 @@ import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   name: "BadmintonGames",
-  components: { PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip, LocaleSwitcher },
+  components: { PagerBar, BadmintonPillNav, BadmintonHubCtaRow, PersonChip, BadmintonTopActions },
   mixins: [matchFormatMixin],
   props: {
     gamesTab: { type: String, default: "" },
