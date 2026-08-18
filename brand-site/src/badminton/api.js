@@ -48,8 +48,9 @@ async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) 
     ...headers,
   };
 
+  const skipBearer = path === "/api/auth/telegram/login" || path === "/api/auth/refresh";
   const token = getAccessToken();
-  if (token) {
+  if (token && !skipBearer) {
     requestHeaders.Authorization = `Bearer ${token}`;
   }
 
@@ -136,7 +137,6 @@ export async function telegramLogin(telegramUser) {
   const result = await apiRequest("/api/auth/telegram/login", {
     method: "POST",
     body: telegramUser,
-    headers: { Authorization: undefined },
   }, true);
   if (result.accessToken && result.refreshToken) {
     setTokens(result.accessToken, result.refreshToken);
@@ -150,7 +150,6 @@ export async function refreshToken() {
   const result = await apiRequest("/api/auth/refresh", {
     method: "POST",
     body: { refreshToken: refresh },
-    headers: { Authorization: undefined },
   }, true);
   if (result.accessToken && result.refreshToken) {
     setTokens(result.accessToken, result.refreshToken);
