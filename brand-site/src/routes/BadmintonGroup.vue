@@ -14,8 +14,8 @@
         <div class="topActions">
           <BadmintonNotificationBell />
           <LocaleSwitcher />
-          <span v-if="group?.isOwner" class="pill">{{ formatRole('owner') }}</span>
-          <span v-else-if="group?.myRole" class="pill">{{ formatRole(group.myRole) }}</span>
+          <span v-if="group?.isOwner" class="rolePill role-owner">{{ formatRole('owner') }}</span>
+          <span v-else-if="group?.myRole" class="rolePill" :class="'role-' + group.myRole">{{ formatRole(group.myRole) }}</span>
           <button class="btn secondary" :disabled="loading" @click="refresh">
             <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
             <template v-else>{{ $t('common.actions.refresh') }}</template>
@@ -224,19 +224,30 @@
                         :username="p.username || getParticipantUsername(p.id)"
                       />
                     </td>
-                    <td>
-                      <select
+                    <td class="roleCell">
+                      <label
                         v-if="canAssignRole(p)"
-                        class="input"
-                        :value="p.role || 'member'"
-                        :disabled="formSaving"
-                        @change="onParticipantRoleChange(p, $event.target.value)"
+                        class="roleSelectWrap"
+                        :class="'role-' + (p.role || 'member')"
                       >
-                        <option v-for="role in assignableRoles" :key="role" :value="role">
-                          {{ formatRole(role) }}
-                        </option>
-                      </select>
-                      <span v-else>{{ formatRole(p.role || 'member') }}</span>
+                        <select
+                          class="roleSelect"
+                          :value="p.role || 'member'"
+                          :disabled="formSaving"
+                          :aria-label="$t('badminton.group.role')"
+                          @change="onParticipantRoleChange(p, $event.target.value)"
+                        >
+                          <option v-for="role in assignableRoles" :key="role" :value="role">
+                            {{ formatRole(role) }}
+                          </option>
+                        </select>
+                        <span class="roleSelectChevron" aria-hidden="true">▾</span>
+                      </label>
+                      <span
+                        v-else
+                        class="rolePill"
+                        :class="'role-' + participantRoleKey(p)"
+                      >{{ formatRole(participantRoleKey(p)) }}</span>
                     </td>
                     <td v-if="isStaff" class="actionsCell">
                       <RouterLink
@@ -1278,6 +1289,12 @@ export default defineComponent({
       const key = `badminton.roles.${role}`;
       const translated = this.$t(key);
       return translated === key ? role : translated;
+    },
+    participantRoleKey(participant) {
+      if (participant?.id && participant.id === this.meId && this.group?.isOwner) {
+        return "owner";
+      }
+      return participant?.role || "member";
     },
     canAssignRole(participant) {
       if (this.isUnlinkedParticipant(participant)) return false;
@@ -2442,6 +2459,87 @@ export default defineComponent({
 .pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 6px 12px; border-radius: 999px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
 .pill.tiny { padding: 3px 8px; font-size: 12px; }
 
+.roleCell { vertical-align: middle; white-space: nowrap; }
+.rolePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
+}
+.roleSelectWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
+}
+.roleSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 6px 28px 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-width: 7.5rem;
+  max-width: 100%;
+  width: auto;
+}
+.roleSelect:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.roleSelectChevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.85;
+}
+.role-member {
+  background: #f3f3f8;
+  border-color: #d8d8e8;
+  color: #5a5a72;
+}
+.role-editor {
+  background: #f3f0ff;
+  border-color: rgba(79, 61, 255, 0.45);
+  color: #4F3DFF;
+}
+.role-admin {
+  background: #4F3DFF;
+  border-color: #4F3DFF;
+  color: #fff;
+}
+.role-owner {
+  background: linear-gradient(135deg, #5b4dff 0%, #7a3dff 100%);
+  border-color: #5b4dff;
+  color: #fff;
+}
+.roleSelectWrap.role-admin .roleSelectChevron,
+.roleSelectWrap.role-owner .roleSelectChevron {
+  color: #fff;
+}
+
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 .noticeBox { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); margin-bottom: 12px; }
 
@@ -2664,6 +2762,31 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
     background: #2d2d2d;
     border-color: #6f62c6;
     color: #c7bcff;
+  }
+
+  .role-member {
+    background: #343434;
+    border-color: #555;
+    color: #cfcfcf;
+  }
+  .role-editor {
+    background: #2a2740;
+    border-color: #6f62c6;
+    color: #c7bcff;
+  }
+  .role-admin {
+    background: #5b4dff;
+    border-color: #5b4dff;
+    color: #fff;
+  }
+  .role-owner {
+    background: linear-gradient(135deg, #5b4dff 0%, #8a4dff 100%);
+    border-color: #6f62c6;
+    color: #fff;
+  }
+  .roleSelect option {
+    background: #2d2d2d;
+    color: #e8e8e8;
   }
 
   .errorBox {

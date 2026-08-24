@@ -275,10 +275,10 @@ const messages = {
         loadingMore: "Loading more...",
       },
       roles: {
-        owner: "owner",
-        admin: "admin",
-        editor: "editor",
-        member: "member",
+        owner: "Owner",
+        admin: "Admin",
+        editor: "Editor",
+        member: "Member",
       },
       notifications: {
         title: "Notifications",
