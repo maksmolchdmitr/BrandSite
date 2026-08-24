@@ -288,8 +288,19 @@ export async function getGroup(groupId) {
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}`);
 }
 
-export async function listMyNotifications() {
-  return apiRequest("/api/me/notifications");
+export async function listMyNotifications({ unread = true, limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  params.append("unread", String(unread));
+  if (limit) params.append("limit", String(limit));
+  if (pageToken) params.append("pageToken", pageToken);
+  const query = params.toString();
+  return apiRequest(`/api/me/notifications?${query}`);
+}
+
+export async function markNotificationRead(notificationId) {
+  return apiRequest(`/api/me/notifications/${encodeURIComponent(notificationId)}/read`, {
+    method: "POST",
+  });
 }
 
 export async function respondToInvitation(invitationId, decision) {

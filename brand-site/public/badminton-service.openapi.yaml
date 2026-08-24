@@ -123,15 +123,51 @@ paths:
       tags: [ Notifications ]
       summary: List notifications for current user
       operationId: listMyNotifications
+      description: |
+        Paginated inbox filtered by `unread`. Newest `createdAt` first.
+        Default filter is unread (`unread=true`).
+      parameters:
+        - in: query
+          name: unread
+          description: true — unread only; false — read only
+          schema: { type: boolean, default: true }
+        - in: query
+          name: limit
+          description: Page size
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: pageToken
+          description: Opaque cursor for the next page (omit on first request)
+          schema: { type: string }
       responses:
         "200":
-          description: User notifications (newest first)
+          description: User notifications page (newest first within the unread filter)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNotificationPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /api/me/notifications/{notificationId}/read:
+    post:
+      tags: [ Notifications ]
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      description: |
+        Sets `unread=false` for the current user's notification. Idempotent if already read.
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Marked as read (or already read)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/invitations/{invitationId}/respond:
     post:
@@ -1456,6 +1492,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserNotification"
+        pageToken:
+          type: string
+          description: Opaque cursor for the next page; omit/null when no more pages
       required: [ items ]
 
     Group:

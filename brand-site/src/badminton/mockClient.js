@@ -940,17 +940,38 @@ export const mockClient = {
     return invitation;
   },
 
-  async listMyNotifications() {
-    logRequest("GET", "/api/me/notifications");
+  async listMyNotifications({ unread = true, limit = 20, pageToken = null } = {}) {
+    logRequest("GET", "/api/me/notifications", { unread, limit, pageToken });
     await delay();
     const db = loadDb();
     const u = requireAuth(db);
-    const items = (db.notifications || [])
+    const filtered = (db.notifications || [])
       .filter(n => (n.receiverUserId || n.userId) === u.id)
-      .map(n => notificationToDto(n, db));
-    const result = {items};
+      .filter(n => (n.unread !== false) === Boolean(unread))
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    const start = pageToken && pageToken.startsWith("offset_")
+      ? parseInt(pageToken.slice("offset_".length), 10) || 0
+      : 0;
+    const pageItems = filtered.slice(start, start + limit).map(n => notificationToDto(n, db));
+    const nextToken = start + limit < filtered.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
     logResponse("GET", "/api/me/notifications", result);
     return result;
+  },
+
+  async markNotificationRead(notificationId) {
+    logRequest("POST", `/api/me/notifications/${notificationId}/read`);
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const notification = (db.notifications || []).find(n => n.id === notificationId);
+    if (!notification || (notification.receiverUserId || notification.userId) !== u.id) {
+      throw new Error("Notification not found");
+    }
+    notification.unread = false;
+    saveDb(db);
+    logResponse("POST", `/api/me/notifications/${notificationId}/read`, null, 204);
+    return null;
   },
 
   async respondToInvitation(invitationId, decision) {

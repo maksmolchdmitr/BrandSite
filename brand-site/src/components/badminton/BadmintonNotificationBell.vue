@@ -42,26 +42,57 @@
             <div class="notifTitle">{{ item.groupName || item.groupId }}</div>
             <div class="notifMeta">{{ formatKind(item.kind) }}</div>
           </div>
-          <div v-if="canResolve(item)" class="notifActions">
+          <div class="notifActions">
             <button
-              class="actionBtn"
-              type="button"
-              :disabled="busyId === item.id"
-              @click="accept(item)"
-            >
-              {{ $t('badminton.notifications.accept') }}
-            </button>
-            <button
+              v-if="item.unread !== false"
               class="actionBtn secondary"
               type="button"
               :disabled="busyId === item.id"
-              @click="reject(item)"
+              @click="markRead(item)"
             >
-              {{ $t('badminton.notifications.reject') }}
+              {{ $t('badminton.notifications.markRead') }}
             </button>
+            <template v-if="canResolve(item)">
+              <button
+                class="actionBtn"
+                type="button"
+                :disabled="busyId === item.id"
+                @click="accept(item)"
+              >
+                {{ $t('badminton.notifications.accept') }}
+              </button>
+              <button
+                class="actionBtn secondary"
+                type="button"
+                :disabled="busyId === item.id"
+                @click="reject(item)"
+              >
+                {{ $t('badminton.notifications.reject') }}
+              </button>
+            </template>
           </div>
         </div>
       </div>
+      <button
+        v-if="pageToken"
+        class="linkBtn footerBtn"
+        type="button"
+        :disabled="loadingMore"
+        @click="loadMore"
+      >
+        {{ $t('badminton.notifications.loadMore') }}
+      </button>
+      <button
+        v-else-if="!loading"
+        class="linkBtn footerBtn"
+        type="button"
+        :disabled="loading"
+        @click="switchFilter"
+      >
+        {{ unreadFilter
+          ? $t('badminton.notifications.viewRead')
+          : $t('badminton.notifications.viewUnread') }}
+      </button>
     </div>
   </div>
 </template>
@@ -70,21 +101,28 @@
 import {defineComponent} from "vue";
 import {badmintonClient} from "@/badminton/client.js";
 
+const PAGE_SIZE = 10;
+
 export default defineComponent({
   name: "BadmintonNotificationBell",
   data() {
     return {
       open: false,
       loading: false,
+      loadingMore: false,
       error: "",
       items: [],
+      pageToken: null,
+      unreadFilter: true,
       busyId: null,
       loadedOnce: false,
     };
   },
   computed: {
     unreadCount() {
-      return this.items.filter((item) => item.unread !== false).length;
+      return this.unreadFilter
+        ? this.items.filter((item) => item.unread !== false).length
+        : 0;
     },
     unreadLabel() {
       return this.unreadCount > 9 ? "9+" : String(this.unreadCount);
@@ -117,15 +155,55 @@ export default defineComponent({
     async refresh() {
       this.loading = true;
       this.error = "";
+      this.pageToken = null;
       try {
-        const page = await badmintonClient.listMyNotifications();
+        const page = await badmintonClient.listMyNotifications({
+          unread: this.unreadFilter,
+          limit: PAGE_SIZE,
+        });
         this.items = page?.items || [];
+        this.pageToken = page?.pageToken || null;
         this.loadedOnce = true;
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errLoad");
         if (!this.loadedOnce) this.items = [];
       } finally {
         this.loading = false;
+      }
+    },
+    async loadMore() {
+      if (!this.pageToken || this.loadingMore) return;
+      this.loadingMore = true;
+      this.error = "";
+      try {
+        const page = await badmintonClient.listMyNotifications({
+          unread: this.unreadFilter,
+          limit: PAGE_SIZE,
+          pageToken: this.pageToken,
+        });
+        this.items = [...this.items, ...(page?.items || [])];
+        this.pageToken = page?.pageToken || null;
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.notifications.errLoad");
+      } finally {
+        this.loadingMore = false;
+      }
+    },
+    async switchFilter() {
+      this.unreadFilter = !this.unreadFilter;
+      await this.refresh();
+    },
+    async markRead(item) {
+      if (!item?.id || item.unread === false) return;
+      this.busyId = item.id;
+      this.error = "";
+      try {
+        await badmintonClient.markNotificationRead(item.id);
+        this.items = this.items.filter((row) => row.id !== item.id);
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.notifications.errMarkRead");
+      } finally {
+        this.busyId = null;
       }
     },
     async accept(item) {
@@ -256,6 +334,11 @@ export default defineComponent({
 .linkBtn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.footerBtn {
+  align-self: flex-start;
+  padding: 4px 0;
 }
 
 .panelError {

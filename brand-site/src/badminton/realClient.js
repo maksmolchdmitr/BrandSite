@@ -86,8 +86,12 @@ export const realClient = {
     return api.getGroup(groupId);
   },
 
-  async listMyNotifications() {
-    return api.listMyNotifications();
+  async listMyNotifications({ unread = true, limit, pageToken } = {}) {
+    return api.listMyNotifications({ unread, limit, pageToken });
+  },
+
+  async markNotificationRead(notificationId) {
+    return api.markNotificationRead(notificationId);
   },
 
   async respondToInvitation(invitationId, decision) {

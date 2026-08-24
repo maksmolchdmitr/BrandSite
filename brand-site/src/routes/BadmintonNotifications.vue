@@ -14,31 +14,72 @@
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="card">
-        <button class="btn secondary" :disabled="loading" @click="refresh">
-          <LoadingPhrase v-if="loading" :text="$t('common.actions.loading')" />
-          <template v-else>{{ $t('common.actions.refresh') }}</template>
-        </button>
+        <div class="toolbar">
+          <button class="btn secondary" :disabled="loading" @click="refresh">
+            <LoadingPhrase v-if="loading && items.length === 0" :text="$t('common.actions.loading')" />
+            <template v-else>{{ $t('common.actions.refresh') }}</template>
+          </button>
+          <div class="filterHint">
+            {{ unreadFilter ? $t('badminton.notifications.filterUnread') : $t('badminton.notifications.filterRead') }}
+          </div>
+        </div>
 
         <div v-if="!loading && items.length === 0" class="empty">
           {{ $t('badminton.notifications.empty') }}
         </div>
 
         <div v-else class="list">
-          <div v-for="item in items" :key="item.id" class="notifRow">
+          <div
+            v-for="item in items"
+            :key="item.id"
+            class="notifRow"
+            :class="{ unread: item.unread !== false }"
+          >
             <div class="notifBody">
               <div class="notifTitle">{{ item.groupName || item.groupId }}</div>
               <div class="notifMeta">{{ formatKind(item.kind) }}</div>
             </div>
-            <div v-if="canResolve(item)" class="actions">
-              <button class="btn" :disabled="busyId === item.id" @click="accept(item)">
-                {{ $t('badminton.notifications.accept') }}
+            <div class="actions">
+              <button
+                v-if="item.unread !== false"
+                class="btn secondary"
+                :disabled="busyId === item.id"
+                @click="markRead(item)"
+              >
+                {{ $t('badminton.notifications.markRead') }}
               </button>
-              <button class="btn secondary" :disabled="busyId === item.id" @click="reject(item)">
-                {{ $t('badminton.notifications.reject') }}
-              </button>
+              <template v-if="canResolve(item)">
+                <button class="btn" :disabled="busyId === item.id" @click="accept(item)">
+                  {{ $t('badminton.notifications.accept') }}
+                </button>
+                <button class="btn secondary" :disabled="busyId === item.id" @click="reject(item)">
+                  {{ $t('badminton.notifications.reject') }}
+                </button>
+              </template>
             </div>
           </div>
         </div>
+
+        <button
+          v-if="pageToken"
+          class="btn secondary"
+          :disabled="loadingMore"
+          @click="loadMore"
+        >
+          <LoadingPhrase v-if="loadingMore" :text="$t('common.actions.loading')" />
+          <template v-else>{{ $t('badminton.notifications.loadMore') }}</template>
+        </button>
+
+        <button
+          v-if="!pageToken && !loading"
+          class="btn secondary"
+          :disabled="loading"
+          @click="switchFilter"
+        >
+          {{ unreadFilter
+            ? $t('badminton.notifications.viewRead')
+            : $t('badminton.notifications.viewUnread') }}
+        </button>
       </div>
     </div>
   </div>
@@ -52,14 +93,19 @@ import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 
+const PAGE_SIZE = 20;
+
 export default defineComponent({
   name: "BadmintonNotifications",
   components: {BadmintonHubCtaRow, BadmintonTopActions, LoadingPhrase},
   data() {
     return {
       loading: false,
+      loadingMore: false,
       error: "",
       items: [],
+      pageToken: null,
+      unreadFilter: true,
       busyId: null,
     };
   },
@@ -81,14 +127,55 @@ export default defineComponent({
     async refresh() {
       this.loading = true;
       this.error = "";
+      this.pageToken = null;
       try {
-        const page = await badmintonClient.listMyNotifications();
+        const page = await badmintonClient.listMyNotifications({
+          unread: this.unreadFilter,
+          limit: PAGE_SIZE,
+        });
         this.items = page?.items || [];
+        this.pageToken = page?.pageToken || null;
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errLoad");
         this.items = [];
+        this.pageToken = null;
       } finally {
         this.loading = false;
+      }
+    },
+    async loadMore() {
+      if (!this.pageToken || this.loadingMore) return;
+      this.loadingMore = true;
+      this.error = "";
+      try {
+        const page = await badmintonClient.listMyNotifications({
+          unread: this.unreadFilter,
+          limit: PAGE_SIZE,
+          pageToken: this.pageToken,
+        });
+        this.items = [...this.items, ...(page?.items || [])];
+        this.pageToken = page?.pageToken || null;
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.notifications.errLoad");
+      } finally {
+        this.loadingMore = false;
+      }
+    },
+    async switchFilter() {
+      this.unreadFilter = !this.unreadFilter;
+      await this.refresh();
+    },
+    async markRead(item) {
+      if (!item?.id || item.unread === false) return;
+      this.busyId = item.id;
+      this.error = "";
+      try {
+        await badmintonClient.markNotificationRead(item.id);
+        this.items = this.items.filter((row) => row.id !== item.id);
+      } catch (e) {
+        this.error = e?.message || this.$t("badminton.notifications.errMarkRead");
+      } finally {
+        this.busyId = null;
       }
     },
     async accept(item) {
@@ -140,11 +227,14 @@ export default defineComponent({
 .subtitle { margin: 0; font-family: var(--font-display); opacity: 0.75; }
 
 .card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.filterHint { font-family: var(--font-display); opacity: 0.7; }
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
 .empty { font-family: var(--font-display); opacity: 0.7; }
 
 .list { display: flex; flex-direction: column; gap: 10px; }
 .notifRow { background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; max-width: 100%; box-sizing: border-box; flex-wrap: wrap; }
+.notifRow.unread { background: #ebe7ff; }
 .notifBody { min-width: 0; }
 .notifTitle { font-family: var(--font-display); font-weight: 700; }
 .notifMeta { font-family: var(--font-display); opacity: 0.7; margin-top: 4px; }
