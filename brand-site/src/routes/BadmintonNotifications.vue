@@ -95,7 +95,7 @@ import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 import {publishUnreadCount, unreadCountFromPage} from "@/badminton/notificationInbox.js";
 
 const PAGE_SIZE = 20;
-const NOTIFICATION_POLL_MS = 60_000;
+const NOTIFICATION_POLL_MS = 15_000;
 
 export default defineComponent({
   name: "BadmintonNotifications",
