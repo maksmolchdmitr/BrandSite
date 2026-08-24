@@ -127,18 +127,9 @@ paths:
         Paginated inbox filtered by `unread`. Newest `createdAt` first.
         Default filter is unread (`unread=true`).
       parameters:
-        - in: query
-          name: unread
-          description: true — unread only; false — read only
-          schema: { type: boolean, default: true }
-        - in: query
-          name: limit
-          description: Page size
-          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
-        - in: query
-          name: pageToken
-          description: Opaque cursor for the next page (omit on first request)
-          schema: { type: string }
+        - $ref: "#/components/parameters/Unread"
+        - $ref: "#/components/parameters/Limit20Max100"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: User notifications page (newest first within the unread filter)
@@ -253,18 +244,9 @@ paths:
         Global prefix search of registered users by username / first / last name
         (case-insensitive, starts-with). Sorted by username. Authenticated users only.
       parameters:
-        - in: query
-          name: query
-          description: Prefix filter on username or name (case-insensitive)
-          schema: { type: string, default: "" }
-        - in: query
-          name: limit
-          description: Page size
-          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
-        - in: query
-          name: pageToken
-          description: Opaque cursor for the next page (omit on first request)
-          schema: { type: string }
+        - $ref: "#/components/parameters/NameQuery"
+        - $ref: "#/components/parameters/Limit10Max100"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Users search page
@@ -281,12 +263,8 @@ paths:
       summary: List groups where current user is a member (via linked participant)
       operationId: listGroups
       parameters:
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Groups page
@@ -380,12 +358,8 @@ paths:
       operationId: listParticipants
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Participants
@@ -444,18 +418,9 @@ paths:
         Same response shape as listing participants: `items` plus optional opaque `pageToken` for the next page.
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: query
-          description: Prefix filter on username or name (case-insensitive)
-          schema: { type: string, default: "" }
-        - in: query
-          name: limit
-          description: Page size
-          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
-        - in: query
-          name: pageToken
-          description: Opaque cursor for the next page (omit on first request)
-          schema: { type: string }
+        - $ref: "#/components/parameters/NameQuery"
+        - $ref: "#/components/parameters/Limit10Max100"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Participants search page
@@ -674,12 +639,8 @@ paths:
         Use this for the group match history UI (not `/api/me/matches`).
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit20Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Paginated singles matches
@@ -779,12 +740,8 @@ paths:
         Use this for the group match history UI (not `/api/me/matches`).
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit20Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Paginated doubles matches
@@ -903,19 +860,9 @@ paths:
 
         For full group match history use `GET /api/groups/{groupId}/matches/singles`.
       parameters:
-        - in: query
-          name: groupId
-          required: false
-          description: Filter to this group UUID (membership required)
-          schema:
-            type: string
-            format: uuid
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/OptionalGroupId"
+        - $ref: "#/components/parameters/Limit20Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Paginated singles matches
@@ -962,19 +909,9 @@ paths:
 
         For full group match history use `GET /api/groups/{groupId}/matches/doubles`.
       parameters:
-        - in: query
-          name: groupId
-          required: false
-          description: Filter to this group UUID (membership required)
-          schema:
-            type: string
-            format: uuid
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/OptionalGroupId"
+        - $ref: "#/components/parameters/Limit20Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Paginated doubles matches
@@ -1014,14 +951,8 @@ paths:
       summary: Current user ratings (singles + doubles)
       operationId: getMyRatings
       parameters:
-        - in: query
-          name: limit
-          description: Page size for doubles-by-partner ratings
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          description: Opaque page token for doubles-by-partner ratings (null for first page)
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Ratings
@@ -1046,16 +977,8 @@ paths:
         clients should warn the user and/or narrow the time window.
       operationId: listMySinglesRatingHistory
       parameters:
-        - in: query
-          name: startTime
-          required: true
-          description: Inclusive lower bound of the time window
-          schema: { type: string, format: date-time }
-        - in: query
-          name: endTime
-          required: false
-          description: Exclusive upper bound; omit for open-ended window up to now
-          schema: { type: string, format: date-time }
+        - $ref: "#/components/parameters/StartTime"
+        - $ref: "#/components/parameters/EndTime"
       responses:
         "200":
           description: Rating history points (at most 200), chronological
@@ -1082,16 +1005,8 @@ paths:
         If the response contains exactly 200 items, the series for this window may be truncated.
       operationId: listMyDoublesRatingHistory
       parameters:
-        - in: query
-          name: startTime
-          required: true
-          description: Inclusive lower bound of the time window
-          schema: { type: string, format: date-time }
-        - in: query
-          name: endTime
-          required: false
-          description: Exclusive upper bound; omit for open-ended window up to now
-          schema: { type: string, format: date-time }
+        - $ref: "#/components/parameters/StartTime"
+        - $ref: "#/components/parameters/EndTime"
       responses:
         "200":
           description: Doubles rating history points (at most 200), chronological
@@ -1111,12 +1026,8 @@ paths:
       operationId: listSinglesRatings
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Leaderboard
@@ -1138,12 +1049,8 @@ paths:
       operationId: listDoublesRatings
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-        - in: query
-          name: pageToken
-          schema: { type: string }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
       responses:
         "200":
           description: Leaderboard
@@ -1186,6 +1093,62 @@ components:
       name: matchId
       required: true
       schema: { type: string }
+
+    PageToken:
+      in: query
+      name: pageToken
+      description: Opaque cursor for the next page (omit on first request)
+      schema: { type: string }
+    Unread:
+      in: query
+      name: unread
+      description: true — unread only; false — read only
+      schema: { type: boolean, default: true }
+    NameQuery:
+      in: query
+      name: query
+      description: Prefix filter on username or name (case-insensitive)
+      schema: { type: string, default: "" }
+    OptionalGroupId:
+      in: query
+      name: groupId
+      required: false
+      description: Filter to this group UUID (membership required)
+      schema:
+        type: string
+        format: uuid
+    StartTime:
+      in: query
+      name: startTime
+      required: true
+      description: Inclusive lower bound of the time window
+      schema: { type: string, format: date-time }
+    EndTime:
+      in: query
+      name: endTime
+      required: false
+      description: Exclusive upper bound; omit for open-ended window up to now
+      schema: { type: string, format: date-time }
+    Limit10Max100:
+      in: query
+      name: limit
+      description: Page size
+      schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+    Limit20Max100:
+      in: query
+      name: limit
+      description: Page size
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Limit20Max200:
+      in: query
+      name: limit
+      description: Page size
+      schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+    Limit50Max200:
+      in: query
+      name: limit
+      description: Page size
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
 
   responses:
     BadRequest:
