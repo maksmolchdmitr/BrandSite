@@ -2456,8 +2456,6 @@ export default defineComponent({
 .sep { opacity: 0.6; }
 .title { margin: 4px 0 0 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 .topActions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.pill { background: white; border: 1px solid rgba(79,61,255,0.35); color: #4F3DFF; padding: 6px 12px; border-radius: 999px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
-.pill.tiny { padding: 3px 8px; font-size: 12px; }
 
 .roleCell { vertical-align: middle; white-space: nowrap; }
 .rolePill {
