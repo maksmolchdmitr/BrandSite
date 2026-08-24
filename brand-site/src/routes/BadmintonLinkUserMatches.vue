@@ -217,15 +217,6 @@ export default defineComponent({
     await this.resetAndLoad();
   },
   methods: {
-    mergeMatchPlayers(players) {
-      for (const p of players || []) {
-        if (!p?.id) continue;
-        if (p.name) this.participantNames.set(p.id, p.name);
-        if (p.photoUrl) this.participantPhotos.set(p.id, p.photoUrl);
-        if (p.photoCrop) this.participantCrops.set(p.id, p.photoCrop);
-        if (p.username) this.participantUsernames.set(p.id, p.username);
-      }
-    },
     async resetAndLoad() {
       this.singlesItems = [];
       this.doublesItems = [];

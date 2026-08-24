@@ -1285,6 +1285,9 @@ export default defineComponent({
       this.participantCropMap = cropMap;
       this.participantUsernameMap = usernameMap;
     },
+    mergeMatchPlayers(players) {
+      this.mergeParticipantNames(players);
+    },
     formatRole(role) {
       const key = `badminton.roles.${role}`;
       const translated = this.$t(key);
@@ -1479,17 +1482,16 @@ export default defineComponent({
           const tab = this.effectiveMatchTab;
           const needSingles = tab === "singles";
           const needDoubles = tab === "doubles";
-          const [participantsRes, singlesRes, doublesRes] = await Promise.all([
-            badmintonClient.listAllParticipants(this.groupId),
+          const [singlesRes, doublesRes] = await Promise.all([
             needSingles
               ? badmintonClient.listGroupSinglesMatches(this.groupId, { limit: this.singlesLimit })
-              : Promise.resolve({ items: [], pageToken: null }),
+              : Promise.resolve({ items: [], pageToken: null, players: [] }),
             needDoubles
               ? badmintonClient.listGroupDoublesMatches(this.groupId, { limit: this.doublesLimit })
-              : Promise.resolve({ items: [], pageToken: null }),
+              : Promise.resolve({ items: [], pageToken: null, players: [] }),
           ]);
-          this.mergeParticipantNames(participantsRes?.items || []);
           if (needSingles) {
+            this.mergeMatchPlayers(singlesRes?.players);
             this.singlesPages = [{ items: singlesRes?.items || [], pageToken: singlesRes?.pageToken || null }];
             this.singlesPageIndex = 0;
           } else {
@@ -1497,6 +1499,7 @@ export default defineComponent({
             this.singlesPageIndex = 0;
           }
           if (needDoubles) {
+            this.mergeMatchPlayers(doublesRes?.players);
             this.doublesPages = [{ items: doublesRes?.items || [], pageToken: doublesRes?.pageToken || null }];
             this.doublesPageIndex = 0;
           } else {
@@ -1556,6 +1559,7 @@ export default defineComponent({
       let pageToken = null;
       for (let i = 0; i < 20; i++) {
         const res = await fetcher({ limit: 50, pageToken });
+        this.mergeMatchPlayers(res?.players);
         const found = (res?.items || []).find(m => m.id === matchId);
         if (found) return found;
         pageToken = res?.pageToken || null;
@@ -1688,6 +1692,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.listGroupSinglesMatches(this.groupId, { limit: this.singlesLimit, pageToken: nextToken });
+        this.mergeMatchPlayers(res?.players);
         this.singlesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.singlesPageIndex = this.singlesPages.length - 1;
       } catch (e) {
@@ -1706,6 +1711,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.listGroupSinglesMatches(this.groupId, { limit });
+        this.mergeMatchPlayers(res?.players);
         this.singlesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.singlesPageIndex = 0;
       } catch (e) {
@@ -1729,6 +1735,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.listGroupDoublesMatches(this.groupId, { limit: this.doublesLimit, pageToken: nextToken });
+        this.mergeMatchPlayers(res?.players);
         this.doublesPages.push({ items: res?.items || [], pageToken: res?.pageToken || null, pageTokenFrom: nextToken });
         this.doublesPageIndex = this.doublesPages.length - 1;
       } catch (e) {
@@ -1747,6 +1754,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.listGroupDoublesMatches(this.groupId, { limit });
+        this.mergeMatchPlayers(res?.players);
         this.doublesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.doublesPageIndex = 0;
       } catch (e) {

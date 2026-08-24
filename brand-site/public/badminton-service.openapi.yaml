@@ -1833,8 +1833,8 @@ components:
         players:
           type: array
           description: >
-            Display profiles for player ids referenced by `items` on this page.
-            Present on link-user invite match lists; omitted on other match endpoints.
+            Display profiles for player ids referenced by `items` on this page
+            (all match list endpoints).
           items:
             $ref: "#/components/schemas/MatchPlayer"
       required: [ items ]

@@ -30,6 +30,15 @@ export const matchFormatMixin = {
       if (!participantId) return "";
       return this.participantUsernames.get(participantId) || "";
     },
+    mergeMatchPlayers(players) {
+      for (const p of players || []) {
+        if (!p?.id) continue;
+        if (p.name) this.participantNames.set(p.id, p.name);
+        if (p.photoUrl) this.participantPhotos.set(p.id, p.photoUrl);
+        if (p.photoCrop) this.participantCrops.set(p.id, p.photoCrop);
+        if (p.username) this.participantUsernames.set(p.id, p.username);
+      }
+    },
     getFinalScore(match, side) {
       const games = match?.score?.games || [];
       if (games.length === 0) return "—";
@@ -50,29 +59,6 @@ export const matchFormatMixin = {
         });
       } catch {
         return dateStr;
-      }
-    },
-    async loadParticipantNames() {
-      try {
-        const groupsRes = await badmintonClient.getMyGroups();
-        const items = groupsRes?.items || [];
-        const allParticipants = [];
-        for (const g of items) {
-          const res = await badmintonClient.listAllParticipants(g.id);
-          allParticipants.push(...(res?.items || []));
-        }
-        this.participantNames = new Map(allParticipants.map((p) => [p.id, p.name]));
-        this.participantPhotos = new Map(
-          allParticipants.filter((p) => p.photoUrl).map((p) => [p.id, p.photoUrl])
-        );
-        this.participantCrops = new Map(
-          allParticipants.filter((p) => p.photoCrop).map((p) => [p.id, p.photoCrop])
-        );
-        this.participantUsernames = new Map(
-          allParticipants.filter((p) => p.username).map((p) => [p.id, p.username])
-        );
-      } catch (e) {
-        console.warn("Failed to load participant names", e);
       }
     },
   },

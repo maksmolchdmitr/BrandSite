@@ -252,7 +252,6 @@ export default defineComponent({
   },
   async mounted() {
     if (redirectToLoginAutoTg(this.$router)) return;
-    await this.loadParticipantNames();
     await this.loadStats();
     await this.loadTabIfNeeded();
   },
@@ -280,6 +279,7 @@ export default defineComponent({
       this.error = "";
       try {
         const res = await badmintonClient.getMySinglesMatches({ limit: this.singlesLimit });
+        this.mergeMatchPlayers(res?.players);
         this.singlesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.singlesPageIndex = 0;
       } catch (e) {
@@ -293,6 +293,7 @@ export default defineComponent({
       this.error = "";
       try {
         const res = await badmintonClient.getMyDoublesMatches({ limit: this.doublesLimit });
+        this.mergeMatchPlayers(res?.players);
         this.doublesPages = [{ items: res?.items || [], pageToken: res?.pageToken || null }];
         this.doublesPageIndex = 0;
       } catch (e) {
@@ -316,6 +317,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.getMySinglesMatches({ limit: this.singlesLimit, pageToken: nextToken });
+        this.mergeMatchPlayers(res?.players);
         this.singlesPages.push({
           items: res?.items || [],
           pageToken: res?.pageToken || null,
@@ -352,6 +354,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await badmintonClient.getMyDoublesMatches({ limit: this.doublesLimit, pageToken: nextToken });
+        this.mergeMatchPlayers(res?.players);
         this.doublesPages.push({
           items: res?.items || [],
           pageToken: res?.pageToken || null,
