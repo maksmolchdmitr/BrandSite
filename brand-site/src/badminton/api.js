@@ -316,7 +316,7 @@ export async function listLinkUserInviteMatches(notificationId, { kind, limit, p
 export async function respondToInvitation(invitationId, decision) {
   return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/respond`, {
     method: "POST",
-    body: JSON.stringify({decision}),
+    body: { decision },
   });
 }
 
