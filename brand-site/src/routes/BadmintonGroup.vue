@@ -596,7 +596,57 @@
       <div v-else-if="groupSection === 'linkUser'" class="card formPage">
         <div class="cardTitle">{{ $t('badminton.group.linkUser') }}</div>
         <div class="formStack">
-          <input class="input formFullWidthInput" v-model="linkUserForm.userId" :placeholder="$t('badminton.group.userId')" />
+          <div class="hint">{{ $t('badminton.group.linkUserHint') }}</div>
+          <div v-if="linkUserForm.selected" class="selectedParticipant">
+            <PersonChip
+              :name="inviteUserLabel(linkUserForm.selected)"
+              :photo-url="linkUserForm.selected.photoUrl"
+              :photo-crop="linkUserForm.selected.photoCrop || null"
+              :username="linkUserForm.selected.username"
+            />
+            <button class="btn small danger" type="button" :disabled="formSaving" @click="clearLinkUserSelection">×</button>
+          </div>
+          <div v-else class="participantSearch inviteSearch formFullWidthInput">
+            <input
+              class="input"
+              v-model="linkUserForm.query"
+              :placeholder="$t('badminton.group.linkUserSearchPlaceholder')"
+              autocomplete="off"
+              @input="onLinkUserSearchInput"
+              @focus="onLinkUserSearchFocus"
+            />
+            <div
+              v-if="showLinkUserDropdown"
+              class="dropdown"
+              @scroll="onLinkUserDropdownScroll"
+            >
+              <div v-if="linkUserSearch.loading && linkUserSearch.items.length === 0" class="dropdownItem">
+                <LoadingPhrase :text="$t('common.actions.loading')" />
+              </div>
+              <div
+                v-for="u in linkUserSearch.items"
+                :key="u.id"
+                class="dropdownItem"
+                @click="selectLinkUser(u)"
+              >
+                <PersonChip
+                  :name="inviteUserLabel(u)"
+                  :photo-url="u.photoUrl"
+                  :photo-crop="u.photoCrop || null"
+                  :username="u.username"
+                />
+              </div>
+              <div v-if="linkUserSearch.loading && linkUserSearch.items.length > 0" class="dropdownItem">
+                <LoadingPhrase :text="$t('badminton.group.loadingMore')" />
+              </div>
+              <div
+                v-if="!linkUserSearch.loading && linkUserSearch.items.length === 0 && linkUserForm.query.trim()"
+                class="dropdownItem muted"
+              >
+                {{ $t('badminton.group.noUsersFound') }}
+              </div>
+            </div>
+          </div>
           <div class="row formActions">
             <button class="btn" :disabled="formSaving || !linkUserForm.userId" @click="confirmLinkUser">{{ $t('common.actions.link') }}</button>
             <button class="btn secondary" :disabled="formSaving" @click="cancelToParticipants">{{ $t('common.actions.cancel') }}</button>
@@ -949,7 +999,9 @@ export default defineComponent({
         photoCleared: false,
         cropTouched: false,
       },
-      linkUserForm: { userId: "" },
+      linkUserForm: { userId: "", query: "", selected: null },
+      linkUserSearch: { items: [], nextPageToken: null, loading: false, open: false },
+      linkUserSearchTimer: null,
       matchForm: {
         matchId: "",
         kind: "doubles",
@@ -985,6 +1037,13 @@ export default defineComponent({
         this.inviteUserSearch.loading
         || this.inviteUserSearch.items.length > 0
         || Boolean(String(this.newParticipantName || "").trim())
+      );
+    },
+    showLinkUserDropdown() {
+      return this.linkUserSearch.open && (
+        this.linkUserSearch.loading
+        || this.linkUserSearch.items.length > 0
+        || Boolean(String(this.linkUserForm.query || "").trim())
       );
     },
     canCreateUnlinked() {
@@ -1193,6 +1252,7 @@ export default defineComponent({
   beforeUnmount() {
     if (this.participantsQueryTimer) clearTimeout(this.participantsQueryTimer);
     if (this.inviteUserSearchTimer) clearTimeout(this.inviteUserSearchTimer);
+    if (this.linkUserSearchTimer) clearTimeout(this.linkUserSearchTimer);
   },
   methods: {
     formatElo,
@@ -1382,9 +1442,14 @@ export default defineComponent({
         } else if (this.groupSection === "editParticipant") {
           await this.loadEditParticipantForm();
         } else if (this.groupSection === "linkUser") {
-          this.linkUserForm = { userId: "" };
+          this.linkUserForm = { userId: "", query: "", selected: null };
+          this.linkUserSearch = { items: [], nextPageToken: null, loading: false, open: false };
           if (!this.participantId) {
             this.error = this.$t("badminton.group.errUpdateParticipant");
+          } else {
+            badmintonClient.listAllParticipants(this.groupId)
+              .then(res => this.mergeParticipantNames(res?.items || []))
+              .catch(() => {});
           }
         } else if (this.groupSection === "createMatch") {
           const kind = this.effectiveMatchTab;
@@ -1913,6 +1978,77 @@ export default defineComponent({
     selectInviteUser(user) {
       this.newParticipantName = user?.username || "";
       this.inviteUserSearch.open = false;
+    },
+
+    onLinkUserSearchFocus() {
+      this.linkUserSearch.open = true;
+      if (this.linkUserSearch.items.length === 0 && !this.linkUserSearch.loading) {
+        this.loadLinkUsers(false);
+      }
+    },
+
+    onLinkUserSearchInput() {
+      this.linkUserSearch.open = true;
+      if (this.linkUserSearchTimer) clearTimeout(this.linkUserSearchTimer);
+      this.linkUserSearchTimer = setTimeout(() => {
+        this.linkUserSearch.items = [];
+        this.linkUserSearch.nextPageToken = null;
+        this.loadLinkUsers(false);
+      }, 250);
+    },
+
+    async loadLinkUsers(append = false) {
+      if (!this.groupId || !this.isStaff) return;
+      if (this.linkUserSearch.loading) return;
+      if (append && !this.linkUserSearch.nextPageToken) return;
+      this.linkUserSearch.loading = true;
+      try {
+        const result = await badmintonClient.searchUsers({
+          query: String(this.linkUserForm.query || "").trim(),
+          limit: 10,
+          pageToken: append ? this.linkUserSearch.nextPageToken : undefined,
+        });
+        const memberIds = new Set(Object.keys(this.participantNameMap || {}));
+        const items = (result?.items || []).filter(u => !memberIds.has(u.id) && !u.groupId);
+        if (append) {
+          const existingIds = new Set(this.linkUserSearch.items.map(u => u.id));
+          this.linkUserSearch.items = [
+            ...this.linkUserSearch.items,
+            ...items.filter(u => !existingIds.has(u.id)),
+          ];
+        } else {
+          this.linkUserSearch.items = items;
+        }
+        this.linkUserSearch.nextPageToken = result?.pageToken || null;
+      } catch (e) {
+        if (!append) this.linkUserSearch.items = [];
+        this.linkUserSearch.nextPageToken = null;
+      } finally {
+        this.linkUserSearch.loading = false;
+      }
+    },
+
+    onLinkUserDropdownScroll(event) {
+      const target = event.target;
+      const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+      if (scrollBottom < 50 && this.linkUserSearch.nextPageToken && !this.linkUserSearch.loading) {
+        this.loadLinkUsers(true);
+      }
+    },
+
+    selectLinkUser(user) {
+      if (!user?.id) return;
+      this.linkUserForm = {
+        userId: user.id,
+        query: user.username || "",
+        selected: user,
+      };
+      this.linkUserSearch.open = false;
+    },
+
+    clearLinkUserSelection() {
+      this.linkUserForm = { userId: "", query: "", selected: null };
+      this.linkUserSearch = { items: [], nextPageToken: null, loading: false, open: false };
     },
 
     splitUnlinkedFirstNameIfNeeded() {
