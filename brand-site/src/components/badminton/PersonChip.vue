@@ -1,5 +1,5 @@
 <template>
-  <span class="personChip">
+  <span class="personChip" :class="size === 'sm' ? 'personChipSm' : null">
     <span v-if="photoUrl" class="avatar">
       <PhotoHoldPreview
         :src="photoUrl"
@@ -28,6 +28,11 @@ export default defineComponent({
     photoUrl: { type: String, default: "" },
     photoCrop: { type: Object, default: null },
     username: { type: String, default: "" },
+    size: {
+      type: String,
+      default: "md",
+      validator: (value) => value === "md" || value === "sm",
+    },
   },
   computed: {
     initials() {
@@ -50,6 +55,26 @@ export default defineComponent({
   gap: 12px;
   min-width: 0;
   max-width: 100%;
+}
+
+.personChipSm {
+  gap: 10px;
+}
+
+.personChipSm .avatar,
+.personChipSm .avatarFallback {
+  width: 40px;
+  height: 40px;
+}
+
+.personChipSm .avatarFallback {
+  font-size: 14px;
+}
+
+.personChipSm .personName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
 }
 .avatar,
 .avatarFallback {

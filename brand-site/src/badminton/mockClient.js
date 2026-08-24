@@ -73,10 +73,14 @@ function notificationToDto(n, db) {
     ? (db.invitations || []).find(i => i.id === n.payload.invitationId)
     : null;
   const group = db.groups.find(g => g.id === n.payload?.groupId);
+  const sender = db.users.find(u => u.id === n.senderUserId);
   const base = {
     id: n.id,
     kind: n.kind,
     senderUserId: n.senderUserId,
+    senderFirstName: sender?.firstName || undefined,
+    senderLastName: sender?.lastName || undefined,
+    senderPhotoUrl: sender?.photoUrl || undefined,
     groupId: n.payload?.groupId,
     groupName: group?.name || "",
     unread: n.unread !== false,

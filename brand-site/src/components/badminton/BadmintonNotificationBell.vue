@@ -38,10 +38,10 @@
           class="notifItem"
           :class="{ unread: item.unread !== false }"
         >
-          <div class="notifBody">
-            <div class="notifTitle">{{ item.groupName || item.groupId }}</div>
-            <div class="notifMeta">{{ formatKind(item.kind) }}</div>
-          </div>
+          <BadmintonNotificationItemBody
+            :item="item"
+            :kind-label="formatKind(item.kind)"
+          />
           <div class="notifActions">
             <button
               v-if="item.unread !== false"
@@ -99,6 +99,7 @@
 
 <script>
 import {defineComponent} from "vue";
+import BadmintonNotificationItemBody from "@/components/badminton/BadmintonNotificationItemBody.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {
   publishUnreadCount,
@@ -111,6 +112,7 @@ const NOTIFICATION_POLL_MS = 60_000;
 
 export default defineComponent({
   name: "BadmintonNotificationBell",
+  components: {BadmintonNotificationItemBody},
   data() {
     return {
       open: false,
@@ -445,19 +447,6 @@ export default defineComponent({
   background: #ebe7ff;
 }
 
-.notifTitle {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.notifMeta {
-  font-family: var(--font-display);
-  opacity: 0.7;
-  font-size: 13px;
-  margin-top: 2px;
-}
-
 .notifActions {
   display: flex;
   gap: 8px;
@@ -517,14 +506,6 @@ export default defineComponent({
 
   .notifItem.unread {
     background: #45405c;
-  }
-
-  .notifTitle {
-    color: #e8e8e8;
-  }
-
-  .notifMeta {
-    color: #b0b0b0;
   }
 
   .panelTitle {

@@ -35,10 +35,10 @@
             class="notifRow"
             :class="{ unread: item.unread !== false }"
           >
-            <div class="notifBody">
-              <div class="notifTitle">{{ item.groupName || item.groupId }}</div>
-              <div class="notifMeta">{{ formatKind(item.kind) }}</div>
-            </div>
+            <BadmintonNotificationItemBody
+              :item="item"
+              :kind-label="formatKind(item.kind)"
+            />
             <div class="actions">
               <button
                 v-if="item.unread !== false"
@@ -88,6 +88,7 @@
 <script>
 import {defineComponent} from "vue";
 import BadmintonHubCtaRow from "@/components/badminton/BadmintonHubCtaRow.vue";
+import BadmintonNotificationItemBody from "@/components/badminton/BadmintonNotificationItemBody.vue";
 import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import {badmintonClient} from "@/badminton/client.js";
@@ -99,7 +100,7 @@ const NOTIFICATION_POLL_MS = 60_000;
 
 export default defineComponent({
   name: "BadmintonNotifications",
-  components: {BadmintonHubCtaRow, BadmintonTopActions, LoadingPhrase},
+  components: {BadmintonHubCtaRow, BadmintonNotificationItemBody, BadmintonTopActions, LoadingPhrase},
   data() {
     return {
       loading: false,
@@ -272,9 +273,6 @@ export default defineComponent({
 .list { display: flex; flex-direction: column; gap: 10px; }
 .notifRow { background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; max-width: 100%; box-sizing: border-box; flex-wrap: wrap; }
 .notifRow.unread { background: #ebe7ff; }
-.notifBody { min-width: 0; }
-.notifTitle { font-family: var(--font-display); font-weight: 700; color: #1a1a2e; }
-.notifMeta { font-family: var(--font-display); color: #555; margin-top: 4px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
@@ -311,14 +309,6 @@ export default defineComponent({
 
   .notifRow.unread {
     background: #353045;
-  }
-
-  .notifTitle {
-    color: #e8e8e8;
-  }
-
-  .notifMeta {
-    color: #b0b0b0;
   }
 
   .btn.secondary {
