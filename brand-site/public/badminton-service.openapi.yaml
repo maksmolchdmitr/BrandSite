@@ -196,6 +196,38 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/me/notifications/{notificationId}/link-user-participants:
+    get:
+      tags: [ Notifications ]
+      summary: List invite-group participants for a link-user invite notification
+      operationId: listLinkUserInviteParticipants
+      description: |
+        Returns the participant roster of the group referenced by a pending `link_user_invite`
+        notification owned by the current user (invitee).
+
+        Access is granted only via `notificationId` so the invitee can resolve match player
+        names without being a group member yet.
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/Limit50Max200"
+        - $ref: "#/components/parameters/PageToken"
+      responses:
+        "200":
+          description: Participants of the invite group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParticipantPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/invitations/{invitationId}/respond:
     post:
       tags: [ Invitations ]

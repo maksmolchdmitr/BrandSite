@@ -79,12 +79,16 @@
                   <PersonChip
                     :name="getParticipantName(m.teamA?.[0])"
                     :photo-url="getParticipantPhoto(m.teamA?.[0])"
+                    :photo-crop="getParticipantCrop(m.teamA?.[0])"
+                    :username="getParticipantUsername(m.teamA?.[0])"
                   />
                 </td>
                 <td class="nameCell">
                   <PersonChip
                     :name="getParticipantName(m.teamA?.[1])"
                     :photo-url="getParticipantPhoto(m.teamA?.[1])"
+                    :photo-crop="getParticipantCrop(m.teamA?.[1])"
+                    :username="getParticipantUsername(m.teamA?.[1])"
                   />
                 </td>
                 <td class="scoreCell">{{ getFinalScore(m, "A") }}</td>
@@ -92,12 +96,16 @@
                   <PersonChip
                     :name="getParticipantName(m.teamB?.[0])"
                     :photo-url="getParticipantPhoto(m.teamB?.[0])"
+                    :photo-crop="getParticipantCrop(m.teamB?.[0])"
+                    :username="getParticipantUsername(m.teamB?.[0])"
                   />
                 </td>
                 <td class="nameCell">
                   <PersonChip
                     :name="getParticipantName(m.teamB?.[1])"
                     :photo-url="getParticipantPhoto(m.teamB?.[1])"
+                    :photo-crop="getParticipantCrop(m.teamB?.[1])"
+                    :username="getParticipantUsername(m.teamB?.[1])"
                   />
                 </td>
                 <td class="scoreCell">{{ getFinalScore(m, "B") }}</td>
@@ -206,14 +214,14 @@ export default defineComponent({
       this.error = this.$t("badminton.linkUserMatches.errMissingNotification");
       return;
     }
-    await this.loadParticipantNamesForGroup();
+    await this.loadParticipantNamesForInvite();
     await this.resetAndLoad();
   },
   methods: {
-    async loadParticipantNamesForGroup() {
-      if (!this.groupId) return;
+    async loadParticipantNamesForInvite() {
+      if (!this.notificationId) return;
       try {
-        const res = await badmintonClient.listAllParticipants(this.groupId);
+        const res = await badmintonClient.listAllLinkUserInviteParticipants(this.notificationId);
         const items = res?.items || [];
         this.participantNames = new Map(items.map((p) => [p.id, p.name]));
         this.participantPhotos = new Map(

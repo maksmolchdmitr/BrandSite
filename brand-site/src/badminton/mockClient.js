@@ -1025,6 +1025,43 @@ export const mockClient = {
     return result;
   },
 
+  async listLinkUserInviteParticipants(notificationId, { limit = 50, pageToken = null } = {}) {
+    logRequest("GET", `/api/me/notifications/${notificationId}/link-user-participants`, { limit, pageToken });
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const notification = (db.notifications || []).find(n => n.id === notificationId);
+    if (!notification || (notification.receiverUserId || notification.userId) !== u.id) {
+      throw new Error("Notification not found");
+    }
+    if (notification.kind !== "link_user_invite") throw new Error("Forbidden");
+    const invitation = (db.invitations || []).find(i => i.id === notification.payload?.invitationId);
+    if (!invitation || invitation.status !== "pending") throw new Error("Forbidden");
+    const groupId = notification.payload?.groupId;
+    const all = (db.participants || [])
+      .filter(p => p.groupId === groupId || (db.memberships || []).some(m => m.groupId === groupId && m.userId === p.id))
+      .sort((a, b) => String(a.username || a.name || "").localeCompare(String(b.username || b.name || "")));
+    const start = pageToken && pageToken.startsWith("offset_")
+      ? parseInt(pageToken.slice("offset_".length), 10) || 0
+      : 0;
+    const pageItems = all.slice(start, start + limit);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", `/api/me/notifications/${notificationId}/link-user-participants`, result);
+    return result;
+  },
+
+  async listAllLinkUserInviteParticipants(notificationId) {
+    const items = [];
+    let pageToken = null;
+    do {
+      const page = await this.listLinkUserInviteParticipants(notificationId, { limit: 200, pageToken });
+      items.push(...(page?.items || []));
+      pageToken = page?.pageToken || null;
+    } while (pageToken);
+    return { items };
+  },
+
   async respondToInvitation(invitationId, decision) {
     logRequest("POST", `/api/invitations/${invitationId}/respond`, {decision});
     await delay();

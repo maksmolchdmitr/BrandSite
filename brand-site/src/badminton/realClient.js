@@ -98,6 +98,14 @@ export const realClient = {
     return api.listLinkUserInviteMatches(notificationId, { kind, limit, pageToken });
   },
 
+  async listLinkUserInviteParticipants(notificationId, { limit, pageToken } = {}) {
+    return api.listLinkUserInviteParticipants(notificationId, { limit, pageToken });
+  },
+
+  async listAllLinkUserInviteParticipants(notificationId) {
+    return api.listAllLinkUserInviteParticipants(notificationId);
+  },
+
   async respondToInvitation(invitationId, decision) {
     const result = await api.respondToInvitation(invitationId, decision);
     if (decision === "accept") {
