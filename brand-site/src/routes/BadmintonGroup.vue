@@ -70,6 +70,7 @@
 
             <div class="addParticipantSection">
               <div class="addParticipantLabel">{{ $t('badminton.group.inviteExisting') }}</div>
+              <div class="hint">{{ $t('badminton.group.inviteExistingHint') }}</div>
               <div class="row inviteSearchRow">
                 <div class="participantSearch inviteSearch">
                   <input
@@ -113,8 +114,8 @@
                   </div>
                 </div>
                 <button class="btn" :disabled="loadingAddParticipant || !newParticipantName" @click="addParticipant">
-                  <LoadingPhrase v-if="loadingAddParticipant" :text="$t('badminton.group.adding')" />
-                  <template v-else>{{ $t('common.actions.add') }}</template>
+                  <LoadingPhrase v-if="loadingAddParticipant" :text="$t('badminton.group.inviting')" />
+                  <template v-else>{{ $t('common.actions.invite') }}</template>
                 </button>
               </div>
             </div>
@@ -1837,7 +1838,7 @@ export default defineComponent({
         this.inviteUserSearch = { items: [], nextPageToken: null, loading: false, open: false };
         this.inviteNotice = this.$t("badminton.group.inviteSent");
       } catch (e) {
-        this.error = e?.message || this.$t("badminton.group.errAddParticipant");
+        this.error = e?.message || this.$t("badminton.group.errInviteParticipant");
       } finally {
         this.loadingAddParticipant = false;
       }
