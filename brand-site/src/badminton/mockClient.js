@@ -746,7 +746,7 @@ export const mockClient = {
       throw new Error("User is already a member of this group");
     }
     if ((db.invitations || []).some(i =>
-      i.status === "pending" && i.groupId === groupId && i.inviteeUserId === invitee.id
+      i.status === "pending" && i.kind === "group_join" && i.groupId === groupId && i.inviteeUserId === invitee.id
     )) {
       throw new Error("Invitation already pending");
     }
@@ -912,7 +912,7 @@ export const mockClient = {
     }
     if ((db.invitations || []).some(i =>
       (i.status === "pending" && i.kind === "link_user" && i.groupId === groupId && i.unlinkedUserId === participantId)
-      || (i.status === "pending" && i.groupId === groupId && i.inviteeUserId === userId)
+      || (i.status === "pending" && i.kind === "link_user" && i.groupId === groupId && i.inviteeUserId === userId)
     )) {
       throw new Error("Link invitation already pending");
     }

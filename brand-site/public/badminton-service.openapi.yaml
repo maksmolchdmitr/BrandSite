@@ -381,6 +381,7 @@ paths:
       description: |
         Creates a pending GROUP_JOIN invitation and notifies the registered user in Telegram.
         Membership is added only after the invitee accepts.
+        A pending GROUP_JOIN may coexist with a pending LINK_USER for the same invitee in the group.
       parameters:
         - $ref: "#/components/parameters/GroupId"
       requestBody:
@@ -565,6 +566,7 @@ paths:
         Creates a pending LINK_USER invitation for the registered Telegram user (`userId`)
         and notifies them in Telegram. The merge of the unlinked participant happens only
         after the invitee accepts.
+        A pending LINK_USER may coexist with a pending GROUP_JOIN for the same invitee in the group.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"
