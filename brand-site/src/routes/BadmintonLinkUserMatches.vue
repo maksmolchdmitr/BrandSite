@@ -214,35 +214,16 @@ export default defineComponent({
       this.error = this.$t("badminton.linkUserMatches.errMissingNotification");
       return;
     }
-    await this.loadParticipantNamesForInvite();
     await this.resetAndLoad();
   },
   methods: {
-    async loadParticipantNamesForInvite() {
-      if (!this.notificationId) return;
-      try {
-        const res = await badmintonClient.listAllLinkUserInviteParticipants(this.notificationId);
-        const items = res?.items || [];
-        this.participantNames = new Map(items.map((p) => [p.id, p.name]));
-        this.participantPhotos = new Map(
-          items.filter((p) => p.photoUrl).map((p) => [p.id, p.photoUrl])
-        );
-        this.participantCrops = new Map(
-          items.filter((p) => p.photoCrop).map((p) => [p.id, p.photoCrop])
-        );
-        this.participantUsernames = new Map(
-          items.filter((p) => p.username).map((p) => [p.id, p.username])
-        );
-        for (const p of items) {
-          if (p.userId) {
-            this.participantNames.set(p.userId, p.name);
-            if (p.photoUrl) this.participantPhotos.set(p.userId, p.photoUrl);
-            if (p.photoCrop) this.participantCrops.set(p.userId, p.photoCrop);
-            if (p.username) this.participantUsernames.set(p.userId, p.username);
-          }
-        }
-      } catch (e) {
-        console.warn("Failed to load participants for link-user matches", e);
+    mergeMatchPlayers(players) {
+      for (const p of players || []) {
+        if (!p?.id) continue;
+        if (p.name) this.participantNames.set(p.id, p.name);
+        if (p.photoUrl) this.participantPhotos.set(p.id, p.photoUrl);
+        if (p.photoCrop) this.participantCrops.set(p.id, p.photoCrop);
+        if (p.username) this.participantUsernames.set(p.id, p.username);
       }
     },
     async resetAndLoad() {
@@ -250,6 +231,10 @@ export default defineComponent({
       this.doublesItems = [];
       this.singlesPageToken = null;
       this.doublesPageToken = null;
+      this.participantNames = new Map();
+      this.participantPhotos = new Map();
+      this.participantCrops = new Map();
+      this.participantUsernames = new Map();
       await this.ensureLoaded(true);
     },
     async ensureLoaded(force = false) {
@@ -269,6 +254,7 @@ export default defineComponent({
           limit: PAGE_SIZE,
           pageToken,
         });
+        this.mergeMatchPlayers(page?.players);
         const items = page?.items || [];
         if (kind === "singles") {
           this.singlesItems = append ? [...this.singlesItems, ...items] : items;

@@ -313,31 +313,6 @@ export async function listLinkUserInviteMatches(notificationId, { kind, limit, p
   );
 }
 
-export async function listLinkUserInviteParticipants(notificationId, { limit, pageToken } = {}) {
-  const params = new URLSearchParams();
-  if (limit) params.append("limit", String(limit));
-  if (pageToken) params.append("pageToken", pageToken);
-  const query = params.toString();
-  return apiRequest(
-    `/api/me/notifications/${encodeURIComponent(notificationId)}/link-user-participants${query ? `?${query}` : ""}`
-  );
-}
-
-/** Fetches all invite-group participants for a link-user notification, paginating. */
-export async function listAllLinkUserInviteParticipants(notificationId) {
-  const items = [];
-  let pageToken;
-  do {
-    const page = await listLinkUserInviteParticipants(notificationId, {
-      limit: PARTICIPANTS_LIST_MAX_LIMIT,
-      pageToken,
-    });
-    items.push(...(page?.items || []));
-    pageToken = page?.pageToken || null;
-  } while (pageToken);
-  return { items };
-}
-
 export async function respondToInvitation(invitationId, decision) {
   return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/respond`, {
     method: "POST",
