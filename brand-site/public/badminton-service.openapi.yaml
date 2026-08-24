@@ -601,9 +601,9 @@ paths:
         Changes the group role of a registered participant (`member` / `editor` / `admin`).
         Unlinked participants always stay `member` and cannot be assigned another role.
 
-        Group owner (`created_by_user_id`) may assign any of these roles, including `admin`.
-        Admin who is not the owner may assign only `member` and `editor`, and cannot
-        change other admins. To transfer ownership use `POST …/transfer-ownership`.
+        Group owner (`created_by_user_id`) may assign any role and may change other admins.
+        Admin who is not the owner may also assign `member` / `editor` / `admin`, but cannot
+        change participants who are already `admin`. To transfer ownership use `POST …/transfer-ownership`.
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/ParticipantId"

@@ -1097,7 +1097,7 @@ export const mockClient = {
     if (user?.groupId) throw new Error("Only registered users can have a role assigned");
     const actorIsOwner = isGroupOwner(db, groupId, actor.id);
     if (membership.role !== role) {
-      if (!actorIsOwner && (membership.role === "admin" || role === "admin")) {
+      if (!actorIsOwner && membership.role === "admin") {
         throw new Error("Admin cannot change admin roles");
       }
       membership.role = role;

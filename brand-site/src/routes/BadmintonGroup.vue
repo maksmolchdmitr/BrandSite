@@ -970,8 +970,7 @@ export default defineComponent({
       return this.isStaff || this.group?.myRole === "editor";
     },
     assignableRoles() {
-      if (this.group?.isOwner) return ["member", "editor", "admin"];
-      return ["member", "editor"];
+      return ["member", "editor", "admin"];
     },
     meId() {
       return getLoggedInUserId() || null;
