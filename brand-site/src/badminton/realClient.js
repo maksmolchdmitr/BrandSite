@@ -94,6 +94,10 @@ export const realClient = {
     return api.markNotificationRead(notificationId);
   },
 
+  async listLinkUserInviteMatches(notificationId, { kind, limit, pageToken } = {}) {
+    return api.listLinkUserInviteMatches(notificationId, { kind, limit, pageToken });
+  },
+
   async respondToInvitation(invitationId, decision) {
     const result = await api.respondToInvitation(invitationId, decision);
     if (decision === "accept") {

@@ -160,6 +160,42 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/me/notifications/{notificationId}/link-user-matches:
+    get:
+      tags: [ Notifications ]
+      summary: List unlinked participant matches for a link-user invite notification
+      operationId: listLinkUserInviteMatches
+      description: |
+        Returns paginated singles or doubles matches of the unlinked participant referenced by
+        a pending `link_user_invite` notification owned by the current user.
+
+        Access is granted only via `notificationId` (no direct unlinked user id lookup).
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: kind
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MatchKind"
+        - $ref: "#/components/parameters/Limit20Max200"
+        - $ref: "#/components/parameters/PageToken"
+      responses:
+        "200":
+          description: Paginated matches for the unlinked participant in the invite group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/invitations/{invitationId}/respond:
     post:
       tags: [ Invitations ]
@@ -1443,6 +1479,11 @@ components:
             unlinkedUserId:
               type: string
               description: Unlinked participant to merge into invitee's account
+            unlinkedFirstName: { type: string }
+            unlinkedLastName: { type: string }
+            unlinkedPhotoUrl:
+              type: string
+              description: Unlinked participant profile photo URL (http/https)
           required: [ invitationId, invitationStatus, unlinkedUserId ]
 
     GroupJoinAcceptedNotification:

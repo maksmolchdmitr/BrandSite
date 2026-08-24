@@ -303,6 +303,16 @@ export async function markNotificationRead(notificationId) {
   });
 }
 
+export async function listLinkUserInviteMatches(notificationId, { kind, limit, pageToken } = {}) {
+  const params = new URLSearchParams();
+  params.append("kind", kind);
+  if (limit) params.append("limit", String(limit));
+  if (pageToken) params.append("pageToken", pageToken);
+  return apiRequest(
+    `/api/me/notifications/${encodeURIComponent(notificationId)}/link-user-matches?${params.toString()}`
+  );
+}
+
 export async function respondToInvitation(invitationId, decision) {
   return apiRequest(`/api/invitations/${encodeURIComponent(invitationId)}/respond`, {
     method: "POST",

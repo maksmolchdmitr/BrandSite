@@ -74,6 +74,9 @@ function notificationToDto(n, db) {
     : null;
   const group = db.groups.find(g => g.id === n.payload?.groupId);
   const sender = db.users.find(u => u.id === n.senderUserId);
+  const unlinked = n.payload?.unlinkedUserId
+    ? db.users.find(u => u.id === n.payload.unlinkedUserId)
+    : null;
   const base = {
     id: n.id,
     kind: n.kind,
@@ -99,6 +102,9 @@ function notificationToDto(n, db) {
       invitationId: n.payload.invitationId,
       invitationStatus: invitation?.status || "pending",
       unlinkedUserId: n.payload.unlinkedUserId,
+      unlinkedFirstName: unlinked?.firstName || undefined,
+      unlinkedLastName: unlinked?.lastName || undefined,
+      unlinkedPhotoUrl: unlinked?.photoUrl || undefined,
     };
   }
   if (n.kind === "group_join_accepted" || n.kind === "group_join_rejected") {
@@ -980,6 +986,43 @@ export const mockClient = {
     saveDb(db);
     logResponse("POST", `/api/me/notifications/${notificationId}/read`, null, 204);
     return null;
+  },
+
+  async listLinkUserInviteMatches(notificationId, { kind = "singles", limit = 20, pageToken = null } = {}) {
+    logRequest("GET", `/api/me/notifications/${notificationId}/link-user-matches`, { kind, limit, pageToken });
+    await delay();
+    const db = loadDb();
+    const u = requireAuth(db);
+    const notification = (db.notifications || []).find(n => n.id === notificationId);
+    if (!notification || (notification.receiverUserId || notification.userId) !== u.id) {
+      throw new Error("Notification not found");
+    }
+    if (notification.kind !== "link_user_invite") throw new Error("Forbidden");
+    const invitation = (db.invitations || []).find(i => i.id === notification.payload?.invitationId);
+    if (!invitation || invitation.status !== "pending") throw new Error("Forbidden");
+    const unlinkedUserId = notification.payload?.unlinkedUserId;
+    const groupId = notification.payload?.groupId;
+    const participantIds = new Set([unlinkedUserId]);
+    for (const p of db.participants || []) {
+      if (p.id === unlinkedUserId || p.userId === unlinkedUserId) participantIds.add(p.id);
+    }
+    const matchKind = kind === "doubles" ? "doubles" : "singles";
+    const all = (db.matches || [])
+      .filter(m => {
+        if (m.kind !== matchKind) return false;
+        if (m.groupId !== groupId) return false;
+        const inTeam = (ids) => (ids || []).some(id => participantIds.has(id));
+        return inTeam(m.teamA) || inTeam(m.teamB);
+      })
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    const start = pageToken && pageToken.startsWith("offset_")
+      ? parseInt(pageToken.slice("offset_".length), 10) || 0
+      : 0;
+    const pageItems = all.slice(start, start + limit).map(matchToClientDto);
+    const nextToken = start + limit < all.length ? `offset_${start + limit}` : null;
+    const result = { items: pageItems, pageToken: nextToken };
+    logResponse("GET", `/api/me/notifications/${notificationId}/link-user-matches`, result);
+    return result;
   },
 
   async respondToInvitation(invitationId, decision) {

@@ -24,3 +24,21 @@ export function notificationSenderName(item) {
     .join(" ");
   return name || "User";
 }
+
+export function notificationUnlinkedName(item) {
+  const name = [item?.unlinkedFirstName, item?.unlinkedLastName]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" ");
+  return name || "User";
+}
+
+export function linkUserMatchesTo(notificationId, groupId) {
+  const query = new URLSearchParams({
+    page: "badminton",
+    section: "link-user-matches",
+    notificationId,
+  });
+  if (groupId) query.set("groupId", groupId);
+  return `/?${query.toString()}`;
+}
