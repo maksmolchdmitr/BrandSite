@@ -92,6 +92,7 @@ import BadmintonTopActions from "@/components/badminton/BadmintonTopActions.vue"
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
+import {publishUnreadCount, unreadCountFromPage} from "@/badminton/notificationInbox.js";
 
 const PAGE_SIZE = 20;
 const NOTIFICATION_POLL_MS = 1000;
@@ -149,6 +150,9 @@ export default defineComponent({
         if (!silent) {
           this.pageToken = page?.pageToken || null;
         }
+        if (this.unreadFilter) {
+          publishUnreadCount(unreadCountFromPage(page, PAGE_SIZE));
+        }
         this.loadedOnce = true;
       } catch (e) {
         if (!silent) {
@@ -163,6 +167,18 @@ export default defineComponent({
     poll() {
       if (this.busyId || this.loading || this.loadingMore) return;
       this.refresh({ silent: true });
+      if (!this.unreadFilter) this.refreshBadgeUnreadCount();
+    },
+    async refreshBadgeUnreadCount() {
+      try {
+        const unreadPage = await badmintonClient.listMyNotifications({
+          unread: true,
+          limit: PAGE_SIZE,
+        });
+        publishUnreadCount(unreadCountFromPage(unreadPage, PAGE_SIZE));
+      } catch {
+        // ignore background poll errors
+      }
     },
     async loadMore() {
       if (!this.pageToken || this.loadingMore) return;
@@ -247,18 +263,18 @@ export default defineComponent({
 .title { margin: 0 0 6px; font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 .subtitle { margin: 0; font-family: var(--font-display); opacity: 0.75; }
 
-.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.card { background: white; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 100%; min-width: 0; box-sizing: border-box; color: #1a1a2e; color-scheme: light; }
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.filterHint { font-family: var(--font-display); opacity: 0.7; }
+.filterHint { font-family: var(--font-display); color: #555; }
 .errorBox { background: #ffe6e6; border: 1px solid #ffb3b3; padding: 12px 14px; border-radius: 12px; font-family: var(--font-display); }
-.empty { font-family: var(--font-display); opacity: 0.7; }
+.empty { font-family: var(--font-display); color: #555; }
 
 .list { display: flex; flex-direction: column; gap: 10px; }
 .notifRow { background: #f6f6ff; border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; max-width: 100%; box-sizing: border-box; flex-wrap: wrap; }
 .notifRow.unread { background: #ebe7ff; }
 .notifBody { min-width: 0; }
-.notifTitle { font-family: var(--font-display); font-weight: 700; }
-.notifMeta { font-family: var(--font-display); opacity: 0.7; margin-top: 4px; }
+.notifTitle { font-family: var(--font-display); font-weight: 700; color: #1a1a2e; }
+.notifMeta { font-family: var(--font-display); color: #555; margin-top: 4px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .btn { flex: 0 0 auto; border: none; cursor: pointer; background-color: #4F3DFF; color: white; border-radius: 100px; padding: 12px 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
@@ -269,5 +285,50 @@ export default defineComponent({
   .page { gap: 12px; }
   .content { padding: 16px 20px 20px 20px; }
   .title { font-size: 28px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .title,
+  .subtitle {
+    color: #e8e8e8;
+  }
+
+  .card {
+    background: #2d2d2d;
+    border: 1px solid #3b3b3b;
+    color: #e8e8e8;
+    color-scheme: dark;
+  }
+
+  .filterHint,
+  .empty {
+    color: #b0b0b0;
+  }
+
+  .notifRow {
+    background: #242424;
+  }
+
+  .notifRow.unread {
+    background: #353045;
+  }
+
+  .notifTitle {
+    color: #e8e8e8;
+  }
+
+  .notifMeta {
+    color: #b0b0b0;
+  }
+
+  .btn.secondary {
+    background: #2d2d2d;
+  }
+
+  .errorBox {
+    background: #4a1f1f;
+    border-color: #8e3c3c;
+    color: #ffd6d6;
+  }
 }
 </style>

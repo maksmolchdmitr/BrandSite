@@ -100,6 +100,11 @@
 <script>
 import {defineComponent} from "vue";
 import {badmintonClient} from "@/badminton/client.js";
+import {
+  publishUnreadCount,
+  subscribeUnreadCount,
+  unreadCountFromPage,
+} from "@/badminton/notificationInbox.js";
 
 const PAGE_SIZE = 10;
 const NOTIFICATION_POLL_MS = 1000;
@@ -119,9 +124,16 @@ export default defineComponent({
       loadedOnce: false,
       pollTimer: null,
       badgeUnreadCount: 0,
+      unsubscribeUnreadCount: null,
     };
   },
   computed: {
+    isNotificationsPage() {
+      const query = this.$route?.query || {};
+      const section = query.section;
+      return query.page === "badminton"
+        && (section === "notifications" || section === "invitations");
+    },
     unreadCount() {
       return this.badgeUnreadCount;
     },
@@ -130,15 +142,38 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.refresh();
-    this.pollTimer = setInterval(() => this.poll(), NOTIFICATION_POLL_MS);
+    this.unsubscribeUnreadCount = subscribeUnreadCount((count) => {
+      this.badgeUnreadCount = count;
+    });
+    if (!this.isNotificationsPage) {
+      this.refresh();
+      this.pollTimer = setInterval(() => this.poll(), NOTIFICATION_POLL_MS);
+    }
     document.addEventListener("pointerdown", this.onDocPointer, true);
     document.addEventListener("keydown", this.onDocKey);
   },
   beforeUnmount() {
     if (this.pollTimer) clearInterval(this.pollTimer);
+    if (this.unsubscribeUnreadCount) this.unsubscribeUnreadCount();
     document.removeEventListener("pointerdown", this.onDocPointer, true);
     document.removeEventListener("keydown", this.onDocKey);
+  },
+  watch: {
+    isNotificationsPage(onNotificationsPage, wasOnNotificationsPage) {
+      if (onNotificationsPage) {
+        if (this.pollTimer) {
+          clearInterval(this.pollTimer);
+          this.pollTimer = null;
+        }
+        return;
+      }
+      if (wasOnNotificationsPage) {
+        this.refresh();
+        if (!this.pollTimer) {
+          this.pollTimer = setInterval(() => this.poll(), NOTIFICATION_POLL_MS);
+        }
+      }
+    },
   },
   methods: {
     formatKind(kind) {
@@ -174,9 +209,7 @@ export default defineComponent({
           this.pageToken = page?.pageToken || null;
         }
         if (this.unreadFilter) {
-          this.badgeUnreadCount = page?.pageToken
-            ? Math.max((page?.items || []).length, PAGE_SIZE)
-            : (page?.items || []).length;
+          publishUnreadCount(unreadCountFromPage(page, PAGE_SIZE));
         }
         this.loadedOnce = true;
       } catch (e) {
@@ -199,9 +232,7 @@ export default defineComponent({
           limit: PAGE_SIZE,
         });
         const unreadItems = unreadPage?.items || [];
-        this.badgeUnreadCount = unreadPage?.pageToken
-          ? Math.max(unreadItems.length, PAGE_SIZE)
-          : unreadItems.length;
+        publishUnreadCount(unreadCountFromPage(unreadPage, PAGE_SIZE));
         if (this.unreadFilter && !this.pageToken) {
           this.items = unreadItems;
           this.loadedOnce = true;
@@ -486,6 +517,22 @@ export default defineComponent({
 
   .notifItem.unread {
     background: #45405c;
+  }
+
+  .notifTitle {
+    color: #e8e8e8;
+  }
+
+  .notifMeta {
+    color: #b0b0b0;
+  }
+
+  .panelTitle {
+    color: #e8e8e8;
+  }
+
+  .panelEmpty {
+    color: #b0b0b0;
   }
 
   .actionBtn.secondary {
