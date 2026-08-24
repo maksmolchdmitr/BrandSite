@@ -102,6 +102,7 @@ import {defineComponent} from "vue";
 import {badmintonClient} from "@/badminton/client.js";
 
 const PAGE_SIZE = 10;
+const NOTIFICATION_POLL_MS = 1000;
 
 export default defineComponent({
   name: "BadmintonNotificationBell",
@@ -116,13 +117,13 @@ export default defineComponent({
       unreadFilter: true,
       busyId: null,
       loadedOnce: false,
+      pollTimer: null,
+      badgeUnreadCount: 0,
     };
   },
   computed: {
     unreadCount() {
-      return this.unreadFilter
-        ? this.items.filter((item) => item.unread !== false).length
-        : 0;
+      return this.badgeUnreadCount;
     },
     unreadLabel() {
       return this.unreadCount > 9 ? "9+" : String(this.unreadCount);
@@ -130,10 +131,12 @@ export default defineComponent({
   },
   mounted() {
     this.refresh();
+    this.pollTimer = setInterval(() => this.poll(), NOTIFICATION_POLL_MS);
     document.addEventListener("pointerdown", this.onDocPointer, true);
     document.addEventListener("keydown", this.onDocKey);
   },
   beforeUnmount() {
+    if (this.pollTimer) clearInterval(this.pollTimer);
     document.removeEventListener("pointerdown", this.onDocPointer, true);
     document.removeEventListener("keydown", this.onDocKey);
   },
@@ -152,23 +155,59 @@ export default defineComponent({
       this.open = !this.open;
       if (this.open) await this.refresh();
     },
-    async refresh() {
-      this.loading = true;
-      this.error = "";
-      this.pageToken = null;
+    async refresh(options = {}) {
+      const silent = options.silent === true;
+      if (!silent) {
+        this.loading = true;
+        this.pageToken = null;
+      } else if (this.pageToken) {
+        return;
+      }
+      this.error = silent ? this.error : "";
       try {
         const page = await badmintonClient.listMyNotifications({
           unread: this.unreadFilter,
           limit: PAGE_SIZE,
         });
         this.items = page?.items || [];
-        this.pageToken = page?.pageToken || null;
+        if (!silent) {
+          this.pageToken = page?.pageToken || null;
+        }
+        if (this.unreadFilter) {
+          this.badgeUnreadCount = page?.pageToken
+            ? Math.max((page?.items || []).length, PAGE_SIZE)
+            : (page?.items || []).length;
+        }
         this.loadedOnce = true;
       } catch (e) {
-        this.error = e?.message || this.$t("badminton.notifications.errLoad");
-        if (!this.loadedOnce) this.items = [];
+        if (!silent) {
+          this.error = e?.message || this.$t("badminton.notifications.errLoad");
+          if (!this.loadedOnce) this.items = [];
+        }
       } finally {
-        this.loading = false;
+        if (!silent) this.loading = false;
+      }
+    },
+    poll() {
+      if (this.busyId || this.loading || this.loadingMore) return;
+      this.pollNotifications();
+    },
+    async pollNotifications() {
+      try {
+        const unreadPage = await badmintonClient.listMyNotifications({
+          unread: true,
+          limit: PAGE_SIZE,
+        });
+        const unreadItems = unreadPage?.items || [];
+        this.badgeUnreadCount = unreadPage?.pageToken
+          ? Math.max(unreadItems.length, PAGE_SIZE)
+          : unreadItems.length;
+        if (this.unreadFilter && !this.pageToken) {
+          this.items = unreadItems;
+          this.loadedOnce = true;
+        }
+      } catch {
+        // ignore background poll errors
       }
     },
     async loadMore() {

@@ -94,6 +94,7 @@ import {badmintonClient} from "@/badminton/client.js";
 import {redirectToLoginAutoTg} from "@/badminton/apiHelpers.js";
 
 const PAGE_SIZE = 20;
+const NOTIFICATION_POLL_MS = 1000;
 
 export default defineComponent({
   name: "BadmintonNotifications",
@@ -107,11 +108,17 @@ export default defineComponent({
       pageToken: null,
       unreadFilter: true,
       busyId: null,
+      loadedOnce: false,
+      pollTimer: null,
     };
   },
   async mounted() {
     if (redirectToLoginAutoTg(this.$router)) return;
     await this.refresh();
+    this.pollTimer = setInterval(() => this.poll(), NOTIFICATION_POLL_MS);
+  },
+  beforeUnmount() {
+    if (this.pollTimer) clearInterval(this.pollTimer);
   },
   methods: {
     formatKind(kind) {
@@ -124,24 +131,38 @@ export default defineComponent({
         && item.invitationStatus === "pending"
         && Boolean(item.invitationId);
     },
-    async refresh() {
-      this.loading = true;
-      this.error = "";
-      this.pageToken = null;
+    async refresh(options = {}) {
+      const silent = options.silent === true;
+      if (!silent) {
+        this.loading = true;
+        this.pageToken = null;
+      } else if (this.pageToken) {
+        return;
+      }
+      this.error = silent ? this.error : "";
       try {
         const page = await badmintonClient.listMyNotifications({
           unread: this.unreadFilter,
           limit: PAGE_SIZE,
         });
         this.items = page?.items || [];
-        this.pageToken = page?.pageToken || null;
+        if (!silent) {
+          this.pageToken = page?.pageToken || null;
+        }
+        this.loadedOnce = true;
       } catch (e) {
-        this.error = e?.message || this.$t("badminton.notifications.errLoad");
-        this.items = [];
-        this.pageToken = null;
+        if (!silent) {
+          this.error = e?.message || this.$t("badminton.notifications.errLoad");
+          this.items = [];
+          this.pageToken = null;
+        }
       } finally {
-        this.loading = false;
+        if (!silent) this.loading = false;
       }
+    },
+    poll() {
+      if (this.busyId || this.loading || this.loadingMore) return;
+      this.refresh({ silent: true });
     },
     async loadMore() {
       if (!this.pageToken || this.loadingMore) return;
