@@ -97,14 +97,14 @@ function notificationToDto(n, db) {
       unlinkedUserId: n.payload.unlinkedUserId,
     };
   }
-  if (n.kind === "group_join_rejected") {
+  if (n.kind === "group_join_accepted" || n.kind === "group_join_rejected") {
     return {
       ...base,
       invitationId: n.payload.invitationId,
       inviteeUserId: n.payload.inviteeUserId,
     };
   }
-  if (n.kind === "link_user_rejected") {
+  if (n.kind === "link_user_accepted" || n.kind === "link_user_rejected") {
     return {
       ...base,
       invitationId: n.payload.invitationId,
@@ -746,7 +746,7 @@ export const mockClient = {
       throw new Error("User is already a member of this group");
     }
     if ((db.invitations || []).some(i =>
-      i.status === "pending" && i.kind === "group_join" && i.groupId === groupId && i.inviteeUserId === invitee.id
+      i.status === "pending" && i.groupId === groupId && i.inviteeUserId === invitee.id
     )) {
       throw new Error("Invitation already pending");
     }
@@ -911,7 +911,8 @@ export const mockClient = {
       throw new Error("User is already a member of this group");
     }
     if ((db.invitations || []).some(i =>
-      i.status === "pending" && i.kind === "link_user" && i.groupId === groupId && i.unlinkedUserId === participantId
+      (i.status === "pending" && i.kind === "link_user" && i.groupId === groupId && i.unlinkedUserId === participantId)
+      || (i.status === "pending" && i.groupId === groupId && i.inviteeUserId === userId)
     )) {
       throw new Error("Link invitation already pending");
     }
@@ -1024,11 +1025,31 @@ export const mockClient = {
         if (!db.memberships.some(m => m.groupId === invitation.groupId && m.userId === userId)) {
           db.memberships.push({groupId: invitation.groupId, userId, role: "member"});
         }
-        invitation.unlinkedUserId = null;
         invalidateParticipantSearchCache(invitation.groupId);
       }
+      const linkedUnlinkedUserId = invitation.unlinkedUserId;
       invitation.status = "accepted";
       invitation.resolvedAt = nowIso();
+      if (invitation.kind === "link_user") {
+        invitation.unlinkedUserId = null;
+      }
+      pushNotification(db, {
+        receiverUserId: invitation.invitedByUserId,
+        senderUserId: u.id,
+        kind: invitation.kind === "group_join" ? "group_join_accepted" : "link_user_accepted",
+        payload: invitation.kind === "group_join"
+          ? {
+            groupId: invitation.groupId,
+            invitationId: invitation.id,
+            inviteeUserId: invitation.inviteeUserId,
+          }
+          : {
+            groupId: invitation.groupId,
+            invitationId: invitation.id,
+            inviteeUserId: invitation.inviteeUserId,
+            unlinkedUserId: linkedUnlinkedUserId,
+          },
+      });
       saveDb(db);
       logResponse("POST", `/api/invitations/${invitationId}/respond`, invitation);
       return invitation;

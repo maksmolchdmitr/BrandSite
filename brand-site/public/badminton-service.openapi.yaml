@@ -1366,7 +1366,13 @@ components:
 
     UserNotificationKind:
       type: string
-      enum: [ group_join_invite, link_user_invite, group_join_rejected, link_user_rejected ]
+      enum:
+        - group_join_invite
+        - link_user_invite
+        - group_join_accepted
+        - link_user_accepted
+        - group_join_rejected
+        - link_user_rejected
 
     UserNotification:
       type: object
@@ -1376,6 +1382,8 @@ components:
         mapping:
           group_join_invite: "#/components/schemas/GroupJoinInviteNotification"
           link_user_invite: "#/components/schemas/LinkUserInviteNotification"
+          group_join_accepted: "#/components/schemas/GroupJoinAcceptedNotification"
+          link_user_accepted: "#/components/schemas/LinkUserAcceptedNotification"
           group_join_rejected: "#/components/schemas/GroupJoinRejectedNotification"
           link_user_rejected: "#/components/schemas/LinkUserRejectedNotification"
       properties:
@@ -1419,6 +1427,33 @@ components:
               type: string
               description: Unlinked participant to merge into invitee's account
           required: [ invitationId, invitationStatus, unlinkedUserId ]
+
+    GroupJoinAcceptedNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId: { type: string }
+            inviteeUserId:
+              type: string
+              description: User who accepted the group invitation
+          required: [ invitationId, inviteeUserId ]
+
+    LinkUserAcceptedNotification:
+      allOf:
+        - $ref: "#/components/schemas/UserNotification"
+        - type: object
+          additionalProperties: false
+          properties:
+            invitationId: { type: string }
+            inviteeUserId:
+              type: string
+              description: User who accepted the account link request
+            unlinkedUserId:
+              type: string
+              description: Unlinked participant that was linked
+          required: [ invitationId, inviteeUserId, unlinkedUserId ]
 
     GroupJoinRejectedNotification:
       allOf:

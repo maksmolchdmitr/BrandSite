@@ -293,6 +293,8 @@ const messages = {
         kinds: {
           group_join_invite: "You were invited to a group",
           link_user_invite: "Account link request",
+          group_join_accepted: "Group invitation was accepted",
+          link_user_accepted: "Account link request was accepted",
           group_join_rejected: "Group invitation was declined",
           link_user_rejected: "Account link request was declined",
         },
@@ -587,6 +589,8 @@ const messages = {
         kinds: {
           group_join_invite: "Вас пригласили в группу",
           link_user_invite: "Запрос на связывание аккаунта",
+          group_join_accepted: "Приглашение в группу принято",
+          link_user_accepted: "Запрос на связывание принят",
           group_join_rejected: "Приглашение в группу отклонено",
           link_user_rejected: "Запрос на связывание отклонён",
         },
