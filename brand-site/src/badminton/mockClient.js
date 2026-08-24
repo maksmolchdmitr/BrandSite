@@ -694,8 +694,8 @@ export const mockClient = {
     );
   },
 
-  async searchUsers({ query = "", limit = 10, pageToken = null } = {}) {
-    logRequest("GET", "/api/users/search", { query, limit, pageToken });
+  async searchUsers({ query = "", registeredOnly = false, limit = 10, pageToken = null } = {}) {
+    logRequest("GET", "/api/users/search", { query, registeredOnly, limit, pageToken });
     await delay();
     const db = loadDb();
     requireAuth(db);
@@ -703,6 +703,9 @@ export const mockClient = {
     let all = db.users
       .slice()
       .sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+    if (registeredOnly) {
+      all = all.filter(u => u.tgId != null || u.telegramId != null);
+    }
     if (lower) {
       all = all.filter(u => {
         const fullName = [u.firstName, u.lastName].filter(Boolean).join(" ").toLowerCase();

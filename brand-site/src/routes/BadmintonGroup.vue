@@ -1961,6 +1961,7 @@ export default defineComponent({
       try {
         const result = await badmintonClient.searchUsers({
           query: String(this.newParticipantName || "").trim(),
+          registeredOnly: true,
           limit: 10,
           pageToken: append ? this.inviteUserSearch.nextPageToken : undefined,
         });
@@ -2022,11 +2023,12 @@ export default defineComponent({
       try {
         const result = await badmintonClient.searchUsers({
           query: String(this.linkUserForm.query || "").trim(),
+          registeredOnly: true,
           limit: 10,
           pageToken: append ? this.linkUserSearch.nextPageToken : undefined,
         });
         const memberIds = new Set(Object.keys(this.participantNameMap || {}));
-        const items = (result?.items || []).filter(u => !memberIds.has(u.id) && !u.groupId);
+        const items = (result?.items || []).filter(u => !memberIds.has(u.id));
         if (append) {
           const existingIds = new Set(this.linkUserSearch.items.map(u => u.id));
           this.linkUserSearch.items = [

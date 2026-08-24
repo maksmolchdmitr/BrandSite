@@ -119,8 +119,8 @@ export const realClient = {
     );
   },
 
-  async searchUsers({ query = "", limit = 10, pageToken } = {}) {
-    return api.searchUsers({ query, limit, pageToken });
+  async searchUsers({ query = "", registeredOnly = false, limit = 10, pageToken } = {}) {
+    return api.searchUsers({ query, registeredOnly, limit, pageToken });
   },
 
   async createParticipant(groupId, {name}) {

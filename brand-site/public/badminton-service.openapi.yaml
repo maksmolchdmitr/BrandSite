@@ -241,10 +241,12 @@ paths:
       summary: Search users
       operationId: searchUsers
       description: |
-        Global prefix search of registered users by username / first / last name
+        Global prefix search of users by username / first / last name
         (case-insensitive, starts-with). Sorted by username. Authenticated users only.
+        Pass `registeredOnly=true` to exclude unlinked participants (`tg_id IS NULL`).
       parameters:
         - $ref: "#/components/parameters/NameQuery"
+        - $ref: "#/components/parameters/RegisteredOnly"
         - $ref: "#/components/parameters/Limit10Max100"
         - $ref: "#/components/parameters/PageToken"
       responses:
@@ -1111,6 +1113,14 @@ components:
       name: query
       description: Prefix filter on username or name (case-insensitive)
       schema: { type: string, default: "" }
+    RegisteredOnly:
+      in: query
+      name: registeredOnly
+      required: false
+      description: |
+        If true, only Telegram-registered users (`tg_id IS NOT NULL`).
+        Use for invite / link-user pickers so unlinked participants are not returned.
+      schema: { type: boolean, default: false }
     OptionalGroupId:
       in: query
       name: groupId

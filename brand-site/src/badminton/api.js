@@ -345,9 +345,10 @@ export async function searchParticipants(groupId, { query = "", limit = 10, page
   return apiRequest(`/api/groups/${encodeURIComponent(groupId)}/participants/search?${params.toString()}`);
 }
 
-export async function searchUsers({ query = "", limit = 10, pageToken } = {}) {
+export async function searchUsers({ query = "", registeredOnly = false, limit = 10, pageToken } = {}) {
   const params = new URLSearchParams();
   if (query) params.append("query", query);
+  if (registeredOnly) params.append("registeredOnly", "true");
   params.append("limit", limit);
   if (pageToken) params.append("pageToken", pageToken);
   return apiRequest(`/api/users/search?${params.toString()}`);
