@@ -107,7 +107,7 @@ import {
 } from "@/badminton/notificationInbox.js";
 
 const PAGE_SIZE = 10;
-const NOTIFICATION_POLL_MS = 1000;
+const NOTIFICATION_POLL_MS = 60_000;
 
 export default defineComponent({
   name: "BadmintonNotificationBell",
