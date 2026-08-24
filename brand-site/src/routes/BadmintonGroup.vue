@@ -2756,12 +2756,6 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
     color: #e8e8e8;
   }
 
-  .pill {
-    background: #2d2d2d;
-    border-color: #6f62c6;
-    color: #c7bcff;
-  }
-
   .role-member {
     background: #343434;
     border-color: #555;
