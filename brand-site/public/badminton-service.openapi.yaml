@@ -1403,6 +1403,11 @@ components:
         kind:
           $ref: "#/components/schemas/UserNotificationKind"
         senderUserId: { type: string }
+        senderFirstName: { type: string }
+        senderLastName: { type: string }
+        senderPhotoUrl:
+          type: string
+          description: Sender profile photo URL (http/https)
         groupId: { type: string }
         groupName: { type: string }
         unread: { type: boolean }
