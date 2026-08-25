@@ -1308,7 +1308,7 @@ export default defineComponent({
       }
     },
     shareRegistrationTelegram() {
-      openTelegramShare(this.registrationUrl, buildRegistrationShareText());
+      openTelegramShare(buildRegistrationShareText(this.registrationUrl));
     },
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };
