@@ -8,8 +8,8 @@ export function buildRegistrationUrl() {
   return `${origin}/?${params.toString()}`;
 }
 
-export function buildRegistrationShareText(registrationUrl) {
-  return `Зарегистрируйся в badminton-service через Telegram:\n${registrationUrl}`;
+export function buildRegistrationShareText() {
+  return "Зарегистрируйся в badminton-service через Telegram:";
 }
 
 export function telegramShareUrl(url, text) {
