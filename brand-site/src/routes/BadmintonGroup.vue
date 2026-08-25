@@ -69,6 +69,22 @@
             <div v-if="participants.length === 0" class="hint">{{ $t('badminton.group.createUnlinkedHint') }}</div>
 
             <div class="addParticipantSection">
+              <div class="addParticipantLabel">{{ $t('badminton.group.inviteLink') }}</div>
+              <div class="hint">{{ $t('badminton.group.inviteLinkHint') }}</div>
+              <div class="row inviteLinkRow">
+                <input class="input inviteLinkInput" :value="groupInviteUrl" readonly @focus="$event.target.select()" />
+                <button type="button" class="btn secondary" @click="copyGroupInviteLink">
+                  {{ inviteLinkCopied
+                    ? $t('badminton.group.inviteLinkCopied')
+                    : $t('badminton.group.inviteLinkCopy') }}
+                </button>
+                <button type="button" class="btn" @click="shareGroupInviteTelegram">
+                  {{ $t('badminton.group.inviteLinkShareTelegram') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="addParticipantSection">
               <div class="addParticipantLabel">{{ $t('badminton.group.inviteExisting') }}</div>
               <div class="hint">{{ $t('badminton.group.inviteExistingHint') }}</div>
               <div class="row inviteSearchRow">
@@ -928,6 +944,12 @@ import { formatElo } from "@/badminton/formatElo.js";
 import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
 import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
+import {
+  buildGroupInviteShareText,
+  buildGroupInviteUrl,
+  copyText,
+  openTelegramShare,
+} from "@/badminton/inviteShare.js";
 const CYRILLIC_TO_LATIN = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
   и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
@@ -951,6 +973,8 @@ export default defineComponent({
       loading: false,
       error: "",
       inviteNotice: "",
+      inviteLinkCopied: false,
+      inviteLinkCopiedTimer: null,
       group: null,
       participantNameMap: {},
       participantPhotoMap: {},
@@ -1027,6 +1051,9 @@ export default defineComponent({
     };
   },
   computed: {
+    groupInviteUrl() {
+      return this.groupId ? buildGroupInviteUrl(this.groupId) : "";
+    },
     isStaff() {
       return this.group?.myRole === "admin";
     },
@@ -1264,9 +1291,27 @@ export default defineComponent({
     if (this.participantsQueryTimer) clearTimeout(this.participantsQueryTimer);
     if (this.inviteUserSearchTimer) clearTimeout(this.inviteUserSearchTimer);
     if (this.linkUserSearchTimer) clearTimeout(this.linkUserSearchTimer);
+    if (this.inviteLinkCopiedTimer) clearTimeout(this.inviteLinkCopiedTimer);
   },
   methods: {
     formatElo,
+    async copyGroupInviteLink() {
+      try {
+        await copyText(this.groupInviteUrl);
+        this.inviteLinkCopied = true;
+        if (this.inviteLinkCopiedTimer) clearTimeout(this.inviteLinkCopiedTimer);
+        this.inviteLinkCopiedTimer = setTimeout(() => {
+          this.inviteLinkCopied = false;
+        }, 2000);
+      } catch (e) {
+        this.error = e?.message || String(e);
+      }
+    },
+    shareGroupInviteTelegram() {
+      const url = this.groupInviteUrl;
+      const text = buildGroupInviteShareText(this.group?.name, url);
+      openTelegramShare(url, text);
+    },
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };
       const photoMap = { ...this.participantPhotoMap };
@@ -2576,6 +2621,8 @@ export default defineComponent({
 .participantsFilterRow { margin-bottom: 4px; }
 .participantsFilterRow .input { width: 100%; max-width: 100%; }
 .addParticipantSection { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
+.inviteLinkRow { flex-wrap: wrap; align-items: stretch; }
+.inviteLinkInput { flex: 1 1 220px; min-width: 0; font-size: 14px; }
 .addParticipantLabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #333; }
 .photoPickerRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .photoPreview {

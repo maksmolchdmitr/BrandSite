@@ -50,6 +50,13 @@ import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
 import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {
+  pathAfterLoginWithInvite,
+  peekInviteGroupFromQuery,
+  peekRememberedInviteGroup,
+  rememberInviteGroup,
+  takeInviteGroup,
+} from "@/badminton/inviteShare.js";
 
 let telegramPopupRef = null;
 
@@ -67,6 +74,8 @@ export default defineComponent({
   },
   async mounted() {
     resetReauthGuard();
+    const inviteFromQuery = peekInviteGroupFromQuery(this.$route?.query);
+    if (inviteFromQuery) rememberInviteGroup(inviteFromQuery);
     this.setupTelegramCallback();
     const fromCallback = this.parseTelegramCallbackFromUrl();
     try {
@@ -81,6 +90,13 @@ export default defineComponent({
     if (this.userId) {
       await this.loginAs(this.userId);
       return;
+    }
+    if (!fromCallback && hasAppSession()) {
+      const inviteGroup = takeInviteGroup() || inviteFromQuery;
+      if (inviteGroup) {
+        await this.$router.replace(pathAfterLoginWithInvite(inviteGroup));
+        return;
+      }
     }
     if (!fromCallback) {
       this.maybeAutoTelegramLogin();
@@ -140,16 +156,38 @@ export default defineComponent({
       markTgAutoLoginTried();
       this.stripAutoTgQuery();
       this.loading = true;
-      const returnTo = `${origin}/?page=badminton&section=login`;
+      const returnTo = this.telegramOAuthReturnTo();
       const url = buildTelegramOAuthUrl({ returnTo });
       tgLog("auto TG: top-level OAuth redirect", url);
       window.location.assign(url);
+    },
+    telegramOAuthReturnTo() {
+      const origin = window.location.origin;
+      const params = new URLSearchParams({ page: "badminton", section: "login" });
+      const inviteGroup =
+        peekInviteGroupFromQuery(this.$route?.query) || peekRememberedInviteGroup();
+      if (inviteGroup) {
+        rememberInviteGroup(inviteGroup);
+        params.set("inviteGroup", inviteGroup);
+      }
+      return `${origin}/?${params.toString()}`;
+    },
+    async goAfterLogin() {
+      const inviteGroup =
+        takeInviteGroup() || peekInviteGroupFromQuery(this.$route?.query);
+      const path = pathAfterLoginWithInvite(inviteGroup);
+      try {
+        await this.$router.push(path);
+      } catch (_) {
+        await this.$router.replace(path);
+      }
     },
     goToTelegramOAuth() {
       clearSkipTgAutoLogin();
       clearTgAutoLoginTried();
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const url = buildTelegramOAuthUrl();
+      const returnTo = this.telegramOAuthReturnTo();
+      const url = buildTelegramOAuthUrl({ returnTo });
       tgLog("1. Opening OAuth popup", { origin, url });
       if (!origin) {
         this.error = this.$t("badminton.login.errOrigin");
@@ -286,7 +324,7 @@ export default defineComponent({
         await badmintonClient.telegramLogin(telegramData);
         tgLog("6. telegramLogin OK");
         await new Promise((r) => setTimeout(r, 150));
-        await this.$router.push("/?page=badminton&section=ratings");
+        await this.goAfterLogin();
       } catch (e) {
         tgLog("7. telegramLogin failed", e?.message);
         const msg = e?.message || "";
@@ -316,11 +354,7 @@ export default defineComponent({
           throw new Error("Cookie was not set after login");
         }
         await new Promise((resolve) => setTimeout(resolve, 150));
-        try {
-          await this.$router.push("/?page=badminton&section=ratings");
-        } catch (navError) {
-          await this.$router.replace("/?page=badminton&section=ratings");
-        }
+        await this.goAfterLogin();
       } catch (e) {
         console.error("Login error:", e);
         this.error = e?.message || this.$t("badminton.login.errLogin");
