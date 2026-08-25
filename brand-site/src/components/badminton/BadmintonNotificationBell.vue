@@ -102,6 +102,7 @@ import {defineComponent} from "vue";
 import BadmintonNotificationItemBody from "@/components/badminton/BadmintonNotificationItemBody.vue";
 import {badmintonClient} from "@/badminton/client.js";
 import {
+  adjustUnreadCount,
   publishUnreadCount,
   subscribeUnreadCount,
   unreadCountFromPage,
@@ -272,6 +273,11 @@ export default defineComponent({
       try {
         await badmintonClient.markNotificationRead(item.id);
         this.items = this.items.filter((row) => row.id !== item.id);
+        if (this.unreadFilter && !this.pageToken) {
+          publishUnreadCount(this.items.length);
+        } else {
+          adjustUnreadCount(-1);
+        }
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errMarkRead");
       } finally {
@@ -285,6 +291,7 @@ export default defineComponent({
       try {
         await badmintonClient.respondToInvitation(item.invitationId, "accept");
         await this.refresh();
+        if (!this.unreadFilter) await this.pollNotifications();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errAccept");
       } finally {
@@ -298,6 +305,7 @@ export default defineComponent({
       try {
         await badmintonClient.respondToInvitation(item.invitationId, "reject");
         await this.refresh();
+        if (!this.unreadFilter) await this.pollNotifications();
       } catch (e) {
         this.error = e?.message || this.$t("badminton.notifications.errReject");
       } finally {

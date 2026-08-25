@@ -6,6 +6,10 @@ export function publishUnreadCount(count) {
   subscribers.forEach((fn) => fn(unreadCount));
 }
 
+export function adjustUnreadCount(delta) {
+  publishUnreadCount(unreadCount + delta);
+}
+
 export function subscribeUnreadCount(fn) {
   subscribers.add(fn);
   fn(unreadCount);
