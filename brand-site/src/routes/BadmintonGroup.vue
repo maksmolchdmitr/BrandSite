@@ -72,13 +72,13 @@
               <div class="addParticipantLabel">{{ $t('badminton.group.inviteLink') }}</div>
               <div class="hint">{{ $t('badminton.group.inviteLinkHint') }}</div>
               <div class="row inviteLinkRow">
-                <input class="input inviteLinkInput" :value="groupInviteUrl" readonly @focus="$event.target.select()" />
-                <button type="button" class="btn secondary" @click="copyGroupInviteLink">
+                <input class="input inviteLinkInput" :value="registrationUrl" readonly @focus="$event.target.select()" />
+                <button type="button" class="btn secondary" @click="copyRegistrationLink">
                   {{ inviteLinkCopied
                     ? $t('badminton.group.inviteLinkCopied')
                     : $t('badminton.group.inviteLinkCopy') }}
                 </button>
-                <button type="button" class="btn" @click="shareGroupInviteTelegram">
+                <button type="button" class="btn" @click="shareRegistrationTelegram">
                   {{ $t('badminton.group.inviteLinkShareTelegram') }}
                 </button>
               </div>
@@ -945,8 +945,8 @@ import { participantPhotoFileFromPaste } from "@/badminton/photoUpload.js";
 import { getGroupMatchTab } from "@/badminton/uiPrefs.js";
 import { redirectToLoginAutoTg } from "@/badminton/apiHelpers.js";
 import {
-  buildGroupInviteShareText,
-  buildGroupInviteUrl,
+  buildRegistrationShareText,
+  buildRegistrationUrl,
   copyText,
   openTelegramShare,
 } from "@/badminton/inviteShare.js";
@@ -1051,8 +1051,8 @@ export default defineComponent({
     };
   },
   computed: {
-    groupInviteUrl() {
-      return this.groupId ? buildGroupInviteUrl(this.groupId) : "";
+    registrationUrl() {
+      return buildRegistrationUrl();
     },
     isStaff() {
       return this.group?.myRole === "admin";
@@ -1295,9 +1295,9 @@ export default defineComponent({
   },
   methods: {
     formatElo,
-    async copyGroupInviteLink() {
+    async copyRegistrationLink() {
       try {
-        await copyText(this.groupInviteUrl);
+        await copyText(this.registrationUrl);
         this.inviteLinkCopied = true;
         if (this.inviteLinkCopiedTimer) clearTimeout(this.inviteLinkCopiedTimer);
         this.inviteLinkCopiedTimer = setTimeout(() => {
@@ -1307,10 +1307,9 @@ export default defineComponent({
         this.error = e?.message || String(e);
       }
     },
-    shareGroupInviteTelegram() {
-      const url = this.groupInviteUrl;
-      const text = buildGroupInviteShareText(this.group?.name, url);
-      openTelegramShare(url, text);
+    shareRegistrationTelegram() {
+      const url = this.registrationUrl;
+      openTelegramShare(url, buildRegistrationShareText(url));
     },
     mergeParticipantNames(items) {
       const nameMap = { ...this.participantNameMap };

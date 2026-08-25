@@ -1,19 +1,15 @@
-const INVITE_GROUP_KEY = "badminton.inviteGroup";
-
-export function buildGroupInviteUrl(groupId) {
+export function buildRegistrationUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const params = new URLSearchParams({
     page: "badminton",
     section: "login",
     autoTg: "1",
-    inviteGroup: String(groupId || ""),
   });
   return `${origin}/?${params.toString()}`;
 }
 
-export function buildGroupInviteShareText(groupName, inviteUrl) {
-  const name = String(groupName || "").trim() || "группу";
-  return `Вас пригласили в «${name}» в badminton-service.\nВойдите через Telegram:\n${inviteUrl}`;
+export function buildRegistrationShareText(registrationUrl) {
+  return `Зарегистрируйся в badminton-service через Telegram:\n${registrationUrl}`;
 }
 
 export function telegramShareUrl(url, text) {
@@ -43,38 +39,4 @@ export async function copyText(text) {
   el.select();
   document.execCommand("copy");
   document.body.removeChild(el);
-}
-
-export function rememberInviteGroup(groupId) {
-  if (typeof sessionStorage === "undefined") return;
-  const id = String(groupId || "").trim();
-  if (!id) return;
-  sessionStorage.setItem(INVITE_GROUP_KEY, id);
-}
-
-export function peekRememberedInviteGroup() {
-  if (typeof sessionStorage === "undefined") return "";
-  return sessionStorage.getItem(INVITE_GROUP_KEY) || "";
-}
-
-export function takeInviteGroup() {
-  if (typeof sessionStorage === "undefined") return "";
-  const id = sessionStorage.getItem(INVITE_GROUP_KEY) || "";
-  sessionStorage.removeItem(INVITE_GROUP_KEY);
-  return id;
-}
-
-export function peekInviteGroupFromQuery(query) {
-  const raw = query?.inviteGroup;
-  return String(Array.isArray(raw) ? raw[0] : raw || "").trim();
-}
-
-export function pathAfterLoginWithInvite(inviteGroupId) {
-  const id = String(inviteGroupId || "").trim();
-  if (!id) return "/?page=badminton&section=ratings";
-  const params = new URLSearchParams({
-    page: "badminton",
-    section: "groups",
-  });
-  return `/?${params.toString()}`;
 }
