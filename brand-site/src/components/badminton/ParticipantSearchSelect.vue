@@ -1,5 +1,5 @@
 <template>
-  <div class="participantSearch">
+  <div ref="root" class="participantSearch">
     <input
       ref="input"
       class="input"
@@ -123,11 +123,24 @@ export default defineComponent({
       }
     },
   },
+  mounted() {
+    document.addEventListener("pointerdown", this.onDocPointerDown, true);
+  },
   beforeUnmount() {
+    document.removeEventListener("pointerdown", this.onDocPointerDown, true);
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.teardownScrollObserver();
   },
   methods: {
+    onDocPointerDown(event) {
+      if (!this.open) return;
+      const root = this.$refs.root;
+      if (root && !root.contains(event.target)) {
+        this.open = false;
+        this.typingEnabled = true;
+        this.touchOpenPending = false;
+      }
+    },
     reset() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
       this.teardownScrollObserver();

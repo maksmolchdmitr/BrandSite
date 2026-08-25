@@ -88,7 +88,7 @@
               <div class="addParticipantLabel">{{ $t('badminton.group.inviteExisting') }}</div>
               <div class="hint">{{ $t('badminton.group.inviteExistingHint') }}</div>
               <div class="row inviteSearchRow">
-                <div class="participantSearch inviteSearch">
+                <div ref="inviteUserSearchRoot" class="participantSearch inviteSearch">
                   <input
                     class="input"
                     v-model="newParticipantName"
@@ -109,6 +109,7 @@
                       v-for="u in inviteUserSearch.items"
                       :key="u.id"
                       class="dropdownItem"
+                      @mousedown.prevent
                       @click="selectInviteUser(u)"
                     >
                       <PersonChip
@@ -633,7 +634,7 @@
             />
             <button class="btn small danger" type="button" :disabled="formSaving" @click="clearLinkUserSelection">×</button>
           </div>
-          <div v-else class="participantSearch inviteSearch formFullWidthInput">
+          <div v-else ref="linkUserSearchRoot" class="participantSearch inviteSearch formFullWidthInput">
             <input
               class="input"
               v-model="linkUserForm.query"
@@ -654,6 +655,7 @@
                 v-for="u in linkUserSearch.items"
                 :key="u.id"
                 class="dropdownItem"
+                @mousedown.prevent
                 @click="selectLinkUser(u)"
               >
                 <PersonChip
@@ -1285,9 +1287,11 @@ export default defineComponent({
   },
   mounted() {
     if (redirectToLoginAutoTg(this.$router)) return;
+    document.addEventListener("pointerdown", this.onDocPointerDown, true);
     this.loadGroup().then(() => this.normalizeMatchesQueryThenLoad());
   },
   beforeUnmount() {
+    document.removeEventListener("pointerdown", this.onDocPointerDown, true);
     if (this.participantsQueryTimer) clearTimeout(this.participantsQueryTimer);
     if (this.inviteUserSearchTimer) clearTimeout(this.inviteUserSearchTimer);
     if (this.linkUserSearchTimer) clearTimeout(this.linkUserSearchTimer);
@@ -1295,6 +1299,28 @@ export default defineComponent({
   },
   methods: {
     formatElo,
+    onDocPointerDown(event) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+
+      const inviteRoot = this.$refs.inviteUserSearchRoot;
+      if (this.inviteUserSearch?.open && inviteRoot && !inviteRoot.contains(target)) {
+        this.inviteUserSearch.open = false;
+      }
+
+      const linkRoot = this.$refs.linkUserSearchRoot;
+      if (this.linkUserSearch?.open && linkRoot && !linkRoot.contains(target)) {
+        this.linkUserSearch.open = false;
+      }
+
+      if (!target.closest?.(".pagerLimitSelect")) {
+        this.showParticipantsLimitDropdown = false;
+        this.showSinglesLimitDropdown = false;
+        this.showDoublesLimitDropdown = false;
+        this.showSinglesLbLimitDropdown = false;
+        this.showDoublesLbLimitDropdown = false;
+      }
+    },
     async copyRegistrationLink() {
       try {
         await copyText(this.registrationUrl);
