@@ -8,20 +8,23 @@ export function buildRegistrationUrl() {
   return `${origin}/?${params.toString()}`;
 }
 
-export function buildRegistrationShareText() {
-  return "Зарегистрируйся в badminton-service через Telegram:";
+export function buildRegistrationShareText(registrationUrl) {
+  return [
+    "Привет! Залетай в badminton-service 🏸",
+    "Матчи, Elo и группы — регистрация через Telegram в один клик:",
+    registrationUrl,
+  ].join("\n");
 }
 
-export function telegramShareUrl(url, text) {
+export function telegramShareUrl(fullMessage) {
   const share = new URL("https://t.me/share/url");
-  share.searchParams.set("url", url);
-  share.searchParams.set("text", text);
+  share.searchParams.set("text", fullMessage);
   return share.toString();
 }
 
-export function openTelegramShare(url, text) {
+export function openTelegramShare(fullMessage) {
   if (typeof window === "undefined") return;
-  window.open(telegramShareUrl(url, text), "_blank", "noopener,noreferrer");
+  window.open(telegramShareUrl(fullMessage), "_blank", "noopener,noreferrer");
 }
 
 export async function copyText(text) {
