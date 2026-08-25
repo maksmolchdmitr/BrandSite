@@ -4,8 +4,10 @@
       size="sm"
       :name="senderName"
       :photo-url="item.senderPhotoUrl || ''"
+      :username="item.senderUsername || ''"
     />
     <div class="notifMeta">{{ subtitle }}</div>
+    <div v-if="isRoleChanged" class="roleChangedDetail">{{ roleChangedDetail }}</div>
     <div v-if="isLinkUserInvite" class="unlinkedBlock">
       <div class="unlinkedLabel">{{ $t("badminton.notifications.unlinkedParticipant") }}</div>
       <PersonChip
@@ -50,6 +52,21 @@ export default defineComponent({
     isLinkUserInvite() {
       return this.item.kind === "link_user_invite" && this.item.invitationStatus === "pending";
     },
+    isRoleChanged() {
+      return this.item.kind === "role_changed" && Boolean(this.item.role);
+    },
+    roleChangedDetail() {
+      const role = String(this.item.role || "").toLowerCase();
+      const roleLabel = this.$t(`badminton.notifications.roleLabels.${role}`);
+      const capabilities = this.$t(`badminton.notifications.roleCapabilities.${role}`);
+      const username = String(this.item.senderUsername || "").trim();
+      const sender = username ? `${this.senderName} @${username}` : this.senderName;
+      return this.$t("badminton.notifications.roleChangedDetail", {
+        sender,
+        role: roleLabel,
+        capabilities,
+      });
+    },
     gamesLink() {
       return linkUserMatchesTo(this.item.id, this.item.groupId);
     },
@@ -70,6 +87,14 @@ export default defineComponent({
   opacity: 0.7;
   font-size: 13px;
   padding-left: 2px;
+}
+
+.roleChangedDetail {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  padding-left: 2px;
+  line-height: 1.35;
 }
 
 .unlinkedBlock {
@@ -108,6 +133,10 @@ export default defineComponent({
   .unlinkedLabel {
     color: #b0b0b0;
     opacity: 1;
+  }
+
+  .roleChangedDetail {
+    color: #e8e8e8;
   }
 
   .unlinkedBlock {
