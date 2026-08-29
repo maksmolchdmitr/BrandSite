@@ -16,7 +16,7 @@ import {
   clearLocalAuthState,
   markSkipTgAutoLogin,
   clearTgAutoLoginTried,
-  clearTelegramOAuthSession,
+  openTelegramServiceNotificationsChat,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { orderMatchTeamsForApi } from "./uuidOrder.js";
@@ -162,7 +162,7 @@ export async function logout() {
   const accessToken = getAccessToken();
   clearLocalAuthState();
   clearTgAutoLoginTried();
-  clearTelegramOAuthSession();
+  openTelegramServiceNotificationsChat();
 
   if (!accessToken) return;
   try {

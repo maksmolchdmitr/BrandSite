@@ -8,7 +8,7 @@ import {
   DOUBLES_RATING_HISTORY_SAFETY_CAP,
   SINGLES_RATING_HISTORY_SAFETY_CAP,
 } from "@/badminton/ratingHistory.js";
-import {clearTgAutoLoginTried, clearLocalAuthState, clearTelegramOAuthSession, markSkipTgAutoLogin} from "@/badminton/apiHelpers.js";
+import {clearTgAutoLoginTried, clearLocalAuthState, markSkipTgAutoLogin} from "@/badminton/apiHelpers.js";
 
 function delay(ms = 180) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -497,7 +497,6 @@ export const mockClient = {
     markSkipTgAutoLogin();
     clearLocalAuthState();
     clearTgAutoLoginTried();
-    clearTelegramOAuthSession();
   },
 
   async getMe() {

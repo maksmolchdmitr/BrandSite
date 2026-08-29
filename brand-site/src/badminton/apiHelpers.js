@@ -178,29 +178,17 @@ export function buildTelegramOAuthLogoutUrl() {
   );
 }
 
+/** Official Telegram "service notifications" chat (phone 42777) — Terminate session lives here. */
+export const TELEGRAM_SERVICE_NOTIFICATIONS_URL = "https://t.me/+42777";
+
 /**
- * Drop Telegram OAuth consent cookies for this bot+origin (on oauth.telegram.org).
- *
- * Uses a hidden iframe only — never window.open. Logout 302s to /auth, and /auth
- * sends X-Frame-Options: SAMEORIGIN, so the iframe never loads auth/push (which
- * hangs Cursor/Codex embedded browsers). Callers must keep expectTgAuth cleared
- * so any stray postMessage is ignored.
+ * Open the official Telegram service notifications chat in a new tab so the user
+ * can press "Terminate session" for this site's OAuth login.
  */
-export function clearTelegramOAuthSession() {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
+export function openTelegramServiceNotificationsChat() {
+  if (typeof window === "undefined") return;
   clearExpectTgAuth();
-  const url = buildTelegramOAuthLogoutUrl();
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", "Telegram logout");
-  iframe.setAttribute("aria-hidden", "true");
-  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;";
-  iframe.src = url;
-  document.body.appendChild(iframe);
-  setTimeout(() => {
-    try {
-      iframe.remove();
-    } catch (_) {}
-  }, 2500);
+  window.open(TELEGRAM_SERVICE_NOTIFICATIONS_URL, "_blank", "noopener,noreferrer");
 }
 
 /** Clears local badminton auth (JWT, mock cookie, mock session flag). */
