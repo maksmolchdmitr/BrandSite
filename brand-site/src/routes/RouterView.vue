@@ -138,11 +138,13 @@ export default defineComponent({
     async maybeRedirectBadmintonToSection() {
       if (this.page !== "badminton" || this.section) return;
       const { getLoggedInUserId } = await import("@/badminton/cookies.js");
-      const { hasAuth } = await import("@/badminton/apiHelpers.js");
+      const { hasAuth, shouldSkipTgAutoLogin } = await import("@/badminton/apiHelpers.js");
       const hasTokens = hasAuth();
       const userId = getLoggedInUserId();
       if (hasTokens || (userId && userId.trim() !== "")) {
         await this.router.replace("/?page=badminton&section=ratings");
+      } else if (shouldSkipTgAutoLogin()) {
+        await this.router.replace("/?page=badminton&section=login");
       } else {
         await this.router.replace("/?page=badminton&section=login&autoTg=1");
       }

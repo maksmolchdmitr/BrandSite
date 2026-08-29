@@ -82,7 +82,10 @@ export const LOGIN_PATH = "/?page=badminton&section=login";
 export const LOGIN_PATH_AUTO_TG = "/?page=badminton&section=login&autoTg=1";
 const MOCK_SESSION_KEY = "badminton.useMockSession";
 const TG_AUTO_LOGIN_TRIED_KEY = "badminton.tgAutoLoginTried";
+/** localStorage: survives new tabs until the user explicitly logs in again. */
 const SKIP_TG_AUTO_LOGIN_KEY = "badminton.skipTgAutoLogin";
+/** sessionStorage: only accept Telegram auth while an OAuth attempt we started is in flight. */
+const EXPECT_TG_AUTH_KEY = "badminton.expectTgAuth";
 
 let reauthRedirectHandler = null;
 let reauthInProgress = false;
@@ -93,18 +96,47 @@ export function setReauthRedirectHandler(handler) {
 
 /** After intentional logout — do not silently bounce via Telegram OAuth. */
 export function markSkipTgAutoLogin() {
-  if (typeof sessionStorage === "undefined") return;
-  sessionStorage.setItem(SKIP_TG_AUTO_LOGIN_KEY, "1");
+  clearExpectTgAuth();
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(SKIP_TG_AUTO_LOGIN_KEY, "1");
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(SKIP_TG_AUTO_LOGIN_KEY);
+  }
 }
 
 export function shouldSkipTgAutoLogin() {
-  if (typeof sessionStorage === "undefined") return false;
-  return sessionStorage.getItem(SKIP_TG_AUTO_LOGIN_KEY) === "1";
+  if (typeof localStorage !== "undefined" && localStorage.getItem(SKIP_TG_AUTO_LOGIN_KEY) === "1") {
+    return true;
+  }
+  if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(SKIP_TG_AUTO_LOGIN_KEY) === "1") {
+    return true;
+  }
+  return false;
 }
 
 export function clearSkipTgAutoLogin() {
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(SKIP_TG_AUTO_LOGIN_KEY);
+  }
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(SKIP_TG_AUTO_LOGIN_KEY);
+  }
+}
+
+/** Mark that we opened / redirected to Telegram OAuth and may accept the result. */
+export function markExpectTgAuth() {
   if (typeof sessionStorage === "undefined") return;
-  sessionStorage.removeItem(SKIP_TG_AUTO_LOGIN_KEY);
+  sessionStorage.setItem(EXPECT_TG_AUTH_KEY, "1");
+}
+
+export function shouldExpectTgAuth() {
+  if (typeof sessionStorage === "undefined") return false;
+  return sessionStorage.getItem(EXPECT_TG_AUTH_KEY) === "1";
+}
+
+export function clearExpectTgAuth() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(EXPECT_TG_AUTH_KEY);
 }
 
 export function markTgAutoLoginTried() {
@@ -136,6 +168,44 @@ export function buildTelegramOAuthUrl({ returnTo } = {}) {
     url += `&return_to=${encodeURIComponent(returnTo)}`;
   }
   return url;
+}
+
+export function buildTelegramOAuthLogoutUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return (
+    `https://oauth.telegram.org/auth/logout?bot_id=${TELEGRAM_OAUTH_BOT_ID}` +
+    `&origin=${encodeURIComponent(origin)}`
+  );
+}
+
+/**
+ * Drop Telegram OAuth consent for this bot+origin (cookies on oauth.telegram.org).
+ * That endpoint may bounce to /auth and postMessage auth data — callers must clear
+ * expectTgAuth first so BadmintonLogin ignores those messages.
+ */
+export function clearTelegramOAuthSession() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  clearExpectTgAuth();
+  const url = buildTelegramOAuthLogoutUrl();
+  const w = window.open(url, "tg_oauth_logout", "width=50,height=50,left=0,top=0");
+  if (w) {
+    setTimeout(() => {
+      try {
+        w.close();
+      } catch (_) {}
+    }, 1200);
+    return;
+  }
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", "Telegram logout");
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  setTimeout(() => {
+    try {
+      iframe.remove();
+    } catch (_) {}
+  }, 2000);
 }
 
 /** Clears local badminton auth (JWT, mock cookie, mock session flag). */

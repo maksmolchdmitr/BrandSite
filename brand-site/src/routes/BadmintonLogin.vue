@@ -49,7 +49,7 @@ import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -124,6 +124,7 @@ export default defineComponent({
       }
       if (shouldSkipTgAutoLogin()) {
         tgLog("auto TG skipped — user logged out intentionally");
+        clearExpectTgAuth();
         this.stripAutoTgQuery();
         return;
       }
@@ -138,6 +139,7 @@ export default defineComponent({
       const origin = window.location.origin;
       if (!origin) return;
       markTgAutoLoginTried();
+      markExpectTgAuth();
       this.stripAutoTgQuery();
       this.loading = true;
       const returnTo = `${origin}/?page=badminton&section=login`;
@@ -148,6 +150,7 @@ export default defineComponent({
     goToTelegramOAuth() {
       clearSkipTgAutoLogin();
       clearTgAutoLoginTried();
+      markExpectTgAuth();
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const url = buildTelegramOAuthUrl();
       tgLog("1. Opening OAuth popup", { origin, url });
@@ -193,6 +196,12 @@ export default defineComponent({
     },
     parseTelegramCallbackFromUrl() {
       if (this.telegramAuthProcessed) return false;
+      if (!shouldExpectTgAuth()) {
+        if (typeof window !== "undefined" && window.location.hash && /tgAuthResult|auth_date/.test(window.location.hash)) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        }
+        return false;
+      }
       const telegramParams = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"];
       const fromQuery = (params) => {
         const o = {};
@@ -260,6 +269,10 @@ export default defineComponent({
           if (BADMINTON_DEBUG && data) tgLog("postMessage from TG skipped", typeof data, this.telegramAuthProcessed);
           return;
         }
+        if (!shouldExpectTgAuth()) {
+          tgLog("postMessage from TG ignored — no in-flight OAuth expect");
+          return;
+        }
         // Telegram может присылать { event, result, origin } — данные пользователя в result
         const payload = (data.result && typeof data.result === "object") ? data.result : data;
         const hasId = payload && "id" in payload && "hash" in payload;
@@ -283,6 +296,7 @@ export default defineComponent({
       try {
         clearSkipTgAutoLogin();
         clearTgAutoLoginTried();
+        clearExpectTgAuth();
         await badmintonClient.telegramLogin(telegramData);
         tgLog("6. telegramLogin OK");
         await new Promise((r) => setTimeout(r, 150));
@@ -303,6 +317,8 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       try {
+        clearSkipTgAutoLogin();
+        clearExpectTgAuth();
         const useMockForLogin =
           typeof badmintonClient.listMockUsers !== "function";
         if (useMockForLogin) {
