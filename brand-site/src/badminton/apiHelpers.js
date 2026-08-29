@@ -170,6 +170,39 @@ export function buildTelegramOAuthUrl({ returnTo } = {}) {
   return url;
 }
 
+export function buildTelegramOAuthLogoutUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return (
+    `https://oauth.telegram.org/auth/logout?bot_id=${TELEGRAM_OAUTH_BOT_ID}` +
+    `&origin=${encodeURIComponent(origin)}`
+  );
+}
+
+/**
+ * Drop Telegram OAuth consent cookies for this bot+origin (on oauth.telegram.org).
+ *
+ * Uses a hidden iframe only — never window.open. Logout 302s to /auth, and /auth
+ * sends X-Frame-Options: SAMEORIGIN, so the iframe never loads auth/push (which
+ * hangs Cursor/Codex embedded browsers). Callers must keep expectTgAuth cleared
+ * so any stray postMessage is ignored.
+ */
+export function clearTelegramOAuthSession() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  clearExpectTgAuth();
+  const url = buildTelegramOAuthLogoutUrl();
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", "Telegram logout");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  setTimeout(() => {
+    try {
+      iframe.remove();
+    } catch (_) {}
+  }, 2500);
+}
+
 /** Clears local badminton auth (JWT, mock cookie, mock session flag). */
 export function clearLocalAuthState() {
   clearTokens();

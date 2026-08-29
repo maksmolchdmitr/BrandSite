@@ -49,7 +49,7 @@ import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, buildTelegramOAuthLogoutUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -148,23 +148,39 @@ export default defineComponent({
       window.location.assign(url);
     },
     goToTelegramOAuth() {
+      // After intentional logout, /auth alone reuses the TG OAuth cookie and
+      // silently returns the same account. Hit /auth/logout first (first-party
+      // popup), then navigate to full /auth with request_access.
+      const resetTgSession = shouldSkipTgAutoLogin();
       clearSkipTgAutoLogin();
       clearTgAutoLoginTried();
       markExpectTgAuth();
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const url = buildTelegramOAuthUrl();
-      tgLog("1. Opening OAuth popup", { origin, url });
+      const authUrl = buildTelegramOAuthUrl();
+      const startUrl = resetTgSession ? buildTelegramOAuthLogoutUrl() : authUrl;
+      tgLog("1. Opening OAuth popup", { origin, resetTgSession, startUrl, authUrl });
       if (!origin) {
         this.error = this.$t("badminton.login.errOrigin");
         return;
       }
       const winName = "tg_oauth_" + Date.now();
-      const w = window.open(url, winName, "width=500,height=600,scrollbars=yes,resizable=yes");
+      const w = window.open(startUrl, winName, "width=500,height=600,scrollbars=yes,resizable=yes");
       telegramPopupRef = w;
       tgLog("2. window.open:", !!w ? "ok" : "null (blocked?)", winName);
       if (!w) {
-        window.location.assign(url);
+        // Top-level: logout URL 302s to /auth (session cleared). Cannot chain
+        // a second assign after navigation — the timer would be killed.
+        window.location.assign(resetTgSession ? buildTelegramOAuthLogoutUrl() : authUrl);
         return;
+      }
+      if (resetTgSession) {
+        setTimeout(() => {
+          try {
+            if (!w.closed) w.location.href = authUrl;
+          } catch (_) {
+            window.open(authUrl, winName);
+          }
+        }, 700);
       }
       if (BADMINTON_DEBUG) {
         setTimeout(() => {
