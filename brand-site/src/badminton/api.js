@@ -14,7 +14,6 @@ import {
   clearTokens,
   forceReauth,
   clearLocalAuthState,
-  clearTelegramOAuthSession,
   markSkipTgAutoLogin,
   clearTgAutoLoginTried,
   BADMINTON_DEBUG,
@@ -158,15 +157,21 @@ export async function refreshToken() {
 }
 
 export async function logout() {
+  markSkipTgAutoLogin();
+  const accessToken = getAccessToken();
+  clearLocalAuthState();
+  clearTgAutoLoginTried();
+
+  if (!accessToken) return;
   try {
-    await apiRequest("/api/auth/logout", { method: "POST" });
+    await fetch(`${BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   } catch (_) {
-    // Игнорируем ошибку сети/ответа — всегда чистим локальное состояние
-  } finally {
-    clearLocalAuthState();
-    markSkipTgAutoLogin();
-    clearTgAutoLoginTried();
-    clearTelegramOAuthSession();
   }
 }
 
