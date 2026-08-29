@@ -16,7 +16,6 @@ import {
   clearLocalAuthState,
   markSkipTgAutoLogin,
   clearTgAutoLoginTried,
-  clearTelegramOAuthSession,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { orderMatchTeamsForApi } from "./uuidOrder.js";
@@ -162,7 +161,6 @@ export async function logout() {
   const accessToken = getAccessToken();
   clearLocalAuthState();
   clearTgAutoLoginTried();
-  clearTelegramOAuthSession();
 
   if (!accessToken) return;
   try {
