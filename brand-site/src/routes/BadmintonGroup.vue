@@ -2357,7 +2357,7 @@ export default defineComponent({
         if (this.editParticipantForm.photoTouched) {
           patch.photoUrl = this.editParticipantForm.photoCleared ? "" : (this.editParticipantForm.photoUrl || "");
         }
-        if (this.editParticipantForm.cropTouched && this.editParticipantForm.photoCrop) {
+        if (this.editParticipantForm.cropTouched) {
           patch.photoCrop = this.editParticipantForm.photoCrop;
         }
         if (patch.firstName == null && patch.lastName == null && patch.photoUrl === undefined && patch.photoCrop === undefined) {

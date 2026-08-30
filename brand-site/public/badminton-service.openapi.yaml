@@ -1335,7 +1335,7 @@ components:
       description: |
         Partial update: only fields present in the body are applied.
         `firstName` / `lastName` update the corresponding columns; omitted fields are left unchanged.
-        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop when present.
+        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop when present; null clears crop.
         At least one field must be present.
       properties:
         firstName: { type: string, minLength: 1, maxLength: 255 }
@@ -1345,7 +1345,10 @@ components:
           maxLength: 4096
           description: Profile photo http/https URL; empty string clears photo
         photoCrop:
-          $ref: "#/components/schemas/PhotoCrop"
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PhotoCrop"
+          description: Crop rectangle; null clears crop. Omit to leave unchanged.
 
     GroupMemberRole:
       type: string
@@ -1712,7 +1715,7 @@ components:
       description: |
         Partial update: only fields present in the body are applied.
         `firstName` / `lastName` update the corresponding columns; omitted fields are left unchanged.
-        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop when present.
+        `photoUrl` sets photo (empty string clears). `photoCrop` sets crop when present; null clears crop.
         At least one field must be present.
       properties:
         firstName: { type: string, minLength: 1, maxLength: 255 }
@@ -1722,7 +1725,10 @@ components:
           maxLength: 4096
           description: Profile photo http/https URL; empty string clears photo
         photoCrop:
-          $ref: "#/components/schemas/PhotoCrop"
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PhotoCrop"
+          description: Crop rectangle; null clears crop. Omit to leave unchanged.
 
     LinkUserRequest:
       type: object
