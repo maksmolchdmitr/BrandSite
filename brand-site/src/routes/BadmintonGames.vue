@@ -36,7 +36,7 @@
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
+                  <td class="scoreCell" :class="{ scoreWin: isWinningScore(m, 'A') }">{{ getFinalScore(m, "A") }}</td>
                   <td class="nameCell">
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
@@ -45,7 +45,7 @@
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
+                  <td class="scoreCell" :class="{ scoreWin: isWinningScore(m, 'B') }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
               </tbody>
@@ -96,7 +96,7 @@
                       :username="getParticipantUsername(m.teamA?.[1])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{ score21: getFinalScore(m, 'A') === 21 }">{{ getFinalScore(m, "A") }}</td>
+                  <td class="scoreCell" :class="{ scoreWin: isWinningScore(m, 'A') }">{{ getFinalScore(m, "A") }}</td>
                   <td class="nameCell">
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
@@ -113,7 +113,7 @@
                       :username="getParticipantUsername(m.teamB?.[1])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{ score21: getFinalScore(m, 'B') === 21 }">{{ getFinalScore(m, "B") }}</td>
+                  <td class="scoreCell" :class="{ scoreWin: isWinningScore(m, 'B') }">{{ getFinalScore(m, "B") }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                 </tr>
               </tbody>
@@ -497,7 +497,7 @@ export default defineComponent({
   color: #4f3dff;
   text-align: center;
 }
-.scoreCell.score21 {
+.scoreCell.scoreWin {
   background-color: #ffeb3b;
   color: #333;
   border-radius: 4px;

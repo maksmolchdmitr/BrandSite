@@ -353,7 +353,7 @@
                       :username="getParticipantUsername(m.teamA?.[0])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
+                  <td class="scoreCell" :class="{scoreWin: isWinningScore(m, 'A')}">{{ getFinalScore(m, 'A') }}</td>
                   <td class="nameCell">
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
@@ -362,7 +362,7 @@
                       :username="getParticipantUsername(m.teamB?.[0])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
+                  <td class="scoreCell" :class="{scoreWin: isWinningScore(m, 'B')}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isMatchEditor" class="actionsCell">
                     <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
@@ -419,7 +419,7 @@
                       :username="getParticipantUsername(m.teamA?.[1])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{score21: getFinalScore(m, 'A') === 21}">{{ getFinalScore(m, 'A') }}</td>
+                  <td class="scoreCell" :class="{scoreWin: isWinningScore(m, 'A')}">{{ getFinalScore(m, 'A') }}</td>
                   <td class="nameCell">
                     <PersonChip
                       :name="getParticipantName(m.teamB?.[0])"
@@ -436,7 +436,7 @@
                       :username="getParticipantUsername(m.teamB?.[1])"
                     />
                   </td>
-                  <td class="scoreCell" :class="{score21: getFinalScore(m, 'B') === 21}">{{ getFinalScore(m, 'B') }}</td>
+                  <td class="scoreCell" :class="{scoreWin: isWinningScore(m, 'B')}">{{ getFinalScore(m, 'B') }}</td>
                   <td class="dateCell">{{ formatDate(m.createdAt) }}</td>
                   <td v-if="isMatchEditor" class="actionsCell">
                     <RouterLink class="btn secondary small" :to="editMatchTo(m)">{{ $t('common.actions.edit') }}</RouterLink>
@@ -1965,9 +1965,15 @@ export default defineComponent({
     getFinalScore(match, side) {
       const games = match.score?.games || [];
       if (games.length === 0) return this.$t("common.misc.noData");
-      // Return points from the last game
       const lastGame = games[games.length - 1];
       return side === 'A' ? lastGame.pointsA : lastGame.pointsB;
+    },
+    isWinningScore(match, side) {
+      const scoreA = this.getFinalScore(match, 'A');
+      const scoreB = this.getFinalScore(match, 'B');
+      if (typeof scoreA !== 'number' || typeof scoreB !== 'number') return false;
+      if (scoreA === scoreB) return false;
+      return side === 'A' ? scoreA > scoreB : scoreB > scoreA;
     },
     formatDate(dateStr) {
       if (!dateStr) return this.$t("common.misc.noData");
@@ -2718,7 +2724,7 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .nameCell { font-weight: 600; }
 .personChipRow { display: flex; flex-direction: column; gap: 6px; }
 .scoreCell { font-weight: 700; color: #4F3DFF; text-align: center; }
-.scoreCell.score21 { background-color: #ffeb3b; color: #333; border-radius: 4px; }
+.scoreCell.scoreWin { background-color: #ffeb3b; color: #333; border-radius: 4px; }
 .dateCell { font-size: 13px; opacity: 0.8; white-space: nowrap; }
 .actionsCell { display: flex; gap: 8px; flex-wrap: wrap; }
 

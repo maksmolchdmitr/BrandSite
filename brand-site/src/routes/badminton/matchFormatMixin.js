@@ -45,6 +45,13 @@ export const matchFormatMixin = {
       const lastGame = games[games.length - 1];
       return side === "A" ? lastGame.pointsA : lastGame.pointsB;
     },
+    isWinningScore(match, side) {
+      const scoreA = this.getFinalScore(match, "A");
+      const scoreB = this.getFinalScore(match, "B");
+      if (typeof scoreA !== "number" || typeof scoreB !== "number") return false;
+      if (scoreA === scoreB) return false;
+      return side === "A" ? scoreA > scoreB : scoreB > scoreA;
+    },
     formatDate(dateStr) {
       if (!dateStr) return "—";
       try {
