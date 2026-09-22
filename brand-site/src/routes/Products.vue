@@ -18,6 +18,27 @@
           </div>
         </div>
       </RouterLink>
+
+      <a
+        class="productCard"
+        href="https://www.rustore.ru/catalog/app/maks.molch.dmitr.makslauncher"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <div class="cardInner cardInnerLauncher">
+          <img
+            class="cardLogo"
+            src="@/assets/infinity-folder-launcher-logo.png"
+            alt="Infinity Folder Launcher"
+            width="72"
+            height="72"
+          />
+          <div class="cardText">
+            <div class="cardTitle">{{ $t('products.launcherTitle') }}</div>
+            <div class="cardSubtitle">{{ $t('products.launcherSubtitle') }}</div>
+          </div>
+        </div>
+      </a>
     </div>
   </div>
 </template>
@@ -57,6 +78,9 @@ export default defineComponent({
   padding: 0 50px 50px 50px;
   max-width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .productCard {
@@ -84,6 +108,10 @@ export default defineComponent({
 .cardInner:hover {
   transform: scale(1.01);
   filter: brightness(95%);
+}
+
+.cardInnerLauncher {
+  background-color: #1C9961;
 }
 
 .cardLogo {

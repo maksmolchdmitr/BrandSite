@@ -77,6 +77,8 @@ const messages = {
     products: {
       badmintonTitle: "Badminton Service",
       badmintonSubtitle: "badminton-service",
+      launcherTitle: "Infinity Folder Launcher",
+      launcherSubtitle: "RuStore — launcher with infinite folders",
     },
     dateSwitch: {
       alt: "Go to another date entry",
@@ -406,6 +408,8 @@ const messages = {
     products: {
       badmintonTitle: "Сервис бадминтона",
       badmintonSubtitle: "badminton-service",
+      launcherTitle: "Лаунчер с бесконечными папками",
+      launcherSubtitle: "RuStore — Infinity Folder Launcher",
     },
     dateSwitch: {
       alt: "Перейти к другой дате",
