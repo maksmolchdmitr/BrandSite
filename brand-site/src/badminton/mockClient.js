@@ -14,6 +14,21 @@ function delay(ms = 180) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const pendingAccountLinks = new Map();
+
+function mockLinkedUser(me) {
+  return {
+    id: me.id,
+    username: me.username,
+    firstName: me.firstName,
+    lastName: me.lastName,
+    photoUrl: me.photoUrl || "",
+    photoCrop: me.photoCrop || null,
+    telegramLinked: me.telegramId != null || me.tgId != null,
+    yandexLinked: Boolean(me.yandexId),
+  };
+}
+
 function logRequest(method, endpoint, params = {}) {
   console.log(`[API Request] ${method} ${endpoint}`, params);
 }
@@ -500,6 +515,94 @@ export const mockClient = {
     };
   },
 
+  async linkYandex({ code, redirectUri, confirmDelete = false, pendingLinkId } = {}) {
+    logRequest("POST", "/api/me/link/yandex", { code: code ? "..." : null, redirectUri, confirmDelete, pendingLinkId });
+    await delay(150);
+    const db = loadDb();
+    const meId = getLoggedInUserId();
+    const me = db.users.find((u) => u.id === meId);
+    if (!me) throw Object.assign(new Error("Unauthorized"), { status: 401 });
+    if (confirmDelete) {
+      const pending = pendingAccountLinks.get(pendingLinkId);
+      if (!pending || pending.meId !== meId || pending.provider !== "yandex") {
+        throw new Error("pendingLinkId is invalid or expired");
+      }
+      pendingAccountLinks.delete(pendingLinkId);
+      const other = db.users.find((u) => String(u.yandexId) === pending.identity && u.id !== meId);
+      if (other) db.users = db.users.filter((u) => u.id !== other.id);
+      me.yandexId = pending.identity;
+      saveDb(db);
+      return mockLinkedUser(me);
+    }
+    const yandexId = `mock_${String(code || "ya").slice(0, 24)}`;
+    const other = db.users.find((u) => String(u.yandexId) === yandexId && u.id !== meId);
+    if (other) {
+      const id = uuid("plink");
+      pendingAccountLinks.set(id, { meId, provider: "yandex", identity: yandexId });
+      const err = new Error(`This login is already linked to another account «${other.username}».`);
+      err.status = 409;
+      err.data = {
+        code: "ACCOUNT_LINK_CONFLICT",
+        pendingLinkId: id,
+        conflictingUsername: other.username,
+        singlesMatchesCount: 0,
+        doublesMatchesCount: 0,
+        groupsCount: 0,
+        ownsGroups: false,
+        message: err.message,
+      };
+      throw err;
+    }
+    me.yandexId = yandexId;
+    saveDb(db);
+    return mockLinkedUser(me);
+  },
+
+  async linkTelegram({ telegramUser, confirmDelete = false, pendingLinkId } = {}) {
+    logRequest("POST", "/api/me/link/telegram", { id: telegramUser?.id, confirmDelete, pendingLinkId });
+    await delay(150);
+    const db = loadDb();
+    const meId = getLoggedInUserId();
+    const me = db.users.find((u) => u.id === meId);
+    if (!me) throw Object.assign(new Error("Unauthorized"), { status: 401 });
+    if (confirmDelete) {
+      const pending = pendingAccountLinks.get(pendingLinkId);
+      if (!pending || pending.meId !== meId || pending.provider !== "telegram") {
+        throw new Error("pendingLinkId is invalid or expired");
+      }
+      pendingAccountLinks.delete(pendingLinkId);
+      const other = db.users.find((u) => String(u.telegramId || u.tgId) === String(pending.identity) && u.id !== meId);
+      if (other) db.users = db.users.filter((u) => u.id !== other.id);
+      me.telegramId = pending.identity;
+      me.tgId = pending.identity;
+      saveDb(db);
+      return mockLinkedUser(me);
+    }
+    const tgId = telegramUser?.id;
+    const other = db.users.find((u) => String(u.telegramId || u.tgId) === String(tgId) && u.id !== meId);
+    if (other) {
+      const id = uuid("plink");
+      pendingAccountLinks.set(id, { meId, provider: "telegram", identity: tgId });
+      const err = new Error(`This login is already linked to another account «${other.username}».`);
+      err.status = 409;
+      err.data = {
+        code: "ACCOUNT_LINK_CONFLICT",
+        pendingLinkId: id,
+        conflictingUsername: other.username,
+        singlesMatchesCount: 0,
+        doublesMatchesCount: 0,
+        groupsCount: 0,
+        ownsGroups: false,
+        message: err.message,
+      };
+      throw err;
+    }
+    me.telegramId = tgId;
+    me.tgId = tgId;
+    saveDb(db);
+    return mockLinkedUser(me);
+  },
+
   async listMockUsers() {
     logRequest("GET", "/auth/mock-users");
     await delay();
@@ -549,6 +652,8 @@ export const mockClient = {
         lastName: lastName || "",
         photoUrl: u.photoUrl || undefined,
         photoCrop: u.photoCrop || undefined,
+        telegramLinked: u.telegramId != null || u.tgId != null,
+        yandexLinked: Boolean(u.yandexId),
       };
     };
 

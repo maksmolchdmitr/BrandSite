@@ -177,9 +177,17 @@ export default defineComponent({
       const q = this.route?.query || {};
       const hasCallback = q.code != null || q.error != null;
       if (!hasCallback) return;
-      if (this.page === 'badminton' && this.section === 'login') return;
+      const pendingLink = (() => {
+        try {
+          return sessionStorage.getItem('badminton.pendingAccountLink') || '';
+        } catch (_) {
+          return '';
+        }
+      })();
+      const section = pendingLink === 'yandex' ? 'profile' : 'login';
+      if (this.page === 'badminton' && this.section === section) return;
       this.router.replace({
-        query: { ...q, page: 'badminton', section: 'login' },
+        query: { ...q, page: 'badminton', section },
       });
     },
   },

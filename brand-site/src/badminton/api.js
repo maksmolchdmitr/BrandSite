@@ -203,6 +203,33 @@ export async function getMe() {
   return apiRequest("/api/me");
 }
 
+export async function linkYandex({ code, redirectUri, confirmDelete = false, pendingLinkId } = {}) {
+  const body = { confirmDelete };
+  if (confirmDelete) {
+    body.pendingLinkId = pendingLinkId;
+  } else {
+    body.code = code;
+    body.redirectUri = redirectUri;
+  }
+  return apiRequest("/api/me/link/yandex", {
+    method: "POST",
+    body,
+  });
+}
+
+export async function linkTelegram({ telegramUser, confirmDelete = false, pendingLinkId } = {}) {
+  const body = { confirmDelete };
+  if (confirmDelete) {
+    body.pendingLinkId = pendingLinkId;
+  } else {
+    Object.assign(body, telegramUser);
+  }
+  return apiRequest("/api/me/link/telegram", {
+    method: "POST",
+    body,
+  });
+}
+
 export async function updateMe({firstName, lastName, photoUrl, photoCrop} = {}) {
   const body = {};
   if (firstName != null) body.firstName = firstName;

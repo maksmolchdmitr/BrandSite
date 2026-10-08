@@ -55,6 +55,23 @@ export function buildYandexOAuthUrl() {
   );
 }
 
+const PENDING_ACCOUNT_LINK_KEY = "badminton.pendingAccountLink";
+
+export function markPendingAccountLink(provider) {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.setItem(PENDING_ACCOUNT_LINK_KEY, provider);
+}
+
+export function peekPendingAccountLink() {
+  if (typeof sessionStorage === "undefined") return "";
+  return sessionStorage.getItem(PENDING_ACCOUNT_LINK_KEY) || "";
+}
+
+export function clearPendingAccountLink() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(PENDING_ACCOUNT_LINK_KEY);
+}
+
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
 }

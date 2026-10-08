@@ -33,6 +33,14 @@ export const realClient = {
     return api.updateMe(patch);
   },
 
+  async linkYandex(args) {
+    return api.linkYandex(args);
+  },
+
+  async linkTelegram(args) {
+    return api.linkTelegram(args);
+  },
+
   async getMyGroups({ limit, pageToken } = {}) {
     return api.getMyGroups({ limit, pageToken });
   },
