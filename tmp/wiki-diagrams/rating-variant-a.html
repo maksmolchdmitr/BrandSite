@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Расчёт рейтинга — A · откат курсора</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1e1e1e;
+    color: #e8e8e8;
+    padding: 32px 36px;
+    width: 780px;
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .sub { color: #a0a0a0; font-size: 13px; margin-bottom: 22px; line-height: 1.4; }
+  .callout {
+    background: #3a2a1a;
+    border: 1px solid #9a6a3a;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .callout-title { font-weight: 600; font-size: 13px; color: #e8b87e; margin-bottom: 6px; }
+  .callout p { font-size: 13px; color: #c8c8c8; line-height: 1.45; }
+  .diagram {
+    margin-bottom: 16px;
+    background: #252525;
+    border-radius: 8px;
+    padding: 8px 0;
+  }
+  .notes { display: flex; flex-direction: column; gap: 8px; }
+  .note { font-size: 13px; color: #a0a0a0; line-height: 1.45; }
+</style>
+</head>
+<body>
+  <h1>Расчёт рейтинга</h1>
+  <p class="sub">Elo по истории матчей. Запись матча — в запросе, пересчёт Elo — в фоне через Temporal. Курсор last = «уже посчитано досюда»; воркер берёт игры строго после last.</p>
+
+  <div class="callout">
+    <div class="callout-title">Куда ставится last при правке</div>
+    <p>Не на изменённый матч, а на матч строго перед ним. Temporal читает игры строго после last — так изменённый матч снова попадёт в пересчёт.</p>
+  </div>
+
+  <div class="diagram">
+    <svg width="720" height="210" viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg">
+      <!-- timeline -->
+      <line x1="56" y1="88" x2="664" y2="88" stroke="#555" stroke-width="2" />
+
+      <!-- matches: 1, 2*, 3, 4, 5  xs = 56 + 608*i/4 -->
+      <!-- i=0: 56, i=1: 208, i=2: 360, i=3: 512, i=4: 664 -->
+
+      <!-- match 1 -->
+      <circle cx="56" cy="88" r="8" fill="#3a3a3a" stroke="#888" stroke-width="1.5" />
+      <text x="56" y="120" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="system-ui, sans-serif">матч 1</text>
+
+      <!-- match 2* highlighted -->
+      <circle cx="208" cy="88" r="10" fill="#3a3a3a" stroke="#3b82f6" stroke-width="2.5" />
+      <text x="208" y="120" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" font-family="system-ui, sans-serif">матч 2*</text>
+
+      <!-- match 3 filled, last was here -->
+      <circle cx="360" cy="88" r="8" fill="#3a3a3a" stroke="#888" stroke-width="1.5" />
+      <text x="360" y="120" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="system-ui, sans-serif">матч 3</text>
+
+      <!-- match 4 empty -->
+      <circle cx="512" cy="88" r="8" fill="#2a2a2a" stroke="#888" stroke-width="1.5" />
+      <text x="512" y="120" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="system-ui, sans-serif">матч 4</text>
+
+      <!-- match 5 empty -->
+      <circle cx="664" cy="88" r="8" fill="#2a2a2a" stroke="#888" stroke-width="1.5" />
+      <text x="664" y="120" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="system-ui, sans-serif">матч 5</text>
+
+      <!-- last marker at match 3 (index 2) -->
+      <line x1="360" y1="48" x2="360" y2="76" stroke="#3b82f6" stroke-width="2" />
+      <text x="360" y="40" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="600" font-family="system-ui, sans-serif">last был здесь</text>
+
+      <!-- rewind arrow from last (index 2) to previous of edited (index 0 = match 1) -->
+      <defs>
+        <marker id="rw-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6" />
+        </marker>
+      </defs>
+      <path d="M 360 150 L 56 150" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#rw-a)" />
+      <text x="208" y="172" text-anchor="middle" fill="#e8e8e8" font-size="12" font-family="system-ui, sans-serif">правим матч 2 → last на предыдущий (матч 1)</text>
+      <text x="360" y="198" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="system-ui, sans-serif">воркер потом снова посчитает 2 → 3 → …</text>
+    </svg>
+  </div>
+
+  <div class="notes">
+    <div class="note">1. В запросе: правка/удаление уже учтённого матча → last = findPrevious(этот матч). Не на сам изменённый.</div>
+    <div class="note">2. Temporal last не откатывает: берёт игры после last, пишет Elo + history и двигает last вперёд по мере прогона.</div>
+    <div class="note">3. Если правим самый первый матч — previous нет, last снимается полностью, воркер идёт с начала ленты.</div>
+  </div>
+</body>
+</html>

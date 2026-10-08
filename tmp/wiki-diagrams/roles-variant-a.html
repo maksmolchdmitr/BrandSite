@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ролевая модель — A · пирамида</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1e1e1e;
+    color: #e8e8e8;
+    padding: 32px 36px;
+    width: 780px;
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .sub { color: #a0a0a0; font-size: 13px; margin-bottom: 22px; line-height: 1.4; }
+  .callout {
+    background: #1a2a3a;
+    border: 1px solid #3a6a9a;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .callout-title { font-weight: 600; font-size: 13px; color: #7eb8e8; margin-bottom: 6px; }
+  .callout p { font-size: 13px; color: #c8c8c8; line-height: 1.45; }
+  .pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+  .tier {
+    box-sizing: border-box;
+    padding: 12px 14px;
+    background: #2a2a2a;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+  }
+  .tier.accent { border: 2px solid #3b82f6; }
+  .tier.w0 { width: 42%; }
+  .tier.w1 { width: 58%; }
+  .tier.w2 { width: 76%; }
+  .tier.w3 { width: 100%; }
+  .tier-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .tier-left { display: flex; align-items: center; gap: 6px; }
+  .tier-title { font-weight: 600; font-size: 14px; }
+  .tier-code, .tier-note { font-size: 12px; color: #888; }
+  .cap { font-size: 13px; color: #a0a0a0; line-height: 1.45; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <h1>Ролевая модель</h1>
+  <p class="sub">Права внутри группы. Владелец — отдельный флаг у группы; роли участников — участник, редактор, админ.</p>
+
+  <div class="callout">
+    <div class="callout-title">Правило</div>
+    <p>Чем выше уровень — тем больше прав. У владельца всегда роль админа, плюс право владения группой.</p>
+  </div>
+
+  <div class="pyramid">
+    <div class="tier accent w0">
+      <div class="tier-head">
+        <div class="tier-left">
+          <span class="tier-title">Владелец</span>
+          <span class="tier-code">OWNER</span>
+        </div>
+        <span class="tier-note">флаг владельца группы, не роль в enum</span>
+      </div>
+      <div class="cap">· всё, что может админ</div>
+      <div class="cap">· передать владение группой</div>
+      <div class="cap">· назначать и снимать админов</div>
+      <div class="cap">· владельца нельзя удалить из группы</div>
+    </div>
+
+    <div class="tier w1">
+      <div class="tier-head">
+        <div class="tier-left">
+          <span class="tier-title">Админ</span>
+          <span class="tier-code">ADMIN</span>
+        </div>
+        <span class="tier-note">роль в enum</span>
+      </div>
+      <div class="cap">· участники, приглашения, связывание профилей</div>
+      <div class="cap">· удалять матчи</div>
+      <div class="cap">· назначать участника и редактора</div>
+      <div class="cap">· не может менять других админов</div>
+    </div>
+
+    <div class="tier w2">
+      <div class="tier-head">
+        <div class="tier-left">
+          <span class="tier-title">Редактор</span>
+          <span class="tier-code">EDITOR</span>
+        </div>
+        <span class="tier-note">роль в enum</span>
+      </div>
+      <div class="cap">· создавать матчи</div>
+      <div class="cap">· редактировать матчи</div>
+      <div class="cap">· нельзя удалять матчи</div>
+      <div class="cap">· нельзя приглашать людей</div>
+    </div>
+
+    <div class="tier w3">
+      <div class="tier-head">
+        <div class="tier-left">
+          <span class="tier-title">Участник</span>
+          <span class="tier-code">MEMBER</span>
+        </div>
+        <span class="tier-note">роль в enum</span>
+      </div>
+      <div class="cap">· смотреть матчи</div>
+      <div class="cap">· смотреть рейтинги</div>
+      <div class="cap">· смотреть список участников</div>
+      <div class="cap">· нельзя записывать матчи</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -56,6 +56,7 @@ export function buildYandexOAuthUrl() {
 }
 
 const PENDING_ACCOUNT_LINK_KEY = "badminton.pendingAccountLink";
+const TELEGRAM_LINKED_KEY = "badminton.telegramLinked";
 
 export function markPendingAccountLink(provider) {
   if (typeof sessionStorage === "undefined") return;
@@ -70,6 +71,30 @@ export function peekPendingAccountLink() {
 export function clearPendingAccountLink() {
   if (typeof sessionStorage === "undefined") return;
   sessionStorage.removeItem(PENDING_ACCOUNT_LINK_KEY);
+}
+
+/** Remember if current session user has Telegram linked (for logout → close TG session). */
+export function setTelegramLinked(linked) {
+  if (typeof sessionStorage === "undefined") return;
+  if (linked) {
+    sessionStorage.setItem(TELEGRAM_LINKED_KEY, "1");
+  } else {
+    sessionStorage.removeItem(TELEGRAM_LINKED_KEY);
+  }
+}
+
+export function isTelegramLinked() {
+  if (typeof sessionStorage === "undefined") return false;
+  return sessionStorage.getItem(TELEGRAM_LINKED_KEY) === "1";
+}
+
+export function rememberTelegramLinkedFromUser(user) {
+  if (!user || typeof user !== "object") return;
+  if ("telegramLinked" in user) {
+    setTelegramLinked(Boolean(user.telegramLinked));
+  } else if (user.telegramId != null || user.tgId != null) {
+    setTelegramLinked(true);
+  }
 }
 
 export function getAccessToken() {
@@ -241,6 +266,7 @@ export function openTelegramServiceNotificationsChat() {
 export function clearLocalAuthState() {
   clearTokens();
   setLoggedInUserId("");
+  setTelegramLinked(false);
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(MOCK_SESSION_KEY);
   }

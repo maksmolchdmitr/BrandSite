@@ -17,6 +17,9 @@ import {
   markSkipTgAutoLogin,
   clearTgAutoLoginTried,
   openTelegramServiceNotificationsChat,
+  isTelegramLinked,
+  rememberTelegramLinkedFromUser,
+  setTelegramLinked,
   BADMINTON_DEBUG,
 } from "./apiHelpers.js";
 import { orderMatchTeamsForApi } from "./uuidOrder.js";
@@ -143,6 +146,7 @@ export async function telegramLogin(telegramUser) {
   }, true);
   if (result.accessToken && result.refreshToken) {
     setTokens(result.accessToken, result.refreshToken);
+    setTelegramLinked(true);
   }
   return result;
 }
@@ -181,26 +185,33 @@ export async function refreshToken() {
 export async function logout() {
   markSkipTgAutoLogin();
   const accessToken = getAccessToken();
+  const closeTelegramSession = isTelegramLinked();
   clearLocalAuthState();
   clearTgAutoLoginTried();
-  openTelegramServiceNotificationsChat();
 
-  if (!accessToken) return;
-  try {
-    await fetch(`${BASE_URL}/api/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-  } catch (_) {
+  if (accessToken) {
+    try {
+      await fetch(`${BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (_) {
+    }
+  }
+
+  if (closeTelegramSession) {
+    openTelegramServiceNotificationsChat();
   }
 }
 
 // User endpoints
 export async function getMe() {
-  return apiRequest("/api/me");
+  const me = await apiRequest("/api/me");
+  rememberTelegramLinkedFromUser(me);
+  return me;
 }
 
 export async function linkYandex({ code, redirectUri, confirmDelete = false, pendingLinkId } = {}) {
@@ -211,10 +222,12 @@ export async function linkYandex({ code, redirectUri, confirmDelete = false, pen
     body.code = code;
     body.redirectUri = redirectUri;
   }
-  return apiRequest("/api/me/link/yandex", {
+  const me = await apiRequest("/api/me/link/yandex", {
     method: "POST",
     body,
   });
+  rememberTelegramLinkedFromUser(me);
+  return me;
 }
 
 export async function linkTelegram({ telegramUser, confirmDelete = false, pendingLinkId } = {}) {
@@ -224,10 +237,12 @@ export async function linkTelegram({ telegramUser, confirmDelete = false, pendin
   } else {
     Object.assign(body, telegramUser);
   }
-  return apiRequest("/api/me/link/telegram", {
+  const me = await apiRequest("/api/me/link/telegram", {
     method: "POST",
     body,
   });
+  rememberTelegramLinkedFromUser(me);
+  return me;
 }
 
 export async function updateMe({firstName, lastName, photoUrl, photoCrop} = {}) {

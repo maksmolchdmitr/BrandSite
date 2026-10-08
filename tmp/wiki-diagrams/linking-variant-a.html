@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Связывание профиля — A · алгоритм</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1e1e1e;
+    color: #e8e8e8;
+    padding: 32px 36px;
+    width: 780px;
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .sub { color: #a0a0a0; font-size: 13px; margin-bottom: 22px; line-height: 1.4; }
+  .callout {
+    background: #1a2a3a;
+    border: 1px solid #3a6a9a;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .callout-title { font-weight: 600; font-size: 13px; color: #7eb8e8; margin-bottom: 6px; }
+  .callout p { font-size: 13px; color: #c8c8c8; line-height: 1.45; }
+  .step { margin-bottom: 14px; }
+  .step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .num {
+    width: 28px; height: 28px; border-radius: 14px;
+    background: #3a3a3a; color: #e8e8e8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .num.last { background: #3b82f6; color: #fff; }
+  .step-title { font-weight: 600; font-size: 14px; }
+  .step-body { padding-left: 40px; font-size: 13px; color: #a0a0a0; line-height: 1.45; }
+  .arrow { padding-left: 48px; color: #666; font-size: 13px; margin: 4px 0 10px; }
+</style>
+</head>
+<body>
+  <h1>Связывание профиля</h1>
+  <p class="sub">Теневой участник без Telegram превращается в живой аккаунт с Telegram. История матчей переезжает на него.</p>
+
+  <div class="callout">
+    <div class="callout-title">Цель</div>
+    <p>Один человек в группе = один пользователь с Telegram. Теневой профиль исчезает, статистика остаётся.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="num">1</div><div class="step-title">Есть теневой участник</div></div>
+    <div class="step-body">Участник без Telegram, уже в группе. Матчи могут быть записаны на него.</div>
+    <div class="arrow">↓</div>
+  </div>
+  <div class="step">
+    <div class="step-head"><div class="num">2</div><div class="step-title">Админ создаёт приглашение на связывание</div></div>
+    <div class="step-body">Проверяем, можно ли слить профили (нет конфликтующих пар и т.п.). Пишем приглашение и уведомление.</div>
+    <div class="arrow">↓</div>
+  </div>
+  <div class="step">
+    <div class="step-head"><div class="num">3</div><div class="step-title">Пользователь Telegram отвечает</div></div>
+    <div class="step-body">В уведомлениях принимает или отклоняет. Параллельно уходит сообщение в Telegram через очередь уведомлений.</div>
+    <div class="arrow">↓</div>
+  </div>
+  <div class="step">
+    <div class="step-head"><div class="num last">4</div><div class="step-title">Принятие → слияние профилей</div></div>
+    <div class="step-body">Матчи и команды переписываются на зарегистрированного пользователя. Теневой профиль удаляется. Рейтинг пересчитывается с самого раннего затронутого матча.</div>
+  </div>
+</body>
+</html>

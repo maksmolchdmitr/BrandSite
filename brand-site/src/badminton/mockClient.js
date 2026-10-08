@@ -8,7 +8,14 @@ import {
   DOUBLES_RATING_HISTORY_SAFETY_CAP,
   SINGLES_RATING_HISTORY_SAFETY_CAP,
 } from "@/badminton/ratingHistory.js";
-import {clearTgAutoLoginTried, clearLocalAuthState, markSkipTgAutoLogin} from "@/badminton/apiHelpers.js";
+import {
+  clearTgAutoLoginTried,
+  clearLocalAuthState,
+  markSkipTgAutoLogin,
+  isTelegramLinked,
+  rememberTelegramLinkedFromUser,
+  openTelegramServiceNotificationsChat,
+} from "@/badminton/apiHelpers.js";
 
 function delay(ms = 180) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -624,8 +631,12 @@ export const mockClient = {
     logRequest("POST", "/api/auth/logout");
     await delay(80);
     markSkipTgAutoLogin();
+    const closeTelegramSession = isTelegramLinked();
     clearLocalAuthState();
     clearTgAutoLoginTried();
+    if (closeTelegramSession) {
+      openTelegramServiceNotificationsChat();
+    }
   },
 
   async getMe() {
@@ -670,6 +681,7 @@ export const mockClient = {
     }
 
     const result = toUserDto(raw);
+    rememberTelegramLinkedFromUser(result);
     logResponse("GET", "/api/me", result);
     return result;
   },

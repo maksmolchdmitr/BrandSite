@@ -1,1 +1,6 @@
 plans/
+sheets/token
+sheets/cookies
+sheets/service-account.json
+sheets/__pycache__/
+

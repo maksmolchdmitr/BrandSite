@@ -1,0 +1,39 @@
+---
+description: Google Sheets через Python + сервис-аккаунт (Механики и вакансии «Работа»)
+alwaysApply: true
+---
+
+# Google Sheets — только Python + SA
+
+Не кликай по ячейкам. Не копируй cookies / `ya29` из браузера — они специально короткоживущие.
+
+Ключ: `.cursor/sheets/service-account.json` (gitignore). Email: `sheets-mechanics@halogen-antenna-435712-f7.iam.gserviceaccount.com`.  
+Каждую таблицу один раз шарить на этот email как **Редактор**.
+
+## Механики
+
+```bash
+python3 .cursor/sheets/sheet.py get
+python3 .cursor/sheets/sheet.py format
+python3 .cursor/sheets/sheet.py write    # stdin: JSON-массив строк
+python3 .cursor/sheets/sheet.py append   # stdin: JSON из 7 ячеек
+```
+
+- Файл: [Механики](https://docs.google.com/spreadsheets/d/1pGYNocr8dE1Q9rNGNfXP8OIQdYvKo55ViKrqGSaW3wI/edit)
+- Колонки: `№ | Механика | Как работает | Пример | Сложность | Почему вау | Комбо`.
+- Нумерация подряд с 1. Сложность: 1 вечер / 2 неделя / 3 ядро. Комбо — только номера уже существующих строк. Тексты простые, с `\n` в ячейке. После записи данных скрипт сам делает format.
+
+## Вакансии «Работа»
+
+```bash
+python3 .cursor/sheets/jobs.py whoami
+python3 .cursor/sheets/jobs.py get
+python3 .cursor/sheets/jobs.py summary
+python3 .cursor/sheets/jobs.py patch    # stdin: {"G12":"статус","H12":"заметка"}
+python3 .cursor/sheets/jobs.py write    # stdin: JSON-массив строк (полная перезапись A:H)
+python3 .cursor/sheets/jobs.py fix_funnel
+```
+
+- Файл: [Работа](https://docs.google.com/spreadsheets/d/1BLKph0W2yLeEnc-3L9JCnQBGcufENGjcEUTDBPpCovo/edit)
+- Колонки: `компания | страна | вакансия | ссылка | канал | дата | результат | заметки`.
+- Воронка (J:L): формулы с `;` (русская локаль). Если снова `#ERROR!` — `fix_funnel`.
