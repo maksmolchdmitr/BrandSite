@@ -91,11 +91,11 @@ const messages = {
       login: {
         yandexTitle: "Login via Yandex ID",
         yandexButton: "Login via Yandex",
-        yandexHint: "You will be redirected to Yandex ID authorization.",
+        yandexHint: "Recommended in Russia — opens Yandex ID (no Telegram needed).",
         telegramTitle: "Login via Telegram",
         telegramButton: "Login via Telegram",
         telegramHint:
-          "A Telegram authorization window will open. Allow pop-ups for this site if nothing appears.",
+          "Opens a popup to Telegram. In Russia Telegram OAuth is often blocked — use Yandex ID, or allow pop-ups and a VPN.",
         mockUsers: "Mock users",
         mockHint: "For testing without Telegram, select a user from the list.",
         userId: "id",
@@ -105,6 +105,8 @@ const messages = {
         errNoServer:
           "Could not connect to server. Check that backend (badminton-service.website) has a valid HTTPS certificate.",
         errTelegram: "Telegram authorization failed",
+        errTelegramPopup:
+          "Could not open Telegram popup. Allow pop-ups, or sign in with Yandex ID (Telegram OAuth is often blocked in Russia).",
         errYandex: "Yandex ID authorization failed",
         errLogin: "Login failed",
         errLogout: "Logout failed",
@@ -426,11 +428,11 @@ const messages = {
       login: {
         yandexTitle: "Вход через Яндекс ID",
         yandexButton: "Войти через Яндекс",
-        yandexHint: "Откроется страница авторизации Яндекс ID.",
+        yandexHint: "Удобнее в России — откроется Яндекс ID, Telegram не нужен.",
         telegramTitle: "Вход через Telegram",
         telegramButton: "Войти через Telegram",
         telegramHint:
-          "Откроется окно авторизации Telegram. Разрешите всплывающие окна для этого сайта, если окно не открылось.",
+          "Откроется попап Telegram. В России oauth.telegram.org часто недоступен — лучше войдите через Яндекс ID (или VPN + разрешите попапы).",
         mockUsers: "Тестовые пользователи",
         mockHint: "Для теста без Telegram выберите пользователя из списка.",
         userId: "id",
@@ -440,6 +442,8 @@ const messages = {
         errNoServer:
           "Не удалось подключиться к серверу. Проверьте, что у бэкенда (badminton-service.website) настроен валидный HTTPS-сертификат.",
         errTelegram: "Ошибка авторизации через Telegram",
+        errTelegramPopup:
+          "Не удалось открыть попап Telegram. Разрешите всплывающие окна или войдите через Яндекс ID (в России Telegram OAuth часто блокируют).",
         errYandex: "Ошибка авторизации через Яндекс ID",
         errLogin: "Ошибка входа",
         errLogout: "Ошибка выхода",

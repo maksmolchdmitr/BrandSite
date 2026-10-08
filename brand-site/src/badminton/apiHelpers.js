@@ -105,9 +105,10 @@ export function hasAppSession() {
   return Boolean(id && String(id).trim());
 }
 
-/** Login with silent Telegram OAuth attempt (used after 401 / missing app session). */
+/** Login page (no silent Telegram redirect — oauth.telegram.org is often blocked in RU). */
 export const LOGIN_PATH = "/?page=badminton&section=login";
-export const LOGIN_PATH_AUTO_TG = "/?page=badminton&section=login&autoTg=1";
+/** @deprecated kept for old invite links; autoTg is ignored and stripped on login. */
+export const LOGIN_PATH_AUTO_TG = LOGIN_PATH;
 const MOCK_SESSION_KEY = "badminton.useMockSession";
 const TG_AUTO_LOGIN_TRIED_KEY = "badminton.tgAutoLoginTried";
 /** localStorage: survives new tabs until the user explicitly logs in again. */
@@ -229,21 +230,18 @@ export function clearLocalAuthState() {
 }
 
 /**
- * If there is no app session, navigate to login (with silent Telegram OAuth unless user just logged out).
+ * If there is no app session, navigate to login.
  * Returns true when the caller should abort (redirect started).
  */
 export function redirectToLoginAutoTg(router) {
   if (hasAppSession()) return false;
-  const target = shouldSkipTgAutoLogin() ? LOGIN_PATH : LOGIN_PATH_AUTO_TG;
-  if (!shouldSkipTgAutoLogin()) {
-    clearTgAutoLoginTried();
-  }
+  clearTgAutoLoginTried();
   if (router && typeof router.replace === "function") {
-    router.replace(target).catch(() => {
-      if (typeof window !== "undefined") window.location.assign(target);
+    router.replace(LOGIN_PATH).catch(() => {
+      if (typeof window !== "undefined") window.location.assign(LOGIN_PATH);
     });
   } else if (typeof window !== "undefined") {
-    window.location.assign(target);
+    window.location.assign(LOGIN_PATH);
   }
   return true;
 }
@@ -259,9 +257,9 @@ export function forceReauth() {
   if (typeof window === "undefined") return;
 
   if (reauthRedirectHandler) {
-    reauthRedirectHandler({ autoTg: !shouldSkipTgAutoLogin() });
+    reauthRedirectHandler({ autoTg: false });
     return;
   }
 
-  window.location.assign(shouldSkipTgAutoLogin() ? LOGIN_PATH : LOGIN_PATH_AUTO_TG);
+  window.location.assign(LOGIN_PATH);
 }

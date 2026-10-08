@@ -3,13 +3,12 @@ export function buildRegistrationUrl() {
   const params = new URLSearchParams({
     page: "badminton",
     section: "login",
-    autoTg: "1",
   });
   return `${origin}/?${params.toString()}`;
 }
 
 export function buildRegistrationShareText() {
-  return "Привет! Залетай в badminton-service 🏸 Матчи, Elo и группы — регистрация через Telegram в один клик.";
+  return "Привет! Залетай в badminton-service 🏸 Матчи, Elo и группы — вход через Яндекс ID или Telegram.";
 }
 
 export function telegramShareUrl(registrationUrl, text) {

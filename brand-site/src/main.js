@@ -18,15 +18,10 @@ const router = createRouter({
     routes
 })
 
-setReauthRedirectHandler(({ autoTg } = {}) => {
+setReauthRedirectHandler(() => {
     const { page, section } = router.currentRoute.value.query;
-    if (page === "badminton" && section === "login") {
-      if (autoTg && !router.currentRoute.value.query.autoTg) {
-        router.replace("/?page=badminton&section=login&autoTg=1");
-      }
-      return;
-    }
-    router.replace(autoTg ? "/?page=badminton&section=login&autoTg=1" : "/?page=badminton&section=login");
+    if (page === "badminton" && section === "login") return;
+    router.replace("/?page=badminton&section=login");
 });
 
 createApp(App)

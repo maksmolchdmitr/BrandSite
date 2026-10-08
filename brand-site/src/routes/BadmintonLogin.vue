@@ -59,7 +59,7 @@ import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, buildTelegramOAuthLogoutUrl, buildYandexOAuthUrl, getYandexOAuthRedirectUri, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, buildTelegramOAuthLogoutUrl, buildYandexOAuthUrl, getYandexOAuthRedirectUri, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -128,35 +128,13 @@ export default defineComponent({
       this.$router.replace({ query: next }).catch(() => {});
     },
     maybeAutoTelegramLogin() {
+      // Never top-level-navigate to oauth.telegram.org: in RU it is often
+      // blocked and freezes the whole tab. Telegram login is popup-only.
       if (typeof window === "undefined") return;
-      if (hasAppSession()) {
-        this.stripAutoTgQuery();
-        return;
-      }
-      if (shouldSkipTgAutoLogin()) {
-        tgLog("auto TG skipped — user logged out intentionally");
-        clearExpectTgAuth();
-        this.stripAutoTgQuery();
-        return;
-      }
-      const autoTg = this.$route?.query?.autoTg;
-      const wantAuto = autoTg === "1" || autoTg === "true";
-      if (!wantAuto) return;
-      if (wasTgAutoLoginTried()) {
-        tgLog("auto TG skipped — already tried this tab session");
-        this.stripAutoTgQuery();
-        return;
-      }
-      const origin = window.location.origin;
-      if (!origin) return;
-      markTgAutoLoginTried();
-      markExpectTgAuth();
       this.stripAutoTgQuery();
-      this.loading = true;
-      const returnTo = `${origin}/?page=badminton&section=login`;
-      const url = buildTelegramOAuthUrl({ returnTo });
-      tgLog("auto TG: top-level OAuth redirect", url);
-      window.location.assign(url);
+      if (hasAppSession() || shouldSkipTgAutoLogin()) {
+        clearExpectTgAuth();
+      }
     },
     goToYandexOAuth() {
       clearSkipTgAutoLogin();
@@ -203,9 +181,7 @@ export default defineComponent({
       return true;
     },
     goToTelegramOAuth() {
-      // After intentional logout, /auth alone reuses the TG OAuth cookie and
-      // silently returns the same account. Hit /auth/logout first (first-party
-      // popup), then navigate to full /auth with request_access.
+      // Popup only — never location.assign to oauth.telegram.org (blocked in RU → tab hang).
       const resetTgSession = shouldSkipTgAutoLogin();
       clearSkipTgAutoLogin();
       clearTgAutoLoginTried();
@@ -218,14 +194,14 @@ export default defineComponent({
         this.error = this.$t("badminton.login.errOrigin");
         return;
       }
+      this.error = "";
       const winName = "tg_oauth_" + Date.now();
       const w = window.open(startUrl, winName, "width=500,height=600,scrollbars=yes,resizable=yes");
       telegramPopupRef = w;
       tgLog("2. window.open:", !!w ? "ok" : "null (blocked?)", winName);
       if (!w) {
-        // Top-level: logout URL 302s to /auth (session cleared). Cannot chain
-        // a second assign after navigation — the timer would be killed.
-        window.location.assign(resetTgSession ? buildTelegramOAuthLogoutUrl() : authUrl);
+        clearExpectTgAuth();
+        this.error = this.$t("badminton.login.errTelegramPopup");
         return;
       }
       if (resetTgSession) {
