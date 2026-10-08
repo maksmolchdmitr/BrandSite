@@ -35,6 +35,7 @@ export default defineComponent({
   },
   async mounted() {
     this.redirectToLoginIfTelegramCallback();
+    this.redirectToLoginIfYandexCallback();
 
     await this.maybeRedirectBadmintonToSection();
     this.redirectLegacyBadmintonGamesSection();
@@ -47,6 +48,7 @@ export default defineComponent({
     "$route": {
       handler() {
         this.redirectToLoginIfTelegramCallback();
+        this.redirectToLoginIfYandexCallback();
         this.maybeRedirectBadmintonToSection();
         this.redirectLegacyBadmintonGamesSection();
         this.normalizeBadmintonGamesSection();
@@ -171,6 +173,16 @@ export default defineComponent({
         const loginQuery = 'page=badminton&section=login' + (search ? '&' + search : '');
         this.router.replace('/?' + loginQuery + hash);
       }
+    },
+    redirectToLoginIfYandexCallback() {
+      if (typeof window === 'undefined') return;
+      const q = this.route?.query || {};
+      const hasCallback = q.code != null || q.error != null;
+      if (!hasCallback) return;
+      if (this.page === 'badminton' && this.section === 'login') return;
+      this.router.replace({
+        query: { ...q, page: 'badminton', section: 'login' },
+      });
     },
   },
   computed: {

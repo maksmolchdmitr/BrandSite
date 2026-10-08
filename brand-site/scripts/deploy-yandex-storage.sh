@@ -9,6 +9,7 @@ cd "$ROOT"
 
 echo "Building brand-site…"
 VITE_BADMINTON_USE_MOCKS=false \
+VITE_BADMINTON_SHOW_MOCK_USERS=false \
 VITE_BADMINTON_API_BASE_URL=https://badminton-service.website \
 VITE_YANDEX_OAUTH_CLIENT_ID="${VITE_YANDEX_OAUTH_CLIENT_ID:-f438411329254ba6a65baf6ff00ba62d}" \
   npm run build
@@ -18,6 +19,10 @@ if [[ ! -d "$DIST" ]]; then
   echo "dist/ not found after build" >&2
   exit 1
 fi
+
+echo "Ensuring website settings (SPA error → index.html)…"
+yc storage bucket update "$BUCKET" \
+  --website-settings '{"index":"index.html","error":"index.html"}' >/dev/null
 
 echo "Uploading dist/ → bucket $BUCKET …"
 # Drop previous objects (best-effort) then upload fresh tree.
