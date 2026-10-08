@@ -89,6 +89,9 @@ const messages = {
         chooseHint: "Choose singles or doubles to open the list.",
       },
       login: {
+        yandexTitle: "Login via Yandex ID",
+        yandexButton: "Login via Yandex",
+        yandexHint: "You will be redirected to Yandex ID authorization.",
         telegramTitle: "Login via Telegram",
         telegramButton: "Login via Telegram",
         telegramHint:
@@ -102,6 +105,7 @@ const messages = {
         errNoServer:
           "Could not connect to server. Check that backend (badminton-service.website) has a valid HTTPS certificate.",
         errTelegram: "Telegram authorization failed",
+        errYandex: "Yandex ID authorization failed",
         errLogin: "Login failed",
         errLogout: "Logout failed",
       },
@@ -420,6 +424,9 @@ const messages = {
         chooseHint: "Выберите одиночные или парные — откроется список матчей.",
       },
       login: {
+        yandexTitle: "Вход через Яндекс ID",
+        yandexButton: "Войти через Яндекс",
+        yandexHint: "Откроется страница авторизации Яндекс ID.",
         telegramTitle: "Вход через Telegram",
         telegramButton: "Войти через Telegram",
         telegramHint:
@@ -433,6 +440,7 @@ const messages = {
         errNoServer:
           "Не удалось подключиться к серверу. Проверьте, что у бэкенда (badminton-service.website) настроен валидный HTTPS-сертификат.",
         errTelegram: "Ошибка авторизации через Telegram",
+        errYandex: "Ошибка авторизации через Яндекс ID",
         errLogin: "Ошибка входа",
         errLogout: "Ошибка выхода",
       },

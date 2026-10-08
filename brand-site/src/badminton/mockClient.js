@@ -474,6 +474,32 @@ export const mockClient = {
     };
   },
 
+  async yandexLogin(code, redirectUri) {
+    logRequest("POST", "/api/auth/yandex/login", { code: "...", redirectUri });
+    await delay(150);
+    const db = loadDb();
+    const yandexId = `mock_${String(code || "ya").slice(0, 24)}`;
+    let user = db.users.find((u) => String(u.yandexId) === yandexId);
+    if (!user) {
+      user = {
+        id: uuid("u"),
+        yandexId,
+        username: `ya_${yandexId}`,
+        firstName: "Yandex",
+        lastName: "Mock",
+        photoUrl: "",
+        createdAt: nowIso(),
+      };
+      db.users.push(user);
+      saveDb(db);
+    }
+    setLoggedInUserId(user.id);
+    return {
+      accessToken: `mock_token_${user.id}_${Date.now()}`,
+      refreshToken: `mock_refresh_${user.id}_${Date.now()}`,
+    };
+  },
+
   async listMockUsers() {
     logRequest("GET", "/auth/mock-users");
     await delay();

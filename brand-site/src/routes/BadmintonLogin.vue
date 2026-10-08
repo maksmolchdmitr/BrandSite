@@ -8,6 +8,16 @@
       <div v-if="error" class="errorBox">{{ error }}</div>
 
       <div class="widgetBox">
+        <div class="widgetTitle">{{ $t('badminton.login.yandexTitle') }}</div>
+        <button type="button" class="btn yandexBtn" :disabled="loading" @click="goToYandexOAuth">
+          {{ $t('badminton.login.yandexButton') }}
+        </button>
+        <div class="widgetHint">
+          {{ $t('badminton.login.yandexHint') }}
+        </div>
+      </div>
+
+      <div class="widgetBox">
         <div class="widgetTitle">{{ $t('badminton.login.telegramTitle') }}</div>
         <button type="button" class="btn telegramBtn" :disabled="loading" @click="goToTelegramOAuth">
           {{ $t('badminton.login.telegramButton') }}
@@ -49,7 +59,7 @@ import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import {badmintonClient, clearMockSession} from "@/badminton/client.js";
 import {mockClient} from "@/badminton/mockClient.js";
 import {getLoggedInUserId} from "@/badminton/cookies.js";
-import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, buildTelegramOAuthLogoutUrl, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
+import {BADMINTON_DEBUG, SHOW_MOCK_USERS, buildTelegramOAuthUrl, buildTelegramOAuthLogoutUrl, buildYandexOAuthUrl, getYandexOAuthRedirectUri, hasAppSession, shouldSkipTgAutoLogin, clearSkipTgAutoLogin, markExpectTgAuth, shouldExpectTgAuth, clearExpectTgAuth, markTgAutoLoginTried, wasTgAutoLoginTried, clearTgAutoLoginTried, resetReauthGuard} from "@/badminton/apiHelpers.js";
 
 let telegramPopupRef = null;
 
@@ -68,7 +78,8 @@ export default defineComponent({
   async mounted() {
     resetReauthGuard();
     this.setupTelegramCallback();
-    const fromCallback = this.parseTelegramCallbackFromUrl();
+    const fromYandex = await this.parseYandexCallbackFromUrl();
+    const fromCallback = fromYandex || this.parseTelegramCallbackFromUrl();
     try {
       if (badmintonClient.listMockUsers) {
         this.users = await badmintonClient.listMockUsers();
@@ -146,6 +157,50 @@ export default defineComponent({
       const url = buildTelegramOAuthUrl({ returnTo });
       tgLog("auto TG: top-level OAuth redirect", url);
       window.location.assign(url);
+    },
+    goToYandexOAuth() {
+      clearSkipTgAutoLogin();
+      clearTgAutoLoginTried();
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      if (!origin) {
+        this.error = this.$t("badminton.login.errOrigin");
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      window.location.assign(buildYandexOAuthUrl());
+    },
+    async parseYandexCallbackFromUrl() {
+      if (typeof window === "undefined") return false;
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const oauthError = params.get("error");
+      if (!code && !oauthError) return false;
+      const cleanQuery = { ...(this.$route?.query || {}) };
+      delete cleanQuery.code;
+      delete cleanQuery.error;
+      delete cleanQuery.error_description;
+      delete cleanQuery.state;
+      this.$router.replace({ query: cleanQuery }).catch(() => {});
+      if (oauthError) {
+        this.error = this.$t("badminton.login.errYandex");
+        return true;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        clearSkipTgAutoLogin();
+        await badmintonClient.yandexLogin(code, getYandexOAuthRedirectUri());
+        this.$router.replace("/?page=badminton&section=groups").catch(() => {
+          window.location.assign("/?page=badminton&section=groups");
+        });
+      } catch (e) {
+        console.error(e);
+        this.error = e?.message || this.$t("badminton.login.errLogin");
+      } finally {
+        this.loading = false;
+      }
+      return true;
     },
     goToTelegramOAuth() {
       // After intentional logout, /auth alone reuses the TG OAuth cookie and
@@ -521,8 +576,14 @@ export default defineComponent({
   opacity: 0.8;
 }
 
-.telegramBtn {
+.telegramBtn,
+.yandexBtn {
   margin-top: 4px;
+}
+
+.yandexBtn {
+  background: #fc3f1d;
+  color: #fff;
 }
 
 .widgetHint {

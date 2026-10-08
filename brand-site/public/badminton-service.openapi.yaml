@@ -15,6 +15,7 @@ servers:
     description: Local
 tags:
   - name: TelegramAuth
+  - name: YandexAuth
   - name: Users
   - name: Groups
   - name: Participants
@@ -58,6 +59,43 @@ paths:
               example:
                 accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OiR7c2VydmVyLnBvcnR9Iiwic3ViIjoiMTMxOTA2MTMyMiIsImlhdCI6MTc2NjM0NTA5NCwiZXhwIjoxNzY2MzQ4Njk0fQ.H3MEPxHKiNlLyybB1m_YHg13EAfD-VzgDR4Isw8tiSirsQ4Zzn4JgDDe0ulLws1qARV_oiiT0MR22f7wjghYsc0JkXPSE2amHQP6Jw-0bFy9myeLA_LPV7CBzk1RUoDqzrAudPiaeiT3rguI-GoRE0uXHMTWlmhXSHgVNiXQiQEYcxiUlqRG0xiQoJlma0L4cI2vYOnMiI0d03IGXu2Aod76GNiBRnOHzWowX658CvAlSGYaKf6sxfy1Zfclp_zgo65vC3f5e0GZDc4gqV9cia1hggyK6dQlxfVS3_TKKPKJ7rAH0c1e4d7ruMVNCz-CPC1XqejlssFH64ecTKjIkw
                 refreshToken: 1bdc818f-7851-4aef-b31a-a6999a4cab52
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/yandex/login:
+    post:
+      tags: [ YandexAuth ]
+      security: [ ]
+      summary: Login via Yandex ID authorization code
+      operationId: yandexLogin
+      description: |
+        Exchanges Yandex OAuth authorization `code` for tokens and returns app JWT pair.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YandexLoginRequest'
+            example:
+              code: "0ce1234567890abcdef"
+              redirectUri: "https://app.badminton-service.website/"
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
         '400':
           description: Bad request
           content:
@@ -1254,6 +1292,21 @@ components:
           format: int64
         hash:
           type: string
+
+    YandexLoginRequest:
+      type: object
+      required:
+        - code
+        - redirectUri
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Authorization code from oauth.yandex.ru redirect
+        redirectUri:
+          type: string
+          minLength: 1
+          description: Exact redirect_uri used in the authorize request
 
     TokenResponse:
       type: object

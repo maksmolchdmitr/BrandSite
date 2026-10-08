@@ -48,7 +48,10 @@ async function apiRequest(path, options = {}, skipRefresh = false, attempt = 0) 
     ...headers,
   };
 
-  const skipBearer = path === "/api/auth/telegram/login" || path === "/api/auth/refresh";
+  const skipBearer =
+    path === "/api/auth/telegram/login" ||
+    path === "/api/auth/yandex/login" ||
+    path === "/api/auth/refresh";
   const token = getAccessToken();
   if (token && !skipBearer) {
     requestHeaders.Authorization = `Bearer ${token}`;
@@ -138,6 +141,24 @@ export async function telegramLogin(telegramUser) {
     method: "POST",
     body: telegramUser,
   }, true);
+  if (result.accessToken && result.refreshToken) {
+    setTokens(result.accessToken, result.refreshToken);
+  }
+  return result;
+}
+
+export async function yandexLogin(code, redirectUri) {
+  if (BADMINTON_DEBUG) {
+    console.log("[YA Auth] api.yandexLogin → POST", BASE_URL + "/api/auth/yandex/login");
+  }
+  const result = await apiRequest(
+    "/api/auth/yandex/login",
+    {
+      method: "POST",
+      body: { code, redirectUri },
+    },
+    true
+  );
   if (result.accessToken && result.refreshToken) {
     setTokens(result.accessToken, result.refreshToken);
   }

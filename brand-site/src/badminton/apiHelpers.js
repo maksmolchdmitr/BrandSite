@@ -10,6 +10,10 @@ const REFRESH_TOKEN_KEY = "badminton.refreshToken";
 /** Telegram OAuth: bot_id for https://oauth.telegram.org/auth */
 export const TELEGRAM_OAUTH_BOT_ID = "7685244546";
 
+/** Yandex ID OAuth client_id (public). Override: VITE_YANDEX_OAUTH_CLIENT_ID */
+export const YANDEX_OAUTH_CLIENT_ID =
+  import.meta.env.VITE_YANDEX_OAUTH_CLIENT_ID || "f438411329254ba6a65baf6ff00ba62d";
+
 /** Логи [TG Auth] и дебаг. Выключить: VITE_BADMINTON_DEBUG=false в .env */
 export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
 
@@ -17,14 +21,38 @@ export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
 export const SHOW_MOCK_USERS = import.meta.env.VITE_BADMINTON_SHOW_MOCK_USERS !== "false";
 
 export function getBadmintonApiBaseUrl() {
-  if (typeof window !== "undefined" && window.location?.hostname?.includes("netlify.app")) {
-    return "";
+  if (typeof window !== "undefined") {
+    const host = window.location?.hostname || "";
+    // Netlify keeps /api proxy → same-origin.
+    if (host.includes("netlify.app")) {
+      return "";
+    }
+    // Yandex CDN static host → call API directly (CORS enabled on backend).
+    if (host === "app.badminton-service.website") {
+      return "https://badminton-service.website";
+    }
   }
   let url = (import.meta.env.VITE_BADMINTON_API_BASE_URL || "").replace(/\/+$/, "");
   if (typeof window !== "undefined" && window.location?.protocol === "https:" && url.startsWith("http://")) {
     url = "https" + url.slice(4);
   }
   return url;
+}
+
+/** Exact redirect_uri registered in Yandex OAuth app. */
+export function getYandexOAuthRedirectUri() {
+  if (typeof window === "undefined") return "http://localhost:5173/";
+  return `${window.location.origin}/`;
+}
+
+export function buildYandexOAuthUrl() {
+  const redirectUri = getYandexOAuthRedirectUri();
+  return (
+    `https://oauth.yandex.ru/authorize?response_type=code` +
+    `&client_id=${encodeURIComponent(YANDEX_OAUTH_CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&force_confirm=yes`
+  );
 }
 
 export function getAccessToken() {

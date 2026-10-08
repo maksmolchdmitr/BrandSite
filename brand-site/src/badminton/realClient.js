@@ -16,6 +16,10 @@ export const realClient = {
     return api.telegramLogin(telegramUser);
   },
 
+  async yandexLogin(code, redirectUri) {
+    return api.yandexLogin(code, redirectUri);
+  },
+
   async logout() {
     return api.logout();
   },
