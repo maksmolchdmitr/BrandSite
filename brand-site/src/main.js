@@ -4,7 +4,7 @@ import App from './App.vue'
 import RouterView from "@/routes/RouterView.vue";
 import LoadingPhrase from "@/components/LoadingPhrase.vue";
 import i18n from "@/i18n";
-import {setReauthRedirectHandler} from "@/badminton/apiHelpers.js";
+import {BADMINTON_ENABLED, setReauthRedirectHandler} from "@/badminton/apiHelpers.js";
 
 const routes = [
     {
@@ -19,6 +19,10 @@ const router = createRouter({
 })
 
 setReauthRedirectHandler(() => {
+    if (!BADMINTON_ENABLED) {
+        router.replace("/?page=products");
+        return;
+    }
     const { page, section } = router.currentRoute.value.query;
     if (page === "badminton" && section === "login") return;
     router.replace("/?page=badminton&section=login");

@@ -20,6 +20,9 @@ export const BADMINTON_DEBUG = import.meta.env.VITE_BADMINTON_DEBUG !== "false";
 /** Показывать блок Mock users на странице входа. Выключить: VITE_BADMINTON_SHOW_MOCK_USERS=false */
 export const SHOW_MOCK_USERS = import.meta.env.VITE_BADMINTON_SHOW_MOCK_USERS !== "false";
 
+/** Показывать badminton-service в продуктах и роутах. Выключить: VITE_BADMINTON_ENABLED=false */
+export const BADMINTON_ENABLED = import.meta.env.VITE_BADMINTON_ENABLED !== "false";
+
 export function getBadmintonApiBaseUrl() {
   if (typeof window !== "undefined") {
     const host = window.location?.hostname || "";
