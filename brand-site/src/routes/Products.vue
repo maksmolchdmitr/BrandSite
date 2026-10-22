@@ -3,7 +3,11 @@
     <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
-      <RouterLink class="productCard" to="/?page=badminton">
+      <RouterLink
+        v-if="badmintonEnabled"
+        class="productCard"
+        to="/?page=badminton"
+      >
         <div class="cardInner">
           <img
             class="cardLogo"
@@ -47,10 +51,14 @@
 
 import {defineComponent} from "vue";
 import HeadBar from "@/components/HeadBar.vue";
+import { BADMINTON_ENABLED } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   components: {HeadBar},
   computed: {
+    badmintonEnabled() {
+      return BADMINTON_ENABLED;
+    },
     localizedHeadItems() {
       return [
         { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: false },

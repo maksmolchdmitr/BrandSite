@@ -26,6 +26,7 @@ import {
   setGroupMatchTab,
   setGroupSection,
 } from "@/badminton/uiPrefs.js";
+import { BADMINTON_ENABLED } from "@/badminton/apiHelpers.js";
 
 export default defineComponent({
   setup() {
@@ -34,6 +35,7 @@ export default defineComponent({
     return { route, router };
   },
   async mounted() {
+    this.redirectDisabledBadminton();
     this.redirectToLoginIfTelegramCallback();
     this.redirectToLoginIfYandexCallback();
 
@@ -47,6 +49,7 @@ export default defineComponent({
   watch: {
     "$route": {
       handler() {
+        this.redirectDisabledBadminton();
         this.redirectToLoginIfTelegramCallback();
         this.redirectToLoginIfYandexCallback();
         this.maybeRedirectBadmintonToSection();
@@ -59,9 +62,13 @@ export default defineComponent({
     },
   },
   methods: {
+    redirectDisabledBadminton() {
+      if (BADMINTON_ENABLED || this.page !== "badminton") return;
+      this.router.replace("/?page=products");
+    },
     applyDocumentChrome() {
       if (typeof document === "undefined") return;
-      const isBadminton = this.page === "badminton";
+      const isBadminton = BADMINTON_ENABLED && this.page === "badminton";
       document.title = isBadminton ? "badminton-service" : "MaksMolch site";
       let icon = document.querySelector("link[rel='icon']");
       if (!icon) {
@@ -205,7 +212,7 @@ export default defineComponent({
       return this.route.query.userId || null;
     },
     currentComponent() {
-      if (this.page === 'badminton') {
+      if (BADMINTON_ENABLED && this.page === 'badminton') {
         if (this.section === 'login') {
           return markRaw(BadmintonLogin);
         } else if (this.section === 'notifications' || this.section === 'invitations') {

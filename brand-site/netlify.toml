@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  VITE_BADMINTON_ENABLED = "false"
+  VITE_BADMINTON_USE_MOCKS = "false"
+  VITE_BADMINTON_SHOW_MOCK_USERS = "false"

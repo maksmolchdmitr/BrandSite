@@ -8,6 +8,7 @@ CDN_RESOURCE_ID="${BRAND_SITE_CDN_RESOURCE_ID:-bc8re4mba3htlaup7sa5}"
 cd "$ROOT"
 
 echo "Building brand-site…"
+VITE_BADMINTON_ENABLED=false \
 VITE_BADMINTON_USE_MOCKS=false \
 VITE_BADMINTON_SHOW_MOCK_USERS=false \
 VITE_BADMINTON_API_BASE_URL=https://badminton-service.website \
