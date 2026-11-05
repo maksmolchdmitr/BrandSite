@@ -7,7 +7,7 @@ All models, textures, audio and Draco decoders are served locally.
 Drag the garden to orbit, scroll/pinch to zoom, or reset the view. Grabbing the
 visible brass dial takes priority over orbiting: clockwise movement speeds up
 the scene (0–3×), counterclockwise slows it down. A centre grab supports horizontal
-dragging. The tempo slider provides keyboard access. The dial rotates around its
+dragging. The dial rotates around its
 exported local axis after mixer updates, independently of the baked scene clip.
 
 The model contains real skinned leaf animation and a four-second scene loop.

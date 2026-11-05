@@ -57,7 +57,7 @@
             <div class="controlHeading">
               <div><p class="eyebrow">{{ $t('items.objectNumber') }}</p><h2>{{ $t('items.gardenName') }}</h2></div>
               <div class="playbackButtons">
-                <button class="iconButton" type="button" :disabled="!canControl" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
+                <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
                   <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
                   <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
                 </button>
@@ -66,11 +66,6 @@
                   {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
                 </button>
               </div>
-            </div>
-            <div class="tempoControl">
-              <label for="item-tempo">{{ $t('items.tempo') }}</label>
-              <input id="item-tempo" type="range" min="0" max="3" step="0.01" :value="viewerState.speed" :disabled="!canControl" :aria-valuetext="formattedSpeed" @input="changeSpeed" />
-              <output for="item-tempo">{{ formattedSpeed }}</output>
             </div>
             <p class="interactionGuide">{{ $t('items.guide') }}</p>
             <p v-if="audioFailed" class="audioWarning" role="status">{{ $t('items.audioError') }}</p>
@@ -111,7 +106,6 @@ export default defineComponent({
     },
     canControl() { return this.viewerState.ready && !this.failed; },
     isRunning() { return this.viewerState.playing && this.viewerState.speed > 0; },
-    formattedSpeed() { return `${new Intl.NumberFormat(this.$i18n.locale, { maximumFractionDigits: 2 }).format(this.viewerState.speed)}×`; },
   },
   beforeUnmount() {
     this.destroyed = true;
@@ -153,7 +147,6 @@ export default defineComponent({
         if (!this.destroyed && attempt === this.loadAttempt) { this.failed = true; this.loading = false; }
       }
     },
-    changeSpeed(event) { this.viewer?.setSpeed(Number(event.target.value)); },
     togglePlaying() { this.viewer?.setPlaying(!this.isRunning); },
     toggleSound() { this.audioFailed = false; this.viewer?.toggleSound(); },
   },
@@ -209,9 +202,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .controlHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .controlHeading h2 { margin: 0; font-size: 30px; line-height: 1.2; }
 .playbackButtons { display: flex; gap: 8px; }
-.tempoControl { display: grid; grid-template-columns: auto minmax(60px, 1fr) 48px; align-items: center; gap: 18px; margin-top: 24px; }
-.tempoControl input { width: 100%; margin: 0; accent-color: #4f3dff; cursor: pointer; height: 28px; }
-.tempoControl output { font-variant-numeric: tabular-nums; text-align: right; font-size: 18px; }
 .interactionGuide { margin: 14px 0 0; font-size: 14px; line-height: 1.6; color: #71776b; }
 .audioWarning { color: #966526; font-size: 14px; }
 @media(max-width: 1000px) {
@@ -238,7 +228,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .playbackButtons { margin-left: auto; }
   .soundButton { font-size: 13px; padding: 0 10px; }
   .dialHint { white-space: normal; width: max-content; max-width: calc(100% - 52px); font-size: 13px; }
-  .tempoControl { gap: 12px; }
   .exhibitControls { padding: 20px; }
 }
 @media(prefers-color-scheme: dark) {

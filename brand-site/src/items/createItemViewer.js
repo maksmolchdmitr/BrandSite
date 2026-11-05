@@ -144,10 +144,10 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     controls.enableDamping = false;
     controls.update();
     controls.enableDamping = true;
-    const center = dialCenter();
     const point = { x: event.clientX, y: event.clientY };
     dial.getWorldQuaternion(quaternion);
     worldAxis.copy(dialAxis).applyQuaternion(quaternion);
+    const center = dialCenter();
     const facing = worldAxis.dot(camera.position.clone().sub(dial.getWorldPosition(centerWorld)));
     drag = { id: event.pointerId, point, center, mode: Math.hypot(point.x - center.x, point.y - center.y) < 12 ? 'linear' : 'angular', sign: facing >= 0 ? -1 : 1 };
     canvas.setPointerCapture(event.pointerId);
@@ -167,11 +167,13 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       const point = { x: event.clientX, y: event.clientY };
       const delta = THREE.MathUtils.clamp(pointerDialDelta(drag.point, point, drag.center, drag.mode), -0.4, 0.4);
       drag.point = point;
+      const speed = speedAfterTurn(state.speed, delta);
+      if (speed === state.speed) return;
       const oldDetent = Math.floor(dialAngle / DETENT);
-      dialAngle += delta * drag.sign;
+      dialAngle += (speed - state.speed) * Math.PI / 1.5 * drag.sign;
       if (oldDetent !== Math.floor(dialAngle / DETENT)) audio.click(delta);
       state.playing = true;
-      setSpeed(speedAfterTurn(state.speed, delta));
+      setSpeed(speed);
       return;
     }
     if (!orbiting && performance.now() - lastHover > 45) {
@@ -315,10 +317,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
         if (!disposed && error.name !== 'AbortError') onError();
       }
     },
-    setSpeed,
     setPlaying(value) {
       state.playing = value;
-      if (value && state.speed === 0) state.speed = 1;
       if (mixer) mixer.timeScale = effectiveSpeed();
       audio.sync();
       emit();
