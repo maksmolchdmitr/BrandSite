@@ -110,6 +110,12 @@ export function createGardenRabbit(onLand = () => {}) {
   let routeStart = 2;
   let lastHeading = REST_HEADING;
   let landedHops = 0;
+  let walkTime = 0;
+  let nextLanding = 0;
+  let stopAt = Infinity;
+  let petRest = 0;
+  let petProgress = 1;
+  let idleTime = 0;
 
   function turnToward(heading, progress) {
     const difference = Math.atan2(Math.sin(heading - lastHeading), Math.cos(heading - lastHeading));
@@ -117,12 +123,13 @@ export function createGardenRabbit(onLand = () => {}) {
   }
 
   function move(time) {
+    nextLanding = 0;
     if (time < routeStart) return;
     if (routeIndex === -1) routeIndex = Math.floor(Math.random() * ROUTES.length);
     const route = ROUTES[routeIndex];
-    const elapsed = time - routeStart;
+    const elapsed = Math.max(0, time - routeStart);
     const hopDuration = HOP_SECONDS + TURN_SECONDS;
-    const step = Math.floor(elapsed / hopDuration);
+    const step = Math.floor((elapsed + 1e-9) / hopDuration);
     const completedHops = Math.min(step, route.length - 1);
     if (completedHops > landedHops) {
       landedHops = completedHops;
@@ -152,6 +159,7 @@ export function createGardenRabbit(onLand = () => {}) {
     turnToward(heading, hopTime / TURN_SECONDS);
     if (hopTime >= TURN_SECONDS) lastHeading = heading;
 
+    nextLanding = progress > 0 && progress < 1 ? routeStart + (step + 1) * hopDuration : 0;
     const lift = Math.sin(Math.PI * progress);
     rabbit.position.set(
       MathUtils.lerp(fromX, toX, progress),
@@ -164,13 +172,37 @@ export function createGardenRabbit(onLand = () => {}) {
 
   return {
     rabbit,
-    animate(time) {
-      move(time);
-      head.rotation.y = Math.sin(time * 1.05) * 0.13;
-      ears[0].rotation.z = 0.22 + Math.sin(time * 2.3) * 0.065;
-      ears[1].rotation.z = -0.22 + Math.sin(time * 2.3 + 1.2) * 0.055;
+    pet(canWalk) {
+      if (petRest > 0 || !canWalk || !nextLanding) {
+        stopAt = Infinity;
+        petRest = 5;
+        petProgress = 0;
+      } else {
+        stopAt = nextLanding;
+      }
+    },
+    animate(delta, speed) {
+      if (petRest > 0) {
+        petRest = Math.max(0, petRest - delta);
+        petProgress = Math.min(1, petProgress + delta / 0.65);
+      } else {
+        walkTime = Math.min(stopAt, walkTime + delta * speed);
+        move(walkTime);
+        if (walkTime === stopAt) {
+          stopAt = Infinity;
+          petRest = 5;
+          petProgress = 0;
+        }
+      }
+      idleTime += delta * speed;
+      const time = idleTime;
+      const nuzzle = Math.sin(Math.PI * petProgress) ** 2;
+      head.rotation.x = -nuzzle * 0.3;
+      head.rotation.y = Math.sin(time * 1.05) * 0.13 + nuzzle * 0.16;
+      ears[0].rotation.z = 0.22 + Math.sin(time * 2.3) * 0.065 + nuzzle * 0.21;
+      ears[1].rotation.z = -0.22 + Math.sin(time * 2.3 + 1.2) * 0.055 - nuzzle * 0.21;
       const blinkTime = Math.abs(time % 4.3 - 3.5);
-      const openness = Math.min(1, 0.12 + blinkTime * 12);
+      const openness = Math.min(1, 0.12 + blinkTime * 12) * (1 - 0.87 * nuzzle);
       for (const eye of eyes) eye.scale.y = 0.017 * openness;
     },
   };

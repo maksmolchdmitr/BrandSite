@@ -128,8 +128,8 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
         for (let i = 0; i < samples.length; i++) {
           const time = i / context.sampleRate;
           gravel = gravel * 0.92 + (Math.random() * 2 - 1) * 0.08;
-          const envelope = Math.sin(Math.PI * i / samples.length) ** 2 * Math.exp(-time * 21);
-          samples[i] = (Math.sin(2 * Math.PI * 145 * time) * 0.005 + gravel * 0.022) * envelope;
+          const envelope = Math.min(1, time / 0.006) * (1 - i / samples.length) ** 2 * Math.exp(-time * 15);
+          samples[i] = (Math.sin(2 * Math.PI * 195 * time) * 0.038 + gravel * 0.13) * envelope;
         }
       }
       const source = context.createBufferSource();
