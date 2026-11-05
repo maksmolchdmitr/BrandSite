@@ -1,9 +1,23 @@
-const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
+const TRACKS = ['rain', 'drops', 'leaves'];
+export const GARDEN_VOLUME_CHANNELS = ['master', ...TRACKS, 'dial', 'rabbit'];
+const VOLUME_STORAGE_KEY = 'quiet-garden-volumes';
 
-export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
+export function readGardenVolumes() {
+  let saved;
+  try {
+    saved = JSON.parse(localStorage.getItem(VOLUME_STORAGE_KEY));
+  } catch {
+    // The mixer still works when storage is unavailable.
+  }
+  return Object.fromEntries(GARDEN_VOLUME_CHANNELS.map(channel => {
+    const value = saved?.[channel];
+    return [channel, Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 100];
+  }));
+}
+
+export function createGardenAudio({ volumes, getTime, getSpeed, onReady, onError }) {
   let context;
-  let master;
-  let volume = 1;
+  const gains = {};
   let ambientGain;
   let buffers;
   let loading;
@@ -26,12 +40,12 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
   function startSources() {
     if (disposed || !enabled || !active || !buffers || !context || getSpeed() <= 0) return;
     stopSources();
-    for (const buffer of buffers) {
+    for (const [index, buffer] of buffers.entries()) {
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.loop = true;
       source.playbackRate.value = getSpeed();
-      source.connect(ambientGain);
+      source.connect(gains[TRACKS[index]]);
       source.start(0, getTime() % buffer.duration);
       sources.push(source);
     }
@@ -47,12 +61,18 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
         context.onstatechange = () => {
           if (!disposed) onReady(context.state === 'running');
         };
-        master = context.createGain();
-        master.gain.value = volume;
-        master.connect(context.destination);
+        for (const channel of GARDEN_VOLUME_CHANNELS) {
+          const gain = context.createGain();
+          gain.gain.value = volumes[channel] / 100;
+          gains[channel] = gain;
+        }
+        gains.master.connect(context.destination);
         ambientGain = context.createGain();
         ambientGain.gain.value = 0.65;
-        ambientGain.connect(master);
+        ambientGain.connect(gains.master);
+        for (const channel of TRACKS) gains[channel].connect(ambientGain);
+        gains.dial.connect(gains.master);
+        gains.rabbit.connect(gains.master);
       }
       // A user gesture can resume audio when autoplay is blocked.
       if (context.state !== 'running') await context.resume();
@@ -60,7 +80,7 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
       onReady(context.state === 'running');
       if (!loading) {
         loading = Promise.all(TRACKS.map(async (name) => {
-          const response = await fetch(`${import.meta.env.BASE_URL}items/quiet-garden/${name}`, { signal: abort.signal });
+          const response = await fetch(`${import.meta.env.BASE_URL}items/quiet-garden/${name}.wav`, { signal: abort.signal });
           if (!response.ok) throw new Error(`Audio ${response.status}`);
           return context.decodeAudioData(await response.arrayBuffer());
         })).then((result) => { buffers = result; });
@@ -78,9 +98,15 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
   }
 
   return {
-    setVolume(value) {
-      volume = value;
-      if (master) master.gain.setTargetAtTime(volume, context.currentTime, 0.02);
+    setVolume(channel, value) {
+      if (!GARDEN_VOLUME_CHANNELS.includes(channel) || !Number.isFinite(value)) return;
+      volumes[channel] = Math.max(0, Math.min(100, value));
+      gains[channel]?.gain.setTargetAtTime(volumes[channel] / 100, context.currentTime, 0.02);
+      try {
+        localStorage.setItem(VOLUME_STORAGE_KEY, JSON.stringify(volumes));
+      } catch {
+        // Keep the new setting for this visit even if it cannot be saved.
+      }
     },
     setEnabled(value) {
       enabled = value;
@@ -115,12 +141,12 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
       filter.Q.value = 0.6;
       const gain = context.createGain();
       gain.gain.value = 0.025;
-      source.connect(filter).connect(gain).connect(master);
+      source.connect(filter).connect(gain).connect(gains.dial);
       source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
       source.start();
     },
     land() {
-      if (!enabled || !active || volume <= 0 || context?.state !== 'running') return;
+      if (!enabled || !active || volumes.master <= 0 || volumes.rabbit <= 0 || context?.state !== 'running') return;
       if (!landingBuffer) {
         landingBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.09), context.sampleRate);
         const samples = landingBuffer.getChannelData(0);
@@ -135,7 +161,7 @@ export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
       const source = context.createBufferSource();
       source.buffer = landingBuffer;
       source.playbackRate.value = 0.92 + Math.random() * 0.16;
-      source.connect(master);
+      source.connect(gains.rabbit);
       source.onended = () => source.disconnect();
       source.start();
     },

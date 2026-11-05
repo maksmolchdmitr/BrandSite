@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clampSpeed, DETENT, pointerDialDelta, speedAfterTurn } from './dialControl.js';
-import { createGardenAudio } from './gardenAudio.js';
+import { createGardenAudio, readGardenVolumes } from './gardenAudio.js';
 import { addGardenPaths } from './gardenPaths.js';
 import { createGardenRabbit } from './gardenRabbit.js';
 import { normalizeClipOrigin } from './modelTime.js';
@@ -24,7 +24,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let frame;
   let lastFrame = performance.now();
   let lastHover = 0;
-  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, audioReady: false, volume: 100, dragging: false, ready: false };
+  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, audioReady: false, volumes: readGardenVolumes(), dragging: false, ready: false };
   const abort = new AbortController();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
@@ -103,8 +103,9 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
   const effectiveSpeed = () => state.playing ? state.speed : 0;
-  const emit = () => { if (!disposed) onState({ ...state }); };
+  const emit = () => { if (!disposed) onState({ ...state, volumes: { ...state.volumes } }); };
   const audio = createGardenAudio({
+    volumes: state.volumes,
     getTime: () => mixer?.time || 0,
     getSpeed: effectiveSpeed,
     onReady: (ready) => {
@@ -469,10 +470,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       audio.sync();
       emit();
     },
-    setVolume(percent) {
-      if (!Number.isFinite(percent)) return;
-      state.volume = THREE.MathUtils.clamp(percent, 0, 100);
-      audio.setVolume(state.volume / 100);
+    setVolume(channel, percent) {
+      audio.setVolume(channel, percent);
       emit();
     },
     toggleSound() {
