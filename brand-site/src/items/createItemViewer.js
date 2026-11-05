@@ -19,6 +19,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let dialAxis;
   let dialAngle = 0;
   let drag = null;
+  let rabbitPress = null;
   let orbiting = false;
   let frame;
   let lastFrame = performance.now();
@@ -71,7 +72,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   controls.enableDamping = true;
   controls.dampingFactor = 0.075;
   controls.enablePan = false;
-  controls.minDistance = 0.9;
+  controls.minDistance = 0.12;
   controls.maxDistance = 13;
   controls.minPolarAngle = 0.035;
   controls.maxPolarAngle = Math.PI - 0.035;
@@ -140,25 +141,30 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     return { x: rect.left + (p.x + 1) * rect.width / 2, y: rect.top + (1 - p.y) * rect.height / 2 };
   }
 
-  function hitsDial(event) {
-    if (!model || !dial) return false;
+  function pick(event) {
+    if (!state.ready) return;
     const rect = canvas.getBoundingClientRect();
     pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
     scene.updateMatrixWorld(true);
     raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(pickables, false)[0];
-    if (!hit) return false;
-    let object = hit.object;
+    let object = raycaster.intersectObjects(pickables, false)[0]?.object;
     while (object) {
-      if (object === dial) return true;
+      if (object === dial || object === rabbit.rabbit) return object;
       object = object.parent;
     }
-    return false;
   }
 
   function pointerDown(event) {
     if (event.pointerType === 'mouse') unlockAudio();
-    if (drag || event.button !== 0 || !state.ready || !hitsDial(event)) return;
+    rabbitPress = null;
+    if (drag || event.button !== 0 || !event.isPrimary) return;
+    const subject = pick(event);
+    if (subject && subject === rabbit.rabbit) {
+      rabbitPress = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      return;
+    }
+    if (!subject || subject !== dial) return;
+    focusScene(event);
     event.preventDefault();
     event.stopImmediatePropagation();
     controls.enabled = false;
@@ -179,6 +185,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   }
 
   function pointerMove(event) {
+    if (rabbitPress?.id === event.pointerId &&
+      Math.hypot(event.clientX - rabbitPress.x, event.clientY - rabbitPress.y) > 6) rabbitPress = null;
     if (drag && event.pointerId === drag.id) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -196,11 +204,19 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     }
     if (!orbiting && performance.now() - lastHover > 45) {
       lastHover = performance.now();
-      canvas.style.cursor = hitsDial(event) ? 'ew-resize' : 'grab';
+      const subject = pick(event);
+      canvas.style.cursor = subject && subject === dial ? 'ew-resize' : subject ? 'pointer' : 'grab';
     }
   }
 
   function endDrag(event) {
+    if (rabbitPress && (!event || event.pointerId === rabbitPress.id)) {
+      const { x, y } = rabbitPress;
+      rabbitPress = null;
+      if (event?.type === 'pointerup' && Math.hypot(event.clientX - x, event.clientY - y) <= 6) {
+        rabbit.pet(effectiveSpeed() > 0);
+      }
+    }
     if (!drag || (event?.pointerId != null && event.pointerId !== drag.id)) return;
     const id = drag.id;
     drag = null;
@@ -286,20 +302,21 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     if (zoom) {
       cameraOrbit.radius = THREE.MathUtils.clamp(
         cameraOrbit.radius * Math.exp(-clampAxis(zoom) * delta * 1.35),
-        Math.min(cameraOrbit.radius, 1.75),
+        controls.minDistance,
         controls.maxDistance,
       );
     }
     cameraOffset.setFromSpherical(cameraOrbit);
 
     // Translate the viewpoint and its orbit centre together.
-    cameraForward.set(-Math.sin(cameraOrbit.theta), 0, -Math.cos(cameraOrbit.theta));
-    cameraRight.crossVectors(cameraForward, verticalAxis);
+    cameraForward.copy(cameraOffset).normalize().negate();
+    cameraRight.crossVectors(cameraForward, verticalAxis).normalize();
+    const travel = delta * 2.4;
     targetOffset.copy(controls.target).sub(initialTarget)
-      .addScaledVector(cameraForward, clampAxis(forward) * delta)
-      .addScaledVector(cameraRight, clampAxis(strafe) * delta)
-      .addScaledVector(verticalAxis, rise * delta)
-      .clampLength(0, 1.15);
+      .addScaledVector(cameraForward, clampAxis(forward) * travel)
+      .addScaledVector(cameraRight, clampAxis(strafe) * travel)
+      .addScaledVector(verticalAxis, rise * travel)
+      .clampLength(0, 8);
     controls.target.copy(initialTarget).add(targetOffset);
     camera.position.copy(controls.target).add(cameraOffset);
   }
@@ -316,7 +333,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     const delta = Math.min((now - lastFrame) / 1000, 0.1);
     lastFrame = now;
     mixer?.update(delta);
-    if (rabbit) rabbit.animate(mixer.time);
+    if (rabbit) rabbit.animate(delta, effectiveSpeed());
     // The scene clip may contain static transforms. Apply the user-controlled pose last.
     if (dial && dialRest) dial.quaternion.copy(dialRest).multiply(quaternion.setFromAxisAngle(dialAxis, dialAngle));
     moveCamera(delta);
@@ -403,6 +420,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
         addGardenPaths(model);
         rabbit = createGardenRabbit(() => audio.land());
         model.add(rabbit.rabbit);
+        rabbit.rabbit.traverse(object => { if (object.isMesh) pickables.push(object); });
         mixer = new THREE.AnimationMixer(model);
         // Scene exports can use absolute frame times. Normalise the common origin once.
         for (const clip of gltf.animations) {
