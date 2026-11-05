@@ -20,8 +20,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let frame;
   let lastFrame = performance.now();
   let lastHover = 0;
-  let soundAutoStart = true;
-  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: false, dragging: false, ready: false };
+  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, dragging: false, ready: false };
   const abort = new AbortController();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
@@ -136,6 +135,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   }
 
   function pointerDown(event) {
+    if (event.pointerType === 'mouse') unlockAudio();
     if (drag || event.button !== 0 || !state.ready || !hitsDial(event)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -153,10 +153,6 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     canvas.setPointerCapture(event.pointerId);
     canvas.style.cursor = 'ew-resize';
     state.dragging = true;
-    if (soundAutoStart) {
-      state.soundEnabled = true;
-      audio.setEnabled(true);
-    } else if (state.soundEnabled) void audio.activate();
     emit();
   }
 
@@ -197,6 +193,11 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   function orbitEnd() { orbiting = false; if (!drag) canvas.style.cursor = 'grab'; }
   controls.addEventListener('start', orbitStart);
   controls.addEventListener('end', orbitEnd);
+  function unlockAudio() {
+    if (state.ready && state.soundEnabled) void audio.activate();
+  }
+  document.addEventListener('pointerup', unlockAudio);
+  document.addEventListener('keydown', unlockAudio);
   canvas.addEventListener('pointerdown', pointerDown, true);
   canvas.addEventListener('pointermove', pointerMove, true);
   canvas.addEventListener('pointerup', endDrag, true);
@@ -311,6 +312,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
         controls.target.copy(initialTarget);
         controls.update();
         state.ready = true;
+        audio.setEnabled(state.soundEnabled);
         onProgress(100);
         emit();
       } catch (error) {
@@ -324,7 +326,6 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       emit();
     },
     toggleSound() {
-      soundAutoStart = false;
       state.soundEnabled = !state.soundEnabled;
       audio.setEnabled(state.soundEnabled);
       emit();
@@ -344,6 +345,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       observer.disconnect();
       document.removeEventListener('visibilitychange', visibilityChanged);
       canvas.removeEventListener('webglcontextlost', contextLost);
+      document.removeEventListener('pointerup', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
       canvas.removeEventListener('pointerdown', pointerDown, true);
       canvas.removeEventListener('pointermove', pointerMove, true);
       canvas.removeEventListener('pointerup', endDrag, true);

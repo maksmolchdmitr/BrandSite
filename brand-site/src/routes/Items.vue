@@ -2,64 +2,55 @@
   <div class="itemsPage">
     <HeadBar :headItems="headItems" />
     <section class="itemsContent">
-      <RouterLink class="backLink" to="/?page=products">{{ $t('common.actions.backToProducts') }}</RouterLink>
+      <RouterLink class="backLink" :to="item ? catalogLink : '/?page=products'">
+        {{ $t(item ? 'items.backToItems' : 'common.actions.backToProducts') }}
+      </RouterLink>
       <header class="pageIntro">
-        <h1>{{ $t('items.title') }}</h1>
+        <h1>{{ $t(item ? item.name : 'items.title') }}</h1>
       </header>
 
-      <div class="collectionLayout">
-        <aside class="catalog" :aria-label="$t('items.chooseItem')">
-          <button
-            class="itemCard"
-            :class="{ selected: selected }"
-            type="button"
-            :aria-pressed="selected"
-            @click="selectItem"
-          >
-            <img :src="poster" :alt="$t('items.gardenName')" width="300" height="300" />
-            <strong>{{ $t('items.gardenName') }}</strong>
-            <span class="cardAction">{{ $t(selected ? 'items.selected' : 'items.inspect') }} <span aria-hidden="true">↗</span></span>
-          </button>
-        </aside>
+      <ul v-if="!item" class="catalog" :aria-label="$t('items.chooseItem')">
+        <li v-for="entry in items" :key="entry.slug">
+          <RouterLink class="itemCard" :to="{ query: { page: 'items', item: entry.slug } }">
+            <img :src="assetUrl(entry, 'poster.webp')" alt="" width="300" height="300" />
+            <strong>{{ $t(entry.name) }}</strong>
+          </RouterLink>
+        </li>
+      </ul>
 
-        <div class="exhibit">
-          <div class="stage" :class="{ turning: viewerState.dragging }" :aria-busy="loading">
-            <div v-if="!selected" class="stageInvitation">
-              <img :src="poster" alt="" width="640" height="640" />
-              <button type="button" class="primaryButton" @click="selectItem">{{ $t('items.inspect') }} <span aria-hidden="true">↗</span></button>
-            </div>
-            <div ref="viewport" class="viewport" :class="{ concealed: !selected || !viewerState.ready || failed }" />
-            <div v-if="selected && loading && !failed" class="stageOverlay" role="status">
-              <img :src="poster" alt="" width="480" height="480" />
-              <span class="loadingPill"><span class="loadingDot" />{{ $t('items.loading') }} {{ progress }}%</span>
-            </div>
-            <div v-if="failed" class="errorOverlay" role="alert">
-              <p>{{ $t('items.loadError') }}</p>
-              <button class="primaryButton" type="button" @click="loadViewer">{{ $t('items.retry') }}</button>
-            </div>
-            <div v-if="canControl" class="stageTopline">
-              <span class="liveBadge"><span />{{ $t(viewerState.playing && viewerState.speed > 0 ? 'items.live' : 'items.paused') }}</span>
-              <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
+      <div v-else class="exhibit">
+        <div class="stage" :class="{ turning: viewerState.dragging }" :aria-busy="loading">
+          <div ref="viewport" class="viewport" :class="{ concealed: !viewerState.ready || failed }" />
+          <div v-if="loading && !failed" class="stageOverlay" role="status">
+            <img :src="assetUrl(item, 'poster.webp')" alt="" width="480" height="480" />
+            <span class="loadingPill"><span class="loadingDot" />{{ $t('items.loading') }} {{ progress }}%</span>
+          </div>
+          <div v-if="failed" class="errorOverlay" role="alert">
+            <p>{{ $t('items.loadError') }}</p>
+            <button class="primaryButton" type="button" @click="loadViewer">{{ $t('items.retry') }}</button>
+          </div>
+          <div v-if="canControl" class="stageTopline">
+            <span class="liveBadge"><span />{{ $t(viewerState.playing && viewerState.speed > 0 ? 'items.live' : 'items.paused') }}</span>
+            <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="exhibitControls">
+          <div class="controlHeading">
+            <div class="playbackButtons">
+              <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
+                <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+                <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
+              </button>
+              <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled" @click="toggleSound">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="viewerState.soundEnabled" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
+                {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
               </button>
             </div>
           </div>
-
-          <div class="exhibitControls">
-            <div class="controlHeading">
-              <div class="playbackButtons">
-                <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
-                  <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
-                  <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
-                </button>
-                <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled" @click="toggleSound">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="viewerState.soundEnabled" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
-                  {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
-                </button>
-              </div>
-            </div>
-            <p v-if="audioFailed" class="audioWarning" role="status">{{ $t('items.audioError') }}</p>
-          </div>
+          <p v-if="audioFailed" class="audioWarning" role="status">{{ $t('items.audioError') }}</p>
         </div>
       </div>
     </section>
@@ -70,11 +61,15 @@
 import { defineComponent, markRaw } from 'vue';
 import HeadBar from '@/components/HeadBar.vue';
 
+const items = [{ slug: 'quiet-garden', name: 'items.gardenName' }];
+const catalogLink = { query: { page: 'items' } };
+
 export default defineComponent({
   components: { HeadBar },
   data() {
     return {
-      selected: false,
+      items,
+      catalogLink,
       loading: false,
       failed: false,
       audioFailed: false,
@@ -82,11 +77,11 @@ export default defineComponent({
       viewer: null,
       destroyed: false,
       loadAttempt: 0,
-      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: false, dragging: false },
-      poster: `${import.meta.env.BASE_URL}items/quiet-garden/poster.webp`,
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, dragging: false },
     };
   },
   computed: {
+    item() { return items.find((entry) => entry.slug === this.$route.query.item); },
     headItems() {
       return [
         { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: false },
@@ -97,18 +92,31 @@ export default defineComponent({
     canControl() { return this.viewerState.ready && !this.failed; },
     isRunning() { return this.viewerState.playing && this.viewerState.speed > 0; },
   },
+  watch: {
+    item(item) {
+      if (item) {
+        void this.loadViewer();
+      } else {
+        this.loadAttempt++;
+        this.viewer?.dispose();
+        this.viewer = null;
+      }
+    },
+  },
+  mounted() {
+    if (this.item) void this.loadViewer();
+  },
   beforeUnmount() {
     this.destroyed = true;
     this.loadAttempt++;
     this.viewer?.dispose();
   },
   methods: {
-    selectItem() {
-      if (this.selected) return;
-      this.selected = true;
-      void this.loadViewer();
+    assetUrl(item, file) {
+      return `${import.meta.env.BASE_URL}items/${item.slug}/${file}`;
     },
     async loadViewer() {
+      const item = this.item;
       const attempt = ++this.loadAttempt;
       this.viewer?.dispose();
       this.viewer = null;
@@ -132,7 +140,7 @@ export default defineComponent({
           onError: () => { if (!this.destroyed && attempt === this.loadAttempt) { this.failed = true; this.loading = false; } },
           onAudioError: () => { if (!this.destroyed && attempt === this.loadAttempt) this.audioFailed = true; },
         }));
-        await this.viewer.load(`${import.meta.env.BASE_URL}items/quiet-garden/quiet-garden.glb`);
+        await this.viewer.load(this.assetUrl(item, `${item.slug}.glb`));
       } catch (_) {
         if (!this.destroyed && attempt === this.loadAttempt) { this.failed = true; this.loading = false; }
       }
@@ -150,22 +158,19 @@ export default defineComponent({
 .backLink:hover { color: #4f3dff; }
 .pageIntro { margin: 28px 0 30px; }
 h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight: 700; }
-.collectionLayout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; }
-.itemCard { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 2px solid transparent; border-radius: 28px; padding: 20px; background: #fff; color: #252e22; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s; }
+.catalog { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 260px)); gap: 16px; }
+.itemCard { text-decoration: none; box-sizing: border-box; position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 2px solid transparent; border-radius: 28px; padding: 20px; background: #fff; color: #252e22; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s; }
 .itemCard:hover { transform: translateY(-3px); }
-.itemCard.selected { border-color: #4f3dff; }
 .itemCard img { width: 100%; height: 235px; object-fit: contain; margin: 4px 0 16px; }
 .itemCard strong { margin-top: 7px; font-size: 28px; }
-.cardAction { display: flex; justify-content: space-between; width: 100%; color: #4f3dff; font-weight: 700; margin-top: 28px; font-size: 16px; }
 .exhibit { min-width: 0; overflow: hidden; border-radius: 32px; background: #fff; }
 .stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 40%, #f6f8f0 0%, #e8eee1 58%, #d9e3d0 100%); }
 .stage.turning { box-shadow: inset 0 0 0 3px #a7bd8e; }
 .viewport { position: absolute; inset: 0; }
 .viewport.concealed { visibility: hidden; }
 .viewport :deep(canvas) { display: block; width: 100%; height: 100%; outline: none; }
-.stageInvitation, .stageOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.stageInvitation img, .stageOverlay img { width: 80%; height: 82%; object-fit: contain; }
-.stageInvitation .primaryButton { position: absolute; bottom: 22px; }
+.stageOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stageOverlay img { width: 80%; height: 82%; object-fit: contain; }
 .primaryButton { border: 0; border-radius: 100px; padding: 13px 24px; background: #4f3dff; color: white; font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; }
 .primaryButton:hover { background: #4030db; }
 .stageOverlay { pointer-events: none; }
@@ -187,7 +192,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .audioWarning { color: #966526; font-size: 14px; }
 @media(max-width: 1000px) {
   .itemsContent { padding: 20px 24px 40px; }
-  .collectionLayout { grid-template-columns: 210px minmax(0, 1fr); gap: 16px; }
   .itemCard { padding: 16px; }
   .itemCard img { height: 190px; }
   .exhibitControls { padding: 22px; }
@@ -195,11 +199,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media(max-width: 700px) {
   .itemsContent { padding: 12px 16px 32px; }
   .pageIntro { margin: 18px 0 22px; }
-  .collectionLayout { grid-template-columns: minmax(0, 1fr); }
-  .itemCard { min-height: 125px; padding: 16px 16px 16px 116px; border-radius: 22px; }
-  .itemCard img { position: absolute; left: 8px; top: 8px; width: 100px; height: 118px; margin: 0; }
+  .catalog { grid-template-columns: 1fr; }
+  .itemCard { min-height: 100px; justify-content: center; padding: 16px 16px 16px 100px; border-radius: 22px; }
+  .itemCard img { position: absolute; left: 8px; top: 8px; width: 80px; height: 80px; margin: 0; }
   .itemCard strong { font-size: 25px; }
-  .cardAction { margin-top: 15px; }
   .exhibit { border-radius: 24px; }
   .stage { height: 490px; max-height: 70svh; min-height: 360px; }
   .playbackButtons { margin-left: auto; }
@@ -209,7 +212,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media(prefers-color-scheme: dark) {
   .backLink { color: #b5bcb1; }
   .itemCard, .exhibit { background: #292d27; color: #eef1e9; }
-  .cardAction { color: #b8b0ff; }
   .iconButton, .soundButton { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
   .stage { background: radial-gradient(ellipse at 50% 40%, #3c4933, #273120); }
   .liveBadge { color: #dae7cf; }

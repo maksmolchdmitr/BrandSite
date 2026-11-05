@@ -76,10 +76,9 @@ const messages = {
     },
     items: {
       "title": "Items",
+      "backToItems": "← Back to items",
       "chooseItem": "Choose an item",
       "gardenName": "Quiet Garden",
-      "selected": "Selected",
-      "inspect": "Explore",
       "loading": "Opening the garden",
       "loadError": "The 3D item could not load. Try again or refresh the page.",
       "retry": "Try again",
@@ -450,10 +449,9 @@ const messages = {
     },
     items: {
       "title": "Предметы",
+      "backToItems": "← Назад к предметам",
       "chooseItem": "Выбрать предмет",
       "gardenName": "Тихий сад",
-      "selected": "Выбран",
-      "inspect": "Осмотреть",
       "loading": "Открываем сад",
       "loadError": "Не удалось загрузить 3D-предмет. Попробуйте ещё раз или обновите страницу.",
       "retry": "Попробовать снова",

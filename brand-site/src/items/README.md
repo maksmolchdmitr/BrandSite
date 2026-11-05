@@ -1,6 +1,6 @@
 # Interactive item collection
 
-Open `/?page=items` from Products. The catalog and viewer are lazy-loaded;
+Open `/?page=items` for the catalog or `/?page=items&item=quiet-garden` for the model. The catalog and viewer are lazy-loaded;
 Three.js and the 4.6 MB model load only when the visitor selects the garden.
 All models, textures, audio and Draco decoders are served locally.
 
@@ -12,7 +12,7 @@ exported local axis after mixer updates, independently of the baked scene clip.
 
 The model contains real skinned leaf animation and a four-second scene loop.
 Sampler timestamps are normalised once per shared array, preserving synchronisation.
-Audio starts only after a dial or sound-button gesture. Quiet rain, drops and leaf
+Sound is enabled by default. If autoplay is blocked, the first interaction unlocks audio. Quiet rain, drops and leaf
 rustle follow the playback rate; dial detents generate brief filtered clicks.
 Explicit mute is respected on later dial gestures. Pause/zero speed stop ambient
 sources, hidden tabs suspend playback, and navigation disposes GPU/audio resources.

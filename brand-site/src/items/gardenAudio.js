@@ -36,7 +36,7 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
   }
 
   async function activate() {
-    if (disposed || !enabled) return;
+    if (disposed || !enabled || (context?.state === 'running' && sources.length)) return;
     try {
       if (!context) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -49,7 +49,7 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
         ambientGain.gain.value = 0.65;
         ambientGain.connect(master);
       }
-      // Called directly by the gesture handler, before fetching/decoding.
+      // A user gesture can resume audio when autoplay is blocked.
       await context.resume();
       if (!loading) {
         loading = Promise.all(TRACKS.map(async (name) => {
@@ -59,7 +59,7 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
         })).then((result) => { buffers = result; });
       }
       await loading;
-      startSources();
+      if (!sources.length) startSources();
     } catch (error) {
       if (!disposed && error.name !== 'AbortError') {
         enabled = false;
