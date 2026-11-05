@@ -65,10 +65,12 @@
         </div>
 
         <div v-if="canControl || audioFailed" ref="soundControls" class="exhibitControls">
-          <label v-if="volumeOpen && canControl" class="volumePanel">
-            <span>{{ $t('items.volume') }} <strong>{{ viewerState.volume }}%</strong></span>
-            <input ref="volumeInput" type="range" min="0" max="100" :value="viewerState.volume" @input="setVolume" />
-          </label>
+          <div v-if="volumeOpen && canControl" ref="volumePanel" class="volumePanel" role="group" :aria-label="$t('items.volume')">
+            <label v-for="channel in volumeChannels" :key="channel">
+              <span>{{ $t(`items.volumeChannels.${channel}`) }} <strong>{{ viewerState.volumes[channel] }}%</strong></span>
+              <input type="range" min="0" max="100" :value="viewerState.volumes[channel]" @input="setVolume(channel, $event)" />
+            </label>
+          </div>
           <div class="controlHeading">
             <div class="playbackButtons">
               <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
@@ -100,6 +102,7 @@
 <script>
 import { defineComponent, markRaw } from 'vue';
 import HeadBar from '@/components/HeadBar.vue';
+import { GARDEN_VOLUME_CHANNELS } from '@/items/gardenAudio.js';
 
 const items = [{ slug: 'quiet-garden', name: 'items.gardenName' }];
 const catalogLink = { query: { page: 'items' } };
@@ -118,13 +121,14 @@ export default defineComponent({
       failed: false,
       audioFailed: false,
       volumeOpen: false,
+      volumeChannels: GARDEN_VOLUME_CHANNELS,
       soundHoldTimer: null,
       soundHeld: false,
       progress: 0,
       viewer: null,
       destroyed: false,
       loadAttempt: 0,
-      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, audioReady: false, volume: 100, dragging: false },
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, audioReady: false, volumes: {}, dragging: false },
     };
   },
   computed: {
@@ -262,14 +266,14 @@ export default defineComponent({
     async openVolumeWithKeyboard() {
       this.volumeOpen = true;
       await this.$nextTick();
-      this.$refs.volumeInput?.focus();
+      this.$refs.volumePanel?.querySelector('input')?.focus();
     },
     dismissVolume(event) {
       if (!this.$refs.soundControls?.contains(event.target)) this.volumeOpen = false;
       if (!this.$refs.viewButtons?.contains(event.target)) this.helpOpen = false;
     },
-    setVolume(event) {
-      this.viewer?.setVolume(event.target.valueAsNumber);
+    setVolume(channel, event) {
+      this.viewer?.setVolume(channel, event.target.valueAsNumber);
     },
     toggleSound(event) {
       if (event.detail > 0 && this.soundHeld) {
@@ -341,11 +345,14 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   gap: 10px;
   margin-bottom: 8px;
   padding: 12px;
-  width: 160px;
+  width: 200px;
+  max-height: min(45vh, 320px);
+  overflow-y: auto;
   border-radius: 14px;
   color: #35402c;
   background: #f7f9f3;
 }
+.volumePanel label { display: grid; gap: 4px; }
 .volumePanel span { display: flex; justify-content: space-between; gap: 8px; }
 .volumePanel input { width: 100%; margin: 0; accent-color: #647b50; }
 .controlHeading { display: flex; justify-content: flex-end; }
