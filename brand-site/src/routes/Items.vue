@@ -43,7 +43,6 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
               </button>
             </div>
-            <span v-if="canControl" class="dialHint" :class="{ active: viewerState.dragging }">{{ $t(viewerState.dragging ? 'items.turning' : 'items.dialHint') }}</span>
           </div>
 
           <div class="exhibitControls">
@@ -181,8 +180,6 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .iconButton svg, .soundButton svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 button:disabled { opacity: .4; cursor: default; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #877bff; outline-offset: 4px; }
-.dialHint { position: absolute; bottom: 18px; left: 18px; max-width: 180px; border-radius: 100px; padding: 10px 18px; background: #ffffffd9; color: #4a5b3c; font-size: 14px; text-align: center; white-space: normal; pointer-events: none; }
-.dialHint.active { background: #4e6440; color: white; }
 .errorOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 28px; background: #edf1e6; color: #3d4935; text-align: center; }
 .exhibitControls { padding: 24px 28px 22px; }
 .controlHeading { display: flex; justify-content: flex-end; }
@@ -207,7 +204,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .stage { height: 490px; max-height: 70svh; min-height: 360px; }
   .playbackButtons { margin-left: auto; }
   .soundButton { font-size: 13px; padding: 0 10px; }
-  .dialHint { white-space: normal; width: max-content; max-width: calc(100% - 52px); font-size: 13px; }
   .exhibitControls { padding: 20px; }
 }
 @media(prefers-color-scheme: dark) {
