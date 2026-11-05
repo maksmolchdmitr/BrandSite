@@ -264,7 +264,7 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .itemCard img { width: 100%; height: 235px; object-fit: contain; margin: 4px 0 16px; }
 .itemCard strong { margin-top: 7px; font-size: 28px; }
 .exhibit { position: relative; min-width: 0; overflow: hidden; border-radius: 32px; }
-.stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 40%, #f6f8f0 0%, #e8eee1 58%, #d9e3d0 100%); }
+.stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 42%, #3a514c 0%, #263b38 54%, #142326 100%); }
 .stage.turning { box-shadow: inset 0 0 0 3px #a7bd8e; }
 .viewport { position: absolute; inset: 0; }
 .viewport.concealed { visibility: hidden; }
@@ -280,7 +280,7 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .stageTopline { position: absolute; top: 18px; right: 18px; left: 22px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
 .viewButtons { display: flex; gap: 8px; }
 .stageTopline > * { pointer-events: auto; }
-.liveBadge { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #4c5e40; }
+.liveBadge { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #e4eddd; }
 .iconButton, .soundButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 12px; border: 1px solid #e1e5dc; border-radius: 14px; color: #35402c; background: #f7f9f3; font: inherit; cursor: pointer; }
 .iconButton { width: 42px; padding: 0; flex-shrink: 0; }
 .iconButton svg, .soundButton svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
@@ -303,7 +303,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .volumePanel input { width: 100%; margin: 0; accent-color: #647b50; }
 .controlHeading { display: flex; justify-content: flex-end; }
 .playbackButtons { display: flex; gap: 8px; }
-.audioWarning { color: #966526; font-size: 14px; }
+.liveBadge span { background: #b7d590; }
+.audioWarning { color: #f5cd98; font-size: 14px; }
 @media(max-width: 1000px) {
   .itemsContent { padding: 20px 24px 40px; }
   .itemCard { padding: 16px; }
@@ -341,8 +342,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .backLink { color: #b5bcb1; }
   .itemCard { background: #292d27; color: #eef1e9; }
   .iconButton, .soundButton, .volumePanel { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
-  .stage { background: radial-gradient(ellipse at 50% 40%, #3c4933, #273120); }
-  .liveBadge { color: #dae7cf; }
 }
 @media(prefers-reduced-motion: reduce) {
   .itemCard { transition: none; }
