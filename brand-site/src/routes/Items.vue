@@ -1,0 +1,223 @@
+<template>
+  <div class="itemsPage">
+    <HeadBar :headItems="headItems" />
+    <section class="itemsContent">
+      <RouterLink class="backLink" :to="item ? catalogLink : '/?page=products'">
+        {{ $t(item ? 'items.backToItems' : 'common.actions.backToProducts') }}
+      </RouterLink>
+      <header class="pageIntro">
+        <h1>{{ $t(item ? item.name : 'items.title') }}</h1>
+      </header>
+
+      <ul v-if="!item" class="catalog" :aria-label="$t('items.chooseItem')">
+        <li v-for="entry in items" :key="entry.slug">
+          <RouterLink class="itemCard" :to="{ query: { page: 'items', item: entry.slug } }">
+            <img :src="assetUrl(entry, 'poster.webp')" alt="" width="300" height="300" />
+            <strong>{{ $t(entry.name) }}</strong>
+          </RouterLink>
+        </li>
+      </ul>
+
+      <div v-else class="exhibit">
+        <div class="stage" :class="{ turning: viewerState.dragging }" :aria-busy="loading">
+          <div ref="viewport" class="viewport" :class="{ concealed: !viewerState.ready || failed }" />
+          <div v-if="loading && !failed" class="stageOverlay" role="status">
+            <img :src="assetUrl(item, 'poster.webp')" alt="" width="480" height="480" />
+            <span class="loadingPill"><span class="loadingDot" />{{ $t('items.loading') }} {{ progress }}%</span>
+          </div>
+          <div v-if="failed" class="errorOverlay" role="alert">
+            <p>{{ $t('items.loadError') }}</p>
+            <button class="primaryButton" type="button" @click="loadViewer">{{ $t('items.retry') }}</button>
+          </div>
+          <div v-if="canControl" class="stageTopline">
+            <span class="liveBadge"><span />{{ $t(viewerState.playing && viewerState.speed > 0 ? 'items.live' : 'items.paused') }}</span>
+            <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="exhibitControls">
+          <div class="controlHeading">
+            <div class="playbackButtons">
+              <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
+                <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+                <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
+              </button>
+              <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled" @click="toggleSound">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="viewerState.soundEnabled" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
+                {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
+              </button>
+            </div>
+          </div>
+          <p v-if="audioFailed" class="audioWarning" role="status">{{ $t('items.audioError') }}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script>
+import { defineComponent, markRaw } from 'vue';
+import HeadBar from '@/components/HeadBar.vue';
+
+const items = [{ slug: 'quiet-garden', name: 'items.gardenName' }];
+const catalogLink = { query: { page: 'items' } };
+
+export default defineComponent({
+  components: { HeadBar },
+  data() {
+    return {
+      items,
+      catalogLink,
+      loading: false,
+      failed: false,
+      audioFailed: false,
+      progress: 0,
+      viewer: null,
+      destroyed: false,
+      loadAttempt: 0,
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, dragging: false },
+    };
+  },
+  computed: {
+    item() { return items.find((entry) => entry.slug === this.$route.query.item); },
+    headItems() {
+      return [
+        { text: this.$t('common.nav.main'), ref: '/?page=main', isMainSwitch: false },
+        { text: this.$t('common.nav.touchMe'), ref: '/?page=contact', isMainSwitch: false },
+        { text: this.$t('common.nav.products'), ref: '/?page=products', isMainSwitch: true },
+      ];
+    },
+    canControl() { return this.viewerState.ready && !this.failed; },
+    isRunning() { return this.viewerState.playing && this.viewerState.speed > 0; },
+  },
+  watch: {
+    item(item) {
+      if (item) {
+        void this.loadViewer();
+      } else {
+        this.loadAttempt++;
+        this.viewer?.dispose();
+        this.viewer = null;
+      }
+    },
+  },
+  mounted() {
+    if (this.item) void this.loadViewer();
+  },
+  beforeUnmount() {
+    this.destroyed = true;
+    this.loadAttempt++;
+    this.viewer?.dispose();
+  },
+  methods: {
+    assetUrl(item, file) {
+      return `${import.meta.env.BASE_URL}items/${item.slug}/${file}`;
+    },
+    async loadViewer() {
+      const item = this.item;
+      const attempt = ++this.loadAttempt;
+      this.viewer?.dispose();
+      this.viewer = null;
+      this.failed = false;
+      this.audioFailed = false;
+      this.loading = true;
+      this.progress = 0;
+      this.viewerState.ready = false;
+      try {
+        const { createItemViewer } = await import('@/items/createItemViewer.js');
+        await this.$nextTick();
+        if (this.destroyed || attempt !== this.loadAttempt) return;
+        this.viewer = markRaw(createItemViewer(this.$refs.viewport, {
+          label: this.$t('items.viewerLabel'),
+          onState: (state) => {
+            if (this.destroyed || attempt !== this.loadAttempt) return;
+            this.viewerState = state;
+            if (state.ready) this.loading = false;
+          },
+          onProgress: (progress) => { if (!this.destroyed && attempt === this.loadAttempt) this.progress = progress; },
+          onError: () => { if (!this.destroyed && attempt === this.loadAttempt) { this.failed = true; this.loading = false; } },
+          onAudioError: () => { if (!this.destroyed && attempt === this.loadAttempt) this.audioFailed = true; },
+        }));
+        await this.viewer.load(this.assetUrl(item, `${item.slug}.glb`));
+      } catch (_) {
+        if (!this.destroyed && attempt === this.loadAttempt) { this.failed = true; this.loading = false; }
+      }
+    },
+    togglePlaying() { this.viewer?.setPlaying(!this.isRunning); },
+    toggleSound() { this.audioFailed = false; this.viewer?.toggleSound(); },
+  },
+});
+</script>
+
+<style scoped>
+.itemsPage { font-family: var(--font-display); }
+.itemsContent { max-width: 1420px; margin: 0 auto; padding: 24px 50px 60px; box-sizing: border-box; }
+.backLink { display: inline-block; color: #555; font-size: 16px; text-decoration: none; padding: 8px 0; }
+.backLink:hover { color: #4f3dff; }
+.pageIntro { margin: 28px 0 30px; }
+h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight: 700; }
+.catalog { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 260px)); gap: 16px; }
+.itemCard { text-decoration: none; box-sizing: border-box; position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 2px solid transparent; border-radius: 28px; padding: 20px; background: #fff; color: #252e22; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s; }
+.itemCard:hover { transform: translateY(-3px); }
+.itemCard img { width: 100%; height: 235px; object-fit: contain; margin: 4px 0 16px; }
+.itemCard strong { margin-top: 7px; font-size: 28px; }
+.exhibit { min-width: 0; overflow: hidden; border-radius: 32px; background: #fff; }
+.stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 40%, #f6f8f0 0%, #e8eee1 58%, #d9e3d0 100%); }
+.stage.turning { box-shadow: inset 0 0 0 3px #a7bd8e; }
+.viewport { position: absolute; inset: 0; }
+.viewport.concealed { visibility: hidden; }
+.viewport :deep(canvas) { display: block; width: 100%; height: 100%; outline: none; }
+.stageOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stageOverlay img { width: 80%; height: 82%; object-fit: contain; }
+.primaryButton { border: 0; border-radius: 100px; padding: 13px 24px; background: #4f3dff; color: white; font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; }
+.primaryButton:hover { background: #4030db; }
+.stageOverlay { pointer-events: none; }
+.stageOverlay img { opacity: .65; }
+.loadingPill { display: flex; align-items: center; gap: 9px; position: absolute; bottom: 24px; padding: 10px 18px; border-radius: 99px; background: #fff; color: #3d4935; }
+.loadingDot, .liveBadge span { width: 7px; height: 7px; border-radius: 50%; background: #6c8851; }
+.stageTopline { position: absolute; top: 18px; right: 18px; left: 22px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.stageTopline > * { pointer-events: auto; }
+.liveBadge { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #4c5e40; }
+.iconButton, .soundButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 12px; border: 1px solid #e1e5dc; border-radius: 14px; color: #35402c; background: #f7f9f3; font: inherit; cursor: pointer; }
+.iconButton { width: 42px; padding: 0; flex-shrink: 0; }
+.iconButton svg, .soundButton svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #877bff; outline-offset: 4px; }
+.errorOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 28px; background: #edf1e6; color: #3d4935; text-align: center; }
+.exhibitControls { padding: 24px 28px 22px; }
+.controlHeading { display: flex; justify-content: flex-end; }
+.playbackButtons { display: flex; gap: 8px; }
+.audioWarning { color: #966526; font-size: 14px; }
+@media(max-width: 1000px) {
+  .itemsContent { padding: 20px 24px 40px; }
+  .itemCard { padding: 16px; }
+  .itemCard img { height: 190px; }
+  .exhibitControls { padding: 22px; }
+}
+@media(max-width: 700px) {
+  .itemsContent { padding: 12px 16px 32px; }
+  .pageIntro { margin: 18px 0 22px; }
+  .catalog { grid-template-columns: 1fr; }
+  .itemCard { min-height: 100px; justify-content: center; padding: 16px 16px 16px 100px; border-radius: 22px; }
+  .itemCard img { position: absolute; left: 8px; top: 8px; width: 80px; height: 80px; margin: 0; }
+  .itemCard strong { font-size: 25px; }
+  .exhibit { border-radius: 24px; }
+  .stage { height: 490px; max-height: 70svh; min-height: 360px; }
+  .playbackButtons { margin-left: auto; }
+  .soundButton { font-size: 13px; padding: 0 10px; }
+  .exhibitControls { padding: 20px; }
+}
+@media(prefers-color-scheme: dark) {
+  .backLink { color: #b5bcb1; }
+  .itemCard, .exhibit { background: #292d27; color: #eef1e9; }
+  .iconButton, .soundButton { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
+  .stage { background: radial-gradient(ellipse at 50% 40%, #3c4933, #273120); }
+  .liveBadge { color: #dae7cf; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .itemCard { transition: none; }
+  .itemCard:hover { transform: none; }
+}
+</style>

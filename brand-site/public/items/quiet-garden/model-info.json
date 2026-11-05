@@ -1,0 +1,16 @@
+{
+  "source_frames": [
+    1,
+    80
+  ],
+  "export_frames": [
+    1,
+    81
+  ],
+  "duration_seconds": 4,
+  "dial_node": "WeatherDial",
+  "axis_node": "WeatherDialAxis",
+  "meshes": 151,
+  "armatures": 69,
+  "bytes": 4827948
+}

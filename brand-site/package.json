@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-api-client": "openapi-generator-cli generate -i public/badminton-service.openapi.yaml -g typescript-axios -o src/badminton/generated --additional-properties=supportsES6=true,withInterfaces=true"
+    "generate-api-client": "openapi-generator-cli generate -i public/badminton-service.openapi.yaml -g typescript-axios -o src/badminton/generated --additional-properties=supportsES6=true,withInterfaces=true",
+    "test:items": "node --test src/items/*.test.js"
   },
   "dependencies": {
+    "three": "^0.182.0",
     "vite-plugin-vue-setup-extend": "^0.4.0",
     "vue": "^3.4.29",
     "vue-i18n": "^11.1.2",

@@ -3,6 +3,15 @@
     <HeadBar :headItems="localizedHeadItems"></HeadBar>
 
     <div class="content">
+      <RouterLink class="productCard" to="/?page=items">
+        <div class="cardInner cardInnerItems">
+          <img class="cardLogo" src="/items/quiet-garden/poster.webp" alt="" width="72" height="72" />
+          <div class="cardText">
+            <div class="cardTitle">{{ $t('products.itemsTitle') }}</div>
+            <div class="cardSubtitle">{{ $t('products.itemsSubtitle') }}</div>
+          </div>
+        </div>
+      </RouterLink>
       <RouterLink
         v-if="badmintonEnabled"
         class="productCard"
@@ -117,6 +126,8 @@ export default defineComponent({
   transform: scale(1.01);
   filter: brightness(95%);
 }
+
+.cardInnerItems { background-color: #566d46; }
 
 .cardInnerLauncher {
   background-color: #1C9961;
