@@ -55,7 +55,7 @@ const REST_HEADING = 0.22;
 const HOP_SECONDS = 0.42;
 const TURN_SECONDS = 0.18;
 
-export function createGardenRabbit() {
+export function createGardenRabbit(onLand = () => {}) {
   const rabbit = new Group();
   rabbit.name = 'Garden rabbit';
   rabbit.position.set(HOME[0], SOIL_HEIGHT, HOME[1]);
@@ -109,6 +109,7 @@ export function createGardenRabbit() {
   let routeIndex = -1;
   let routeStart = 2;
   let lastHeading = REST_HEADING;
+  let landedHops = 0;
 
   function turnToward(heading, progress) {
     const difference = Math.atan2(Math.sin(heading - lastHeading), Math.cos(heading - lastHeading));
@@ -122,6 +123,11 @@ export function createGardenRabbit() {
     const elapsed = time - routeStart;
     const hopDuration = HOP_SECONDS + TURN_SECONDS;
     const step = Math.floor(elapsed / hopDuration);
+    const completedHops = Math.min(step, route.length - 1);
+    if (completedHops > landedHops) {
+      landedHops = completedHops;
+      onLand();
+    }
 
     if (step >= route.length - 1) {
       rabbit.position.set(HOME[0], SOIL_HEIGHT, HOME[1]);
@@ -130,6 +136,7 @@ export function createGardenRabbit() {
       turnToward(REST_HEADING, endTurn);
       if (endTurn >= 1) {
         lastHeading = REST_HEADING;
+        landedHops = 0;
         // Choose uniformly from the other two routes after each rest.
         routeIndex = (routeIndex + 1 + Math.floor(Math.random() * (ROUTES.length - 1))) % ROUTES.length;
         routeStart = time + 1.3 + Math.random() * 1.1;

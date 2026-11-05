@@ -24,26 +24,30 @@ function nearPath(x, z, width = PATH_HALF_WIDTH) {
 }
 
 function trimMoss(mesh) {
-  const geometry = mesh.geometry;
-  const position = geometry.attributes.position;
-  const indices = geometry.index;
-  const inverse = new Matrix4().copy(mesh.matrixWorld).invert();
-  const point = new Vector3();
-  const onPath = new Uint8Array(position.count);
-  for (let i = 0; i < position.count; i++) {
-    point.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld);
-    onPath[i] = nearPath(point.x, point.z);
-    point.y = SOIL_TOP + Math.max(0, point.y - SOIL_TOP) * 0.42;
-    point.applyMatrix4(inverse);
-    position.setXYZ(i, point.x, point.y, point.z);
+  const source = mesh.geometry;
+  const geometry = source.index ? source.toNonIndexed() : source;
+  if (geometry !== source) {
+    mesh.geometry = geometry;
+    source.dispose();
   }
+  const position = geometry.attributes.position;
+  const inverse = new Matrix4().copy(mesh.matrixWorld).invert();
+  const blade = [new Vector3(), new Vector3(), new Vector3()];
   const keep = [];
-  const count = indices ? indices.count : position.count;
-  for (let i = 0; i < count; i += 3) {
-    const a = indices ? indices.getX(i) : i;
-    const b = indices ? indices.getX(i + 1) : i + 1;
-    const c = indices ? indices.getX(i + 2) : i + 2;
-    if (!onPath[a] && !onPath[b] && !onPath[c]) keep.push(a, b, c);
+  for (let i = 0; i < position.count; i += 3) {
+    for (let j = 0; j < blade.length; j++) {
+      blade[j].fromBufferAttribute(position, i + j).applyMatrix4(mesh.matrixWorld);
+    }
+    if (blade.some(({ x, z }) => nearPath(x, z))) continue;
+
+    const base = Math.min(...blade.map(point => point.y));
+    for (let j = 0; j < blade.length; j++) {
+      const point = blade[j];
+      point.y = SOIL_TOP - 0.003 + (point.y - base) * 0.55;
+      point.applyMatrix4(inverse);
+      position.setXYZ(i + j, point.x, point.y, point.z);
+      keep.push(i + j);
+    }
   }
   geometry.setIndex(keep);
   position.needsUpdate = true;

@@ -297,7 +297,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
           } else pickables.push(object);
         });
         addGardenPaths(model);
-        rabbit = createGardenRabbit();
+        rabbit = createGardenRabbit(() => audio.land());
         model.add(rabbit.rabbit);
         mixer = new THREE.AnimationMixer(model);
         // Scene exports can use absolute frame times. Normalise the common origin once.
