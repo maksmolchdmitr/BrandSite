@@ -23,7 +23,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let frame;
   let lastFrame = performance.now();
   let lastHover = 0;
-  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, volume: 100, dragging: false, ready: false };
+  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, audioReady: false, volume: 100, dragging: false, ready: false };
   const abort = new AbortController();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
@@ -84,8 +84,16 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   const quaternion = new THREE.Quaternion();
   const pickables = [];
   const movementKeys = new Set();
-  const movementCodes = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD']);
+  const movementCodes = new Set([
+    'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+    'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract',
+  ]);
   const cameraOffset = new THREE.Vector3();
+  const cameraOrbit = new THREE.Spherical();
+  const cameraForward = new THREE.Vector3();
+  const cameraRight = new THREE.Vector3();
+  const targetOffset = new THREE.Vector3();
   const verticalAxis = new THREE.Vector3(0, 1, 0);
   let readGamepads = navigator.getGamepads?.bind(navigator);
   const draco = new DRACOLoader();
@@ -98,6 +106,11 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   const audio = createGardenAudio({
     getTime: () => mixer?.time || 0,
     getSpeed: effectiveSpeed,
+    onReady: (ready) => {
+      if (state.audioReady === ready) return;
+      state.audioReady = ready;
+      emit();
+    },
     onError: () => {
       state.soundEnabled = false;
       emit();
@@ -202,7 +215,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   function orbitEnd() { orbiting = false; if (!drag) canvas.style.cursor = 'grab'; }
   controls.addEventListener('start', orbitStart);
   controls.addEventListener('end', orbitEnd);
-  function unlockAudio() {
+  function unlockAudio(event) {
+    if (event?.target instanceof Element && event.target.closest('[data-garden-sound]')) return;
     if (state.ready && state.soundEnabled) void audio.activate();
   }
   document.addEventListener('pointerup', unlockAudio);
@@ -236,33 +250,57 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
 
   function moveCamera(delta) {
     if (!state.ready || drag || orbiting || !document.hasFocus()) return;
-    let turn = Number(movementKeys.has('KeyD')) - Number(movementKeys.has('KeyA'));
-    let zoom = Number(movementKeys.has('KeyW')) - Number(movementKeys.has('KeyS'));
+    const held = code => Number(movementKeys.has(code));
+    let forward = held('KeyW') - held('KeyS');
+    let strafe = held('KeyD') - held('KeyA');
+    const rise = held('KeyE') - held('KeyQ');
+    let yaw = held('ArrowRight') - held('ArrowLeft');
+    let pitch = held('ArrowDown') - held('ArrowUp');
+    let zoom = Math.max(held('Equal'), held('NumpadAdd')) - Math.max(held('Minus'), held('NumpadSubtract'));
     if (readGamepads) {
       try {
         const pad = Array.from(readGamepads()).find(gamepad => gamepad?.connected && gamepad.axes.length >= 2);
         if (pad) {
-          turn += stickAxis(pad.axes[0]);
-          zoom -= stickAxis(pad.axes[1]);
+          strafe += stickAxis(pad.axes[0]);
+          forward -= stickAxis(pad.axes[1]);
+          yaw += stickAxis(pad.axes[2]);
+          pitch += stickAxis(pad.axes[3]);
+          if (pad.mapping === 'standard') zoom += (pad.buttons[7]?.value ?? 0) - (pad.buttons[6]?.value ?? 0);
         }
       } catch {
         // Embedded viewers can be denied gamepad access by the host.
         readGamepads = undefined;
       }
     }
-    if (!turn && !zoom) return;
+    if (!forward && !strafe && !rise && !yaw && !pitch && !zoom) return;
 
+    const clampAxis = value => THREE.MathUtils.clamp(value, -1, 1);
     cameraOffset.copy(camera.position).sub(controls.target);
-    cameraOffset.applyAxisAngle(verticalAxis, THREE.MathUtils.clamp(turn, -1, 1) * delta * 1.45);
+    cameraOrbit.setFromVector3(cameraOffset);
+    cameraOrbit.theta += clampAxis(yaw) * delta * 1.45;
+    cameraOrbit.phi = THREE.MathUtils.clamp(
+      cameraOrbit.phi - clampAxis(pitch) * delta * 1.2,
+      controls.minPolarAngle,
+      controls.maxPolarAngle,
+    );
     if (zoom) {
-      const distance = cameraOffset.length();
-      const minDistance = Math.min(distance, 1.75);
-      cameraOffset.setLength(THREE.MathUtils.clamp(
-        distance * Math.exp(-THREE.MathUtils.clamp(zoom, -1, 1) * delta * 1.35),
-        minDistance,
+      cameraOrbit.radius = THREE.MathUtils.clamp(
+        cameraOrbit.radius * Math.exp(-clampAxis(zoom) * delta * 1.35),
+        Math.min(cameraOrbit.radius, 1.75),
         controls.maxDistance,
-      ));
+      );
     }
+    cameraOffset.setFromSpherical(cameraOrbit);
+
+    // Translate the viewpoint and its orbit centre together.
+    cameraForward.set(-Math.sin(cameraOrbit.theta), 0, -Math.cos(cameraOrbit.theta));
+    cameraRight.crossVectors(cameraForward, verticalAxis);
+    targetOffset.copy(controls.target).sub(initialTarget)
+      .addScaledVector(cameraForward, clampAxis(forward) * delta)
+      .addScaledVector(cameraRight, clampAxis(strafe) * delta)
+      .addScaledVector(verticalAxis, rise * delta)
+      .clampLength(0, 1.15);
+    controls.target.copy(initialTarget).add(targetOffset);
     camera.position.copy(controls.target).add(cameraOffset);
   }
 
@@ -405,6 +443,10 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       emit();
     },
     toggleSound() {
+      if (state.soundEnabled && !state.audioReady) {
+        void audio.activate();
+        return;
+      }
       state.soundEnabled = !state.soundEnabled;
       audio.setEnabled(state.soundEnabled);
       emit();
