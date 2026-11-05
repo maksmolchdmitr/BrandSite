@@ -18,7 +18,7 @@
         </li>
       </ul>
 
-      <div v-else class="exhibit">
+      <div v-else ref="exhibit" class="exhibit" :class="{ expanded }">
         <div class="stage" :class="{ turning: viewerState.dragging }" :aria-busy="loading">
           <div ref="viewport" class="viewport" :class="{ concealed: !viewerState.ready || failed }" />
           <div v-if="loading && !failed" class="stageOverlay" role="status">
@@ -31,9 +31,17 @@
           </div>
           <div v-if="canControl" class="stageTopline">
             <span class="liveBadge"><span />{{ $t(viewerState.playing && viewerState.speed > 0 ? 'items.live' : 'items.paused') }}</span>
-            <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
-            </button>
+            <div class="viewButtons">
+              <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
+              </button>
+              <button class="iconButton" type="button" :title="fullscreenLabel" :aria-label="fullscreenLabel" @click="toggleFullscreen">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path v-if="fullscreen" d="M9 3v6H3m12-6v6h6M9 21v-6H3m12 6v-6h6" />
+                  <path v-else d="M9 3H3v6m12-6h6v6M9 21H3v-6m12 6h6v-6" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -71,6 +79,8 @@ export default defineComponent({
       items,
       catalogLink,
       loading: false,
+      fullscreen: false,
+      expanded: false,
       failed: false,
       audioFailed: false,
       progress: 0,
@@ -89,11 +99,15 @@ export default defineComponent({
         { text: this.$t('common.nav.products'), ref: '/?page=products', isMainSwitch: true },
       ];
     },
+    fullscreenLabel() {
+      return this.$t(this.fullscreen ? 'items.exitFullscreen' : 'items.enterFullscreen');
+    },
     canControl() { return this.viewerState.ready && !this.failed; },
     isRunning() { return this.viewerState.playing && this.viewerState.speed > 0; },
   },
   watch: {
     item(item) {
+      this.exitExpanded();
       if (item) {
         void this.loadViewer();
       } else {
@@ -104,14 +118,46 @@ export default defineComponent({
     },
   },
   mounted() {
+    document.addEventListener('fullscreenchange', this.syncFullscreen);
+    document.addEventListener('keydown', this.handleFullscreenEscape);
     if (this.item) void this.loadViewer();
   },
   beforeUnmount() {
+    this.exitExpanded();
+    document.removeEventListener('fullscreenchange', this.syncFullscreen);
+    document.removeEventListener('keydown', this.handleFullscreenEscape);
     this.destroyed = true;
     this.loadAttempt++;
     this.viewer?.dispose();
   },
   methods: {
+    syncFullscreen() {
+      this.fullscreen = this.expanded || document.fullscreenElement === this.$refs.exhibit;
+    },
+    exitExpanded() {
+      this.expanded = false;
+      this.syncFullscreen();
+    },
+    handleFullscreenEscape(event) {
+      if (event.key === 'Escape' && this.expanded) this.exitExpanded();
+    },
+    async toggleFullscreen() {
+      const exhibit = this.$refs.exhibit;
+      if (this.expanded) {
+        this.exitExpanded();
+      } else if (document.fullscreenElement === exhibit) {
+        await document.exitFullscreen();
+      } else {
+        try {
+          await exhibit.requestFullscreen();
+        } catch {
+          if (exhibit !== this.$refs.exhibit || this.destroyed) return;
+          this.expanded = true;
+          this.syncFullscreen();
+        }
+      }
+    },
+
     assetUrl(item, file) {
       return `${import.meta.env.BASE_URL}items/${item.slug}/${file}`;
     },
@@ -178,6 +224,7 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .loadingPill { display: flex; align-items: center; gap: 9px; position: absolute; bottom: 24px; padding: 10px 18px; border-radius: 99px; background: #fff; color: #3d4935; }
 .loadingDot, .liveBadge span { width: 7px; height: 7px; border-radius: 50%; background: #6c8851; }
 .stageTopline { position: absolute; top: 18px; right: 18px; left: 22px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.viewButtons { display: flex; gap: 8px; }
 .stageTopline > * { pointer-events: auto; }
 .liveBadge { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #4c5e40; }
 .iconButton, .soundButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 12px; border: 1px solid #e1e5dc; border-radius: 14px; color: #35402c; background: #f7f9f3; font: inherit; cursor: pointer; }
@@ -208,6 +255,22 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .playbackButtons { margin-left: auto; }
   .soundButton { font-size: 13px; padding: 0 10px; }
   .exhibitControls { padding: 20px; }
+}
+.exhibit:fullscreen, .exhibit.expanded {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+}
+.exhibit.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.exhibit:fullscreen .stage, .exhibit.expanded .stage {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 @media(prefers-color-scheme: dark) {
   .backLink { color: #b5bcb1; }
