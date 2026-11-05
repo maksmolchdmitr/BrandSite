@@ -61,6 +61,20 @@ const PET_REACTIONS = [
   { duration: 1.15, pitch: -0.14, roll: 0.4, yaw: 0.23, fold: 0.1, twitch: 0, squint: 0.82 },
   // Duck and flick the ears twice.
   { duration: 0.85, pitch: 0.22, roll: -0.13, yaw: -0.1, fold: 0.12, twitch: 0.34, squint: 0.58 },
+  // Give two quick nods.
+  { duration: 1.05, nod: 0.46, squint: 0.65 },
+  // Rub the cheek gently from side to side.
+  { duration: 1.35, shake: 0.52, roll: -0.26, squint: 0.96 },
+  // Perk up one ear, then the other.
+  { duration: 1.05, perk: 0.26, yaw: 0.18 },
+  // Tuck the chin and flatten both ears.
+  { duration: 1.3, pitch: 0.37, fold: 0.62, duck: 0.031, squint: 0.89 },
+  // Stretch the nose forward and sniff.
+  { duration: 1.1, pitch: -0.22, reach: 0.034, sniff: 0.14 },
+  // Lift one front paw.
+  { duration: 1.2, paw: 0.055, roll: 0.16, yaw: -0.25, squint: 0.45 },
+  // Sway the head from one shoulder to the other.
+  { duration: 1.4, sway: 0.64, pitch: -0.1, fold: 0.17, squint: 0.92 },
 ];
 
 export function createGardenRabbit(onLand = () => {}) {
@@ -89,13 +103,17 @@ export function createGardenRabbit(onLand = () => {}) {
   oval(rabbit, clay, 0, 0.109, -0.018, 0.105, 0.119, 0.091);
   oval(rabbit, cream, 0, 0.098, 0.047, 0.068, 0.081, 0.033);
   oval(rabbit, cream, 0, 0.054, -0.108, 0.042, 0.039, 0.045);
+  let frontPaw;
   for (const side of [-1, 1]) {
     oval(rabbit, clay, side * 0.07, 0.047, -0.025, 0.058, 0.045, 0.065);
-    oval(rabbit, cream, side * 0.045, 0.025, 0.061, 0.03, 0.025, 0.048);
+    const paw = oval(rabbit, cream, side * 0.045, 0.025, 0.061, 0.03, 0.025, 0.048);
+    if (side === 1) frontPaw = paw;
   }
 
   const head = new Group();
   head.position.set(0, 0.196, 0.044);
+  const headRest = head.position.clone();
+  const pawRest = frontPaw.position.clone();
   rabbit.add(head);
   oval(head, clay, 0, 0, 0, 0.096, 0.085, 0.083);
   oval(head, cream, 0, -0.03, 0.061, 0.054, 0.037, 0.039);
@@ -124,6 +142,7 @@ export function createGardenRabbit(onLand = () => {}) {
   let petRest = 0;
   let petHeld = false;
   let petPending = false;
+  const remainingReactions = [];
   let reactionIndex = -1;
   let reactionTime = 0;
   let idleTime = 0;
@@ -182,10 +201,17 @@ export function createGardenRabbit(onLand = () => {}) {
   }
 
   function beginPet() {
-    const count = PET_REACTIONS.length;
-    reactionIndex = reactionIndex < 0
-      ? Math.floor(Math.random() * count)
-      : (reactionIndex + 1 + Math.floor(Math.random() * (count - 1))) % count;
+    if (!remainingReactions.length) {
+      for (const index of PET_REACTIONS.keys()) remainingReactions.push(index);
+      // Draw the first reaction of a new round from the other nine.
+      const previous = reactionIndex < 0 ? [] : remainingReactions.splice(reactionIndex, 1);
+      const choice = Math.floor(Math.random() * remainingReactions.length);
+      [reactionIndex] = remainingReactions.splice(choice, 1);
+      remainingReactions.push(...previous);
+    } else {
+      const choice = Math.floor(Math.random() * remainingReactions.length);
+      [reactionIndex] = remainingReactions.splice(choice, 1);
+    }
     reactionTime = 0;
     petRest = 5;
   }
@@ -226,12 +252,20 @@ export function createGardenRabbit(onLand = () => {}) {
       const phase = current ? reactionTime / current.duration : 1;
       const ease = current && phase < 1 ? Math.sin(Math.PI * phase) ** 2 : 0;
       const twitch = ease * (current?.twitch ?? 0) * Math.sin(4 * Math.PI * phase);
-      head.rotation.x = ease * (current?.pitch ?? 0);
-      head.rotation.z = ease * (current?.roll ?? 0);
-      head.rotation.y = Math.sin(idleTime * 1.05) * 0.13 + ease * (current?.yaw ?? 0);
+      const wave = Math.sin(2 * Math.PI * phase);
+      const nod = Math.sin(2 * Math.PI * phase) ** 2;
+      head.rotation.x = ease * ((current?.pitch ?? 0) + nod * (current?.nod ?? 0)
+        + Math.sin(8 * Math.PI * phase) * (current?.sniff ?? 0));
+      head.rotation.z = ease * ((current?.roll ?? 0) + wave * (current?.sway ?? 0));
+      head.rotation.y = Math.sin(idleTime * 1.05) * 0.13
+        + ease * ((current?.yaw ?? 0) + wave * (current?.shake ?? 0));
+      head.position.y = headRest.y - ease * (current?.duck ?? 0);
+      head.position.z = headRest.z + ease * (current?.reach ?? 0);
+      frontPaw.position.y = pawRest.y + ease * (current?.paw ?? 0);
       const fold = ease * (current?.fold ?? 0);
-      ears[0].rotation.z = 0.22 + Math.sin(idleTime * 2.3) * 0.065 + fold + twitch;
-      ears[1].rotation.z = -0.22 + Math.sin(idleTime * 2.3 + 1.2) * 0.055 - fold + twitch * 0.5;
+      const perk = ease * wave * (current?.perk ?? 0);
+      ears[0].rotation.z = 0.22 + Math.sin(idleTime * 2.3) * 0.065 + fold + twitch - Math.max(0, perk);
+      ears[1].rotation.z = -0.22 + Math.sin(idleTime * 2.3 + 1.2) * 0.055 - fold + twitch * 0.5 - Math.min(0, perk);
       const blinkTime = Math.abs(idleTime % 4.3 - 3.5);
       const openness = Math.min(1, 0.12 + blinkTime * 12) * (1 - ease * (current?.squint ?? 0));
       for (const eye of eyes) eye.scale.y = 0.017 * openness;
