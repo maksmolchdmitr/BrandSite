@@ -3,6 +3,7 @@ const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
 export function createGardenAudio({ getTime, getSpeed, onError }) {
   let context;
   let master;
+  let volume = 0.2;
   let ambientGain;
   let buffers;
   let loading;
@@ -43,7 +44,7 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
         if (!AudioContext) throw new Error('Audio unavailable');
         context = new AudioContext();
         master = context.createGain();
-        master.gain.value = 0.55;
+        master.gain.value = volume;
         master.connect(context.destination);
         ambientGain = context.createGain();
         ambientGain.gain.value = 0.65;
@@ -70,6 +71,10 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
   }
 
   return {
+    setVolume(value) {
+      volume = value;
+      if (master) master.gain.setTargetAtTime(volume, context.currentTime, 0.02);
+    },
     setEnabled(value) {
       enabled = value;
       if (!value) stopSources();

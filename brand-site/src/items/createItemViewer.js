@@ -20,7 +20,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let frame;
   let lastFrame = performance.now();
   let lastHover = 0;
-  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, dragging: false, ready: false };
+  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, volume: 20, dragging: false, ready: false };
   const abort = new AbortController();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
@@ -323,6 +323,12 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       state.playing = value;
       if (mixer) mixer.timeScale = effectiveSpeed();
       audio.sync();
+      emit();
+    },
+    setVolume(percent) {
+      if (!Number.isFinite(percent)) return;
+      state.volume = THREE.MathUtils.clamp(percent, 0, 100);
+      audio.setVolume(state.volume / 100);
       emit();
     },
     toggleSound() {

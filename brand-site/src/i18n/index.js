@@ -90,6 +90,8 @@ const messages = {
       "pause": "Pause animation",
       "play": "Play animation",
       "soundOn": "Sound on",
+      "volume": "Volume",
+      "volumeHint": "Hold or press Down Arrow to adjust volume",
       "soundOff": "Sound off",
       "audioError": "Sound is unavailable. You can still explore and control the item.",
       "viewerLabel": "Quiet Garden 3D viewer. Drag to explore; hold the dial to change the animation tempo."
@@ -465,6 +467,8 @@ const messages = {
       "pause": "Приостановить анимацию",
       "play": "Включить анимацию",
       "soundOn": "Звук вкл.",
+      "volume": "Громкость",
+      "volumeHint": "Удерживайте или нажмите стрелку вниз, чтобы настроить громкость",
       "soundOff": "Звук выкл.",
       "audioError": "Звук недоступен. Предметом по-прежнему можно управлять.",
       "viewerLabel": "Трёхмерный Тихий сад. Потяните для осмотра; удерживайте крутилку для изменения темпа."
