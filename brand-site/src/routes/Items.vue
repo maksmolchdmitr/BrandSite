@@ -45,14 +45,27 @@
           </div>
         </div>
 
-        <div class="exhibitControls">
+        <div v-if="canControl || audioFailed" ref="soundControls" class="exhibitControls">
+          <label v-if="volumeOpen && canControl" class="volumePanel">
+            <span>{{ $t('items.volume') }} <strong>{{ viewerState.volume }}%</strong></span>
+            <input ref="volumeInput" type="range" min="0" max="100" :value="viewerState.volume" @input="setVolume" />
+          </label>
           <div class="controlHeading">
             <div class="playbackButtons">
               <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
                 <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
                 <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
               </button>
-              <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled" @click="toggleSound">
+              <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled"
+                :aria-expanded="volumeOpen"
+                :title="$t('items.volumeHint')"
+                @pointerdown="startSoundHold"
+                @pointerup="cancelSoundHold"
+                @pointerleave="cancelSoundHold"
+                @pointercancel="cancelSoundHold"
+                @contextmenu.prevent
+                @keydown.arrow-down.prevent="openVolumeWithKeyboard"
+                @click="toggleSound">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="viewerState.soundEnabled" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
                 {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
               </button>
@@ -83,11 +96,14 @@ export default defineComponent({
       expanded: false,
       failed: false,
       audioFailed: false,
+      volumeOpen: false,
+      soundHoldTimer: null,
+      soundHeld: false,
       progress: 0,
       viewer: null,
       destroyed: false,
       loadAttempt: 0,
-      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, dragging: false },
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, volume: 20, dragging: false },
     };
   },
   computed: {
@@ -108,6 +124,8 @@ export default defineComponent({
   watch: {
     item(item) {
       this.exitExpanded();
+      this.cancelSoundHold();
+      this.volumeOpen = false;
       if (item) {
         void this.loadViewer();
       } else {
@@ -118,11 +136,14 @@ export default defineComponent({
     },
   },
   mounted() {
+    document.addEventListener('pointerdown', this.dismissVolume);
     document.addEventListener('fullscreenchange', this.syncFullscreen);
     document.addEventListener('keydown', this.handleFullscreenEscape);
     if (this.item) void this.loadViewer();
   },
   beforeUnmount() {
+    this.cancelSoundHold();
+    document.removeEventListener('pointerdown', this.dismissVolume);
     this.exitExpanded();
     document.removeEventListener('fullscreenchange', this.syncFullscreen);
     document.removeEventListener('keydown', this.handleFullscreenEscape);
@@ -139,7 +160,9 @@ export default defineComponent({
       this.syncFullscreen();
     },
     handleFullscreenEscape(event) {
-      if (event.key === 'Escape' && this.expanded) this.exitExpanded();
+      if (event.key !== 'Escape') return;
+      if (this.volumeOpen) this.volumeOpen = false;
+      else if (this.expanded) this.exitExpanded();
     },
     async toggleFullscreen() {
       const exhibit = this.$refs.exhibit;
@@ -192,7 +215,38 @@ export default defineComponent({
       }
     },
     togglePlaying() { this.viewer?.setPlaying(!this.isRunning); },
-    toggleSound() { this.audioFailed = false; this.viewer?.toggleSound(); },
+    startSoundHold(event) {
+      if (event.button !== 0 || !event.isPrimary) return;
+      this.cancelSoundHold();
+      this.soundHeld = false;
+      this.soundHoldTimer = setTimeout(() => {
+        this.soundHeld = true;
+        this.volumeOpen = true;
+      }, 500);
+    },
+    cancelSoundHold() {
+      clearTimeout(this.soundHoldTimer);
+      this.soundHoldTimer = null;
+    },
+    async openVolumeWithKeyboard() {
+      this.volumeOpen = true;
+      await this.$nextTick();
+      this.$refs.volumeInput?.focus();
+    },
+    dismissVolume(event) {
+      if (!this.$refs.soundControls?.contains(event.target)) this.volumeOpen = false;
+    },
+    setVolume(event) {
+      this.viewer?.setVolume(event.target.valueAsNumber);
+    },
+    toggleSound(event) {
+      if (event.detail > 0 && this.soundHeld) {
+        this.soundHeld = false;
+        return;
+      }
+      this.audioFailed = false;
+      this.viewer?.toggleSound();
+    },
   },
 });
 </script>
@@ -209,7 +263,7 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .itemCard:hover { transform: translateY(-3px); }
 .itemCard img { width: 100%; height: 235px; object-fit: contain; margin: 4px 0 16px; }
 .itemCard strong { margin-top: 7px; font-size: 28px; }
-.exhibit { min-width: 0; overflow: hidden; border-radius: 32px; background: #fff; }
+.exhibit { position: relative; min-width: 0; overflow: hidden; border-radius: 32px; }
 .stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 40%, #f6f8f0 0%, #e8eee1 58%, #d9e3d0 100%); }
 .stage.turning { box-shadow: inset 0 0 0 3px #a7bd8e; }
 .viewport { position: absolute; inset: 0; }
@@ -233,7 +287,20 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 button:disabled { opacity: .4; cursor: default; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #877bff; outline-offset: 4px; }
 .errorOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 28px; background: #edf1e6; color: #3d4935; text-align: center; }
-.exhibitControls { padding: 24px 28px 22px; }
+.exhibitControls { position: absolute; right: 18px; bottom: 18px; }
+.soundButton { touch-action: manipulation; user-select: none; -webkit-touch-callout: none; }
+.volumePanel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 12px;
+  width: 160px;
+  border-radius: 14px;
+  color: #35402c;
+  background: #f7f9f3;
+}
+.volumePanel span { display: flex; justify-content: space-between; gap: 8px; }
+.volumePanel input { width: 100%; margin: 0; accent-color: #647b50; }
 .controlHeading { display: flex; justify-content: flex-end; }
 .playbackButtons { display: flex; gap: 8px; }
 .audioWarning { color: #966526; font-size: 14px; }
@@ -241,7 +308,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .itemsContent { padding: 20px 24px 40px; }
   .itemCard { padding: 16px; }
   .itemCard img { height: 190px; }
-  .exhibitControls { padding: 22px; }
 }
 @media(max-width: 700px) {
   .itemsContent { padding: 12px 16px 32px; }
@@ -254,7 +320,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .stage { height: 490px; max-height: 70svh; min-height: 360px; }
   .playbackButtons { margin-left: auto; }
   .soundButton { font-size: 13px; padding: 0 10px; }
-  .exhibitControls { padding: 20px; }
 }
 .exhibit:fullscreen, .exhibit.expanded {
   display: flex;
@@ -274,8 +339,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 }
 @media(prefers-color-scheme: dark) {
   .backLink { color: #b5bcb1; }
-  .itemCard, .exhibit { background: #292d27; color: #eef1e9; }
-  .iconButton, .soundButton { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
+  .itemCard { background: #292d27; color: #eef1e9; }
+  .iconButton, .soundButton, .volumePanel { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
   .stage { background: radial-gradient(ellipse at 50% 40%, #3c4933, #273120); }
   .liveBadge { color: #dae7cf; }
 }
