@@ -5,12 +5,14 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clampSpeed, DETENT, pointerDialDelta, speedAfterTurn } from './dialControl.js';
 import { createGardenAudio } from './gardenAudio.js';
+import { createGardenRabbit } from './gardenRabbit.js';
 import { normalizeClipOrigin } from './modelTime.js';
 
 export function createItemViewer(host, { label, onState, onProgress, onError, onAudioError }) {
   let disposed = false;
   let model;
   let mixer;
+  let rabbit;
   let dial;
   let dialRest;
   let dialAxis;
@@ -211,6 +213,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     const delta = Math.min((now - lastFrame) / 1000, 0.1);
     lastFrame = now;
     mixer?.update(delta);
+    if (rabbit) rabbit.animate(mixer.time);
     // The scene clip may contain static transforms. Apply the user-controlled pose last.
     if (dial && dialRest) dial.quaternion.copy(dialRest).multiply(quaternion.setFromAxisAngle(dialAxis, dialAngle));
     controls.update(delta);
@@ -292,6 +295,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
             object.renderOrder = 2;
           } else pickables.push(object);
         });
+        rabbit = createGardenRabbit();
+        model.add(rabbit.rabbit);
         mixer = new THREE.AnimationMixer(model);
         // Scene exports can use absolute frame times. Normalise the common origin once.
         for (const clip of gltf.animations) {
