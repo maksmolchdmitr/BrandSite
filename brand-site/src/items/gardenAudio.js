@@ -1,6 +1,6 @@
 const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
 
-export function createGardenAudio({ getTime, getSpeed, onError }) {
+export function createGardenAudio({ getTime, getSpeed, onReady, onError }) {
   let context;
   let master;
   let volume = 1;
@@ -44,6 +44,9 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) throw new Error('Audio unavailable');
         context = new AudioContext();
+        context.onstatechange = () => {
+          if (!disposed) onReady(context.state === 'running');
+        };
         master = context.createGain();
         master.gain.value = volume;
         master.connect(context.destination);
@@ -52,7 +55,9 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
         ambientGain.connect(master);
       }
       // A user gesture can resume audio when autoplay is blocked.
-      await context.resume();
+      if (context.state !== 'running') await context.resume();
+      if (disposed || !enabled) return;
+      onReady(context.state === 'running');
       if (!loading) {
         loading = Promise.all(TRACKS.map(async (name) => {
           const response = await fetch(`${import.meta.env.BASE_URL}items/quiet-garden/${name}`, { signal: abort.signal });
@@ -63,7 +68,8 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
       await loading;
       if (!sources.length) startSources();
     } catch (error) {
-      if (!disposed && error.name !== 'AbortError') {
+      if (!disposed && error.name !== 'AbortError' && error.name !== 'NotAllowedError') {
+        loading = undefined;
         enabled = false;
         stopSources();
         onError();

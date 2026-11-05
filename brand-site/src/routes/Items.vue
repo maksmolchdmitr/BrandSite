@@ -31,7 +31,25 @@
           </div>
           <div v-if="canControl" class="stageTopline">
             <span class="liveBadge"><span />{{ $t(viewerState.playing && viewerState.speed > 0 ? 'items.live' : 'items.paused') }}</span>
-            <div class="viewButtons">
+            <div ref="viewButtons" class="viewButtons">
+              <button
+                class="iconButton helpButton"
+                type="button"
+                :aria-label="$t('items.cameraHelp')"
+                :aria-expanded="helpOpen || helpHeld"
+                aria-controls="camera-help"
+                @click="helpOpen = !helpOpen"
+                @pointerdown="helpHeld = true"
+                @pointerup="helpHeld = false"
+                @pointerleave="helpHeld = false"
+                @pointercancel="helpHeld = false"
+                @contextmenu.prevent
+              >?</button>
+              <div v-show="helpOpen || helpHeld" id="camera-help" class="helpPanel">
+                <strong>{{ $t('items.cameraHelp') }}</strong>
+                <p>{{ $t('items.cameraKeyboard') }}</p>
+                <p>{{ $t('items.cameraGamepad') }}</p>
+              </div>
               <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
               </button>
@@ -56,7 +74,7 @@
                 <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
                 <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
               </button>
-              <button class="soundButton" type="button" :disabled="!canControl" :aria-pressed="viewerState.soundEnabled"
+              <button class="soundButton" data-garden-sound type="button" :disabled="!canControl" :aria-pressed="soundAudible"
                 :aria-expanded="volumeOpen"
                 :title="$t('items.volumeHint')"
                 @pointerdown="startSoundHold"
@@ -66,8 +84,8 @@
                 @contextmenu.prevent
                 @keydown.arrow-down.prevent="openVolumeWithKeyboard"
                 @click="toggleSound">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="viewerState.soundEnabled" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
-                {{ $t(viewerState.soundEnabled ? 'items.soundOn' : 'items.soundOff') }}
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" /><path v-if="soundAudible" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /><path v-else d="m16 9 6 6m0-6-6 6" /></svg>
+                {{ $t(soundLabel) }}
               </button>
             </div>
           </div>
@@ -94,6 +112,8 @@ export default defineComponent({
       loading: false,
       fullscreen: false,
       expanded: false,
+      helpOpen: false,
+      helpHeld: false,
       failed: false,
       audioFailed: false,
       volumeOpen: false,
@@ -103,7 +123,7 @@ export default defineComponent({
       viewer: null,
       destroyed: false,
       loadAttempt: 0,
-      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, volume: 100, dragging: false },
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, audioReady: false, volume: 100, dragging: false },
     };
   },
   computed: {
@@ -118,6 +138,11 @@ export default defineComponent({
     fullscreenLabel() {
       return this.$t(this.fullscreen ? 'items.exitFullscreen' : 'items.enterFullscreen');
     },
+    soundAudible() { return this.viewerState.soundEnabled && this.viewerState.audioReady; },
+    soundLabel() {
+      if (this.viewerState.soundEnabled && !this.viewerState.audioReady) return 'items.soundStart';
+      return this.soundAudible ? 'items.soundOn' : 'items.soundOff';
+    },
     canControl() { return this.viewerState.ready && !this.failed; },
     isRunning() { return this.viewerState.playing && this.viewerState.speed > 0; },
   },
@@ -126,6 +151,8 @@ export default defineComponent({
       this.exitExpanded();
       this.cancelSoundHold();
       this.volumeOpen = false;
+      this.helpOpen = false;
+      this.helpHeld = false;
       if (item) {
         void this.loadViewer();
       } else {
@@ -161,7 +188,10 @@ export default defineComponent({
     },
     handleFullscreenEscape(event) {
       if (event.key !== 'Escape') return;
-      if (this.volumeOpen) this.volumeOpen = false;
+      if (this.helpOpen || this.helpHeld) {
+        this.helpOpen = false;
+        this.helpHeld = false;
+      } else if (this.volumeOpen) this.volumeOpen = false;
       else if (this.expanded) this.exitExpanded();
     },
     async toggleFullscreen() {
@@ -235,6 +265,7 @@ export default defineComponent({
     },
     dismissVolume(event) {
       if (!this.$refs.soundControls?.contains(event.target)) this.volumeOpen = false;
+      if (!this.$refs.viewButtons?.contains(event.target)) this.helpOpen = false;
     },
     setVolume(event) {
       this.viewer?.setVolume(event.target.valueAsNumber);
@@ -279,6 +310,21 @@ h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight
 .loadingDot, .liveBadge span { width: 7px; height: 7px; border-radius: 50%; background: #6c8851; }
 .stageTopline { position: absolute; top: 18px; right: 18px; left: 22px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
 .viewButtons { display: flex; gap: 8px; }
+.helpButton { font-weight: 700; touch-action: manipulation; user-select: none; -webkit-touch-callout: none; }
+.helpPanel {
+  position: absolute;
+  z-index: 2;
+  top: 50px;
+  right: 0;
+  width: min(315px, 100%);
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 14px;
+  color: #35402c;
+  background: #f7f9f3;
+  font-size: 14px;
+}
+.helpPanel p { margin: 8px 0 0; line-height: 1.4; }
 .stageTopline > * { pointer-events: auto; }
 .liveBadge { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #e4eddd; }
 .iconButton, .soundButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 12px; border: 1px solid #e1e5dc; border-radius: 14px; color: #35402c; background: #f7f9f3; font: inherit; cursor: pointer; }
@@ -341,7 +387,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media(prefers-color-scheme: dark) {
   .backLink { color: #b5bcb1; }
   .itemCard { background: #292d27; color: #eef1e9; }
-  .iconButton, .soundButton, .volumePanel { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
+  .iconButton, .soundButton, .volumePanel, .helpPanel { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
 }
 @media(prefers-reduced-motion: reduce) {
   .itemCard { transition: none; }
