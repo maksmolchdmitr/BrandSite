@@ -156,37 +156,51 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
 
   function pointerDown(event) {
     if (event.pointerType === 'mouse') unlockAudio();
-    rabbitPress = null;
-    if (drag || event.button !== 0 || !event.isPrimary) return;
+    if (drag || rabbitPress || event.button !== 0 || !event.isPrimary) return;
     const subject = pick(event);
-    if (subject && subject === rabbit.rabbit) {
-      rabbitPress = { id: event.pointerId, x: event.clientX, y: event.clientY };
-      return;
-    }
-    if (!subject || subject !== dial) return;
+    if (!subject) return;
     focusScene(event);
     event.preventDefault();
     event.stopImmediatePropagation();
     controls.enabled = false;
-    // Stop any camera damping inherited from an earlier orbit before grabbing the knob.
+    // Stop any camera damping inherited from an earlier orbit before interacting.
     controls.enableDamping = false;
     controls.update();
     controls.enableDamping = true;
+    canvas.setPointerCapture(event.pointerId);
+    if (subject === rabbit.rabbit) {
+      rabbitPress = { id: event.pointerId, x: event.clientX, y: event.clientY, time: event.timeStamp, distance: 0 };
+      rabbit.setHeld(true);
+      rabbit.pet(effectiveSpeed() > 0);
+      canvas.style.cursor = 'grabbing';
+      return;
+    }
     const point = { x: event.clientX, y: event.clientY };
     dial.getWorldQuaternion(quaternion);
     worldAxis.copy(dialAxis).applyQuaternion(quaternion);
     const center = dialCenter();
     const facing = worldAxis.dot(camera.position.clone().sub(dial.getWorldPosition(centerWorld)));
     drag = { id: event.pointerId, point, center, mode: Math.hypot(point.x - center.x, point.y - center.y) < 12 ? 'linear' : 'angular', sign: facing >= 0 ? -1 : 1 };
-    canvas.setPointerCapture(event.pointerId);
     canvas.style.cursor = 'ew-resize';
     state.dragging = true;
     emit();
   }
 
   function pointerMove(event) {
-    if (rabbitPress?.id === event.pointerId &&
-      Math.hypot(event.clientX - rabbitPress.x, event.clientY - rabbitPress.y) > 6) rabbitPress = null;
+    if (rabbitPress?.id === event.pointerId) {
+      const distance = Math.hypot(event.clientX - rabbitPress.x, event.clientY - rabbitPress.y);
+      const elapsed = event.timeStamp - rabbitPress.time;
+      rabbitPress.x = event.clientX;
+      rabbitPress.y = event.clientY;
+      rabbitPress.time = event.timeStamp;
+      rabbitPress.distance = elapsed > 140 || distance < elapsed * 0.18
+        ? 0 : rabbitPress.distance + distance;
+      if (rabbitPress.distance >= 16) {
+        rabbitPress.distance = 0;
+        rabbit.pet(effectiveSpeed() > 0);
+      }
+      return;
+    }
     if (drag && event.pointerId === drag.id) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -211,11 +225,12 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
 
   function endDrag(event) {
     if (rabbitPress && (!event || event.pointerId === rabbitPress.id)) {
-      const { x, y } = rabbitPress;
+      const { id } = rabbitPress;
       rabbitPress = null;
-      if (event?.type === 'pointerup' && Math.hypot(event.clientX - x, event.clientY - y) <= 6) {
-        rabbit.pet(effectiveSpeed() > 0);
-      }
+      rabbit.setHeld(false);
+      controls.enabled = true;
+      canvas.style.cursor = 'grab';
+      if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
     }
     if (!drag || (event?.pointerId != null && event.pointerId !== drag.id)) return;
     const id = drag.id;
@@ -265,7 +280,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   }
 
   function moveCamera(delta) {
-    if (!state.ready || drag || orbiting || !document.hasFocus()) return;
+    if (!state.ready || drag || rabbitPress || orbiting || !document.hasFocus()) return;
     const held = code => Number(movementKeys.has(code));
     let forward = held('KeyW') - held('KeyS');
     let strafe = held('KeyD') - held('KeyA');

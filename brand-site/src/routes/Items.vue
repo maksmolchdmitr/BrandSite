@@ -49,6 +49,7 @@
                 <strong>{{ $t('items.cameraHelp') }}</strong>
                 <p>{{ $t('items.cameraKeyboard') }}</p>
                 <p>{{ $t('items.cameraGamepad') }}</p>
+                <p>{{ $t('items.petRabbit') }}</p>
               </div>
               <button class="iconButton" type="button" :title="$t('items.resetView')" :aria-label="$t('items.resetView')" @click="viewer?.resetView()">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.8 9M3 4v6h6" /></svg>
