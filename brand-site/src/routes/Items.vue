@@ -4,11 +4,7 @@
     <section class="itemsContent">
       <RouterLink class="backLink" to="/?page=products">{{ $t('common.actions.backToProducts') }}</RouterLink>
       <header class="pageIntro">
-        <div>
-          <p class="eyebrow">{{ $t('items.collection') }}</p>
-          <h1>{{ $t('items.title') }}</h1>
-        </div>
-        <p class="introText">{{ $t('items.intro') }}</p>
+        <h1>{{ $t('items.title') }}</h1>
       </header>
 
       <div class="collectionLayout">
@@ -20,11 +16,8 @@
             :aria-pressed="selected"
             @click="selectItem"
           >
-            <span class="itemNumber">001</span>
             <img :src="poster" :alt="$t('items.gardenName')" width="300" height="300" />
-            <span class="cardCategory">{{ $t('items.gardenCategory') }}</span>
             <strong>{{ $t('items.gardenName') }}</strong>
-            <span class="cardDescription">{{ $t('items.gardenDescription') }}</span>
             <span class="cardAction">{{ $t(selected ? 'items.selected' : 'items.inspect') }} <span aria-hidden="true">↗</span></span>
           </button>
         </aside>
@@ -55,7 +48,6 @@
 
           <div class="exhibitControls">
             <div class="controlHeading">
-              <div><p class="eyebrow">{{ $t('items.objectNumber') }}</p><h2>{{ $t('items.gardenName') }}</h2></div>
               <div class="playbackButtons">
                 <button class="iconButton" type="button" :disabled="!canControl || viewerState.speed === 0" :aria-label="$t(isRunning ? 'items.pause' : 'items.play')" :title="$t(isRunning ? 'items.pause' : 'items.play')" @click="togglePlaying">
                   <svg v-if="isRunning" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
@@ -67,7 +59,6 @@
                 </button>
               </div>
             </div>
-            <p class="interactionGuide">{{ $t('items.guide') }}</p>
             <p v-if="audioFailed" class="audioWarning" role="status">{{ $t('items.audioError') }}</p>
           </div>
         </div>
@@ -158,19 +149,14 @@ export default defineComponent({
 .itemsContent { max-width: 1420px; margin: 0 auto; padding: 24px 50px 60px; box-sizing: border-box; }
 .backLink { display: inline-block; color: #555; font-size: 16px; text-decoration: none; padding: 8px 0; }
 .backLink:hover { color: #4f3dff; }
-.pageIntro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin: 28px 0 30px; }
-.eyebrow { margin: 0 0 8px; color: #67735e; font-size: 13px; letter-spacing: .09em; text-transform: uppercase; }
+.pageIntro { margin: 28px 0 30px; }
 h1 { font-size: clamp(38px, 5vw, 64px); line-height: 1.1; margin: 0; font-weight: 700; }
-.introText { max-width: 360px; margin: 0 0 4px; color: #5a5b56; font-size: 19px; line-height: 1.5; }
 .collectionLayout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; }
 .itemCard { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 2px solid transparent; border-radius: 28px; padding: 20px; background: #fff; color: #252e22; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s; }
 .itemCard:hover { transform: translateY(-3px); }
 .itemCard.selected { border-color: #4f3dff; }
-.itemNumber { color: #7e8779; font-size: 13px; }
 .itemCard img { width: 100%; height: 235px; object-fit: contain; margin: 4px 0 16px; }
-.cardCategory { color: #748168; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 .itemCard strong { margin-top: 7px; font-size: 28px; }
-.cardDescription { color: #697063; font-size: 16px; line-height: 1.5; margin-top: 10px; }
 .cardAction { display: flex; justify-content: space-between; width: 100%; color: #4f3dff; font-weight: 700; margin-top: 28px; font-size: 16px; }
 .exhibit { min-width: 0; overflow: hidden; border-radius: 32px; background: #fff; }
 .stage { position: relative; isolation: isolate; height: clamp(450px, 63vh, 680px); background: radial-gradient(ellipse at 50% 40%, #f6f8f0 0%, #e8eee1 58%, #d9e3d0 100%); }
@@ -199,10 +185,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .dialHint.active { background: #4e6440; color: white; }
 .errorOverlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 28px; background: #edf1e6; color: #3d4935; text-align: center; }
 .exhibitControls { padding: 24px 28px 22px; }
-.controlHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-.controlHeading h2 { margin: 0; font-size: 30px; line-height: 1.2; }
+.controlHeading { display: flex; justify-content: flex-end; }
 .playbackButtons { display: flex; gap: 8px; }
-.interactionGuide { margin: 14px 0 0; font-size: 14px; line-height: 1.6; color: #71776b; }
 .audioWarning { color: #966526; font-size: 14px; }
 @media(max-width: 1000px) {
   .itemsContent { padding: 20px 24px 40px; }
@@ -213,28 +197,22 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 }
 @media(max-width: 700px) {
   .itemsContent { padding: 12px 16px 32px; }
-  .pageIntro { display: block; margin: 18px 0 22px; }
-  .introText { font-size: 17px; max-width: none; margin: 16px 0 0; }
+  .pageIntro { margin: 18px 0 22px; }
   .collectionLayout { grid-template-columns: minmax(0, 1fr); }
   .itemCard { min-height: 125px; padding: 16px 16px 16px 116px; border-radius: 22px; }
   .itemCard img { position: absolute; left: 8px; top: 8px; width: 100px; height: 118px; margin: 0; }
-  .itemNumber, .cardCategory, .cardDescription { display: none; }
   .itemCard strong { font-size: 25px; }
   .cardAction { margin-top: 15px; }
   .exhibit { border-radius: 24px; }
   .stage { height: 490px; max-height: 70svh; min-height: 360px; }
-  .controlHeading { align-items: start; flex-wrap: wrap; }
-  .controlHeading h2 { font-size: 27px; }
   .playbackButtons { margin-left: auto; }
   .soundButton { font-size: 13px; padding: 0 10px; }
   .dialHint { white-space: normal; width: max-content; max-width: calc(100% - 52px); font-size: 13px; }
   .exhibitControls { padding: 20px; }
 }
 @media(prefers-color-scheme: dark) {
-  .backLink, .introText { color: #b5bcb1; }
-  .eyebrow { color: #a9b99b; }
+  .backLink { color: #b5bcb1; }
   .itemCard, .exhibit { background: #292d27; color: #eef1e9; }
-  .cardCategory, .cardDescription, .interactionGuide { color: #b4bfaa; }
   .cardAction { color: #b8b0ff; }
   .iconButton, .soundButton { background: #343c2f; color: #e1e9da; border-color: #4a5444; }
   .stage { background: radial-gradient(ellipse at 50% 40%, #3c4933, #273120); }
