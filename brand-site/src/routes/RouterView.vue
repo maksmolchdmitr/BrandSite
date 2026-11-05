@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import {defineComponent, markRaw} from "vue";
+import {defineComponent, defineAsyncComponent, markRaw} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import Main from "@/routes/Main.vue";
 import TouchMe from "@/routes/TouchMe.vue";
@@ -27,6 +27,8 @@ import {
   setGroupSection,
 } from "@/badminton/uiPrefs.js";
 import { BADMINTON_ENABLED } from "@/badminton/apiHelpers.js";
+
+const Items = defineAsyncComponent(() => import('@/routes/Items.vue'));
 
 export default defineComponent({
   setup() {
@@ -240,6 +242,8 @@ export default defineComponent({
 
       if (this.page === 'contact') {
         return markRaw(TouchMe);
+      } else if (this.page === 'items') {
+        return markRaw(Items);
       } else if (this.page === 'products') {
         return markRaw(Products);
       }

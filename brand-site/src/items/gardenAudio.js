@@ -1,0 +1,119 @@
+const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
+
+export function createGardenAudio({ getTime, getSpeed, onError }) {
+  let context;
+  let master;
+  let ambientGain;
+  let buffers;
+  let loading;
+  let sources = [];
+  let enabled = false;
+  let active = true;
+  let disposed = false;
+  let lastClick = -Infinity;
+  const abort = new AbortController();
+
+  function stopSources() {
+    for (const source of sources) {
+      try { source.stop(); } catch (_) { /* already stopped */ }
+      source.disconnect();
+    }
+    sources = [];
+  }
+
+  function startSources() {
+    if (disposed || !enabled || !active || !buffers || !context || getSpeed() <= 0) return;
+    stopSources();
+    for (const buffer of buffers) {
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.playbackRate.value = getSpeed();
+      source.connect(ambientGain);
+      source.start(0, getTime() % buffer.duration);
+      sources.push(source);
+    }
+  }
+
+  async function activate() {
+    if (disposed || !enabled) return;
+    try {
+      if (!context) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) throw new Error('Audio unavailable');
+        context = new AudioContext();
+        master = context.createGain();
+        master.gain.value = 0.55;
+        master.connect(context.destination);
+        ambientGain = context.createGain();
+        ambientGain.gain.value = 0.65;
+        ambientGain.connect(master);
+      }
+      // Called directly by the gesture handler, before fetching/decoding.
+      await context.resume();
+      if (!loading) {
+        loading = Promise.all(TRACKS.map(async (name) => {
+          const response = await fetch(`${import.meta.env.BASE_URL}items/quiet-garden/${name}`, { signal: abort.signal });
+          if (!response.ok) throw new Error(`Audio ${response.status}`);
+          return context.decodeAudioData(await response.arrayBuffer());
+        })).then((result) => { buffers = result; });
+      }
+      await loading;
+      startSources();
+    } catch (error) {
+      if (!disposed && error.name !== 'AbortError') {
+        enabled = false;
+        stopSources();
+        onError();
+      }
+    }
+  }
+
+  return {
+    setEnabled(value) {
+      enabled = value;
+      if (!value) stopSources();
+      else void activate();
+    },
+    activate,
+    sync() {
+      if (!enabled || !context || !active) return;
+      if (getSpeed() <= 0) stopSources();
+      else if (!sources.length) startSources();
+      else for (const source of sources) source.playbackRate.setTargetAtTime(getSpeed(), context.currentTime, 0.025);
+    },
+    setActive(value) {
+      active = value;
+      if (!value) stopSources();
+      else if (enabled && context) void activate();
+    },
+    click(direction) {
+      if (!enabled || !context || context.state !== 'running') return;
+      const now = context.currentTime;
+      if (now - lastClick < 0.04) return;
+      lastClick = now;
+      const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.014), context.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let i = 0; i < samples.length; i++) samples[i] = (Math.random() * 2 - 1) * Math.exp(-i / (samples.length * 0.14));
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      const filter = context.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = direction > 0 ? 1600 : 1100;
+      filter.Q.value = 0.6;
+      const gain = context.createGain();
+      gain.gain.value = 0.025;
+      source.connect(filter).connect(gain).connect(master);
+      source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+      source.start();
+    },
+    dispose() {
+      disposed = true;
+      enabled = false;
+      abort.abort();
+      stopSources();
+      if (context) void context.close();
+      buffers = undefined;
+    },
+  };
+}
