@@ -54,6 +54,14 @@ const SOIL_HEIGHT = 0.84;
 const REST_HEADING = 0.22;
 const HOP_SECONDS = 0.42;
 const TURN_SECONDS = 0.18;
+const PET_REACTIONS = [
+  // Lift the chin and close both eyes.
+  { duration: 0.95, pitch: -0.38, roll: 0, yaw: 0, fold: 0.25, twitch: 0, squint: 0.94 },
+  // Tilt the head and lean into the stroke.
+  { duration: 1.15, pitch: -0.14, roll: 0.4, yaw: 0.23, fold: 0.1, twitch: 0, squint: 0.82 },
+  // Duck and flick the ears twice.
+  { duration: 0.85, pitch: 0.22, roll: -0.13, yaw: -0.1, fold: 0.12, twitch: 0.34, squint: 0.58 },
+];
 
 export function createGardenRabbit(onLand = () => {}) {
   const rabbit = new Group();
@@ -114,7 +122,10 @@ export function createGardenRabbit(onLand = () => {}) {
   let nextLanding = 0;
   let stopAt = Infinity;
   let petRest = 0;
-  let petProgress = 1;
+  let petHeld = false;
+  let petPending = false;
+  let reactionIndex = -1;
+  let reactionTime = 0;
   let idleTime = 0;
 
   function turnToward(heading, progress) {
@@ -170,39 +181,59 @@ export function createGardenRabbit(onLand = () => {}) {
     rabbit.scale.y = RABBIT_SCALE * (1 - 0.12 * crouch + 0.09 * lift);
   }
 
+  function beginPet() {
+    const count = PET_REACTIONS.length;
+    reactionIndex = reactionIndex < 0
+      ? Math.floor(Math.random() * count)
+      : (reactionIndex + 1 + Math.floor(Math.random() * (count - 1))) % count;
+    reactionTime = 0;
+    petRest = 5;
+  }
+
   return {
     rabbit,
+    setHeld(held) { petHeld = held; },
     pet(canWalk) {
-      if (petRest > 0 || !canWalk || !nextLanding) {
-        stopAt = Infinity;
-        petRest = 5;
-        petProgress = 0;
-      } else {
+      if (stopAt !== Infinity || reactionTime < (PET_REACTIONS[reactionIndex]?.duration ?? 0)) {
+        petPending = true;
+      } else if (petRest === 0 && canWalk && nextLanding) {
         stopAt = nextLanding;
+      } else {
+        petPending = false;
+        beginPet();
       }
     },
     animate(delta, speed) {
-      if (petRest > 0) {
-        petRest = Math.max(0, petRest - delta);
-        petProgress = Math.min(1, petProgress + delta / 0.65);
+      const reaction = PET_REACTIONS[reactionIndex];
+      if (reaction && reactionTime < reaction.duration) {
+        reactionTime = Math.min(reaction.duration, reactionTime + delta);
+      } else if (petRest > 0) {
+        if (petPending) {
+          petPending = false;
+          beginPet();
+        } else if (!petHeld) petRest = Math.max(0, petRest - delta);
       } else {
         walkTime = Math.min(stopAt, walkTime + delta * speed);
         move(walkTime);
-        if (walkTime === stopAt) {
+        if (walkTime === stopAt || (stopAt !== Infinity && speed === 0)) {
           stopAt = Infinity;
-          petRest = 5;
-          petProgress = 0;
+          beginPet();
         }
       }
+
       idleTime += delta * speed;
-      const time = idleTime;
-      const nuzzle = Math.sin(Math.PI * petProgress) ** 2;
-      head.rotation.x = -nuzzle * 0.3;
-      head.rotation.y = Math.sin(time * 1.05) * 0.13 + nuzzle * 0.16;
-      ears[0].rotation.z = 0.22 + Math.sin(time * 2.3) * 0.065 + nuzzle * 0.21;
-      ears[1].rotation.z = -0.22 + Math.sin(time * 2.3 + 1.2) * 0.055 - nuzzle * 0.21;
-      const blinkTime = Math.abs(time % 4.3 - 3.5);
-      const openness = Math.min(1, 0.12 + blinkTime * 12) * (1 - 0.87 * nuzzle);
+      const current = PET_REACTIONS[reactionIndex];
+      const phase = current ? reactionTime / current.duration : 1;
+      const ease = current && phase < 1 ? Math.sin(Math.PI * phase) ** 2 : 0;
+      const twitch = ease * (current?.twitch ?? 0) * Math.sin(4 * Math.PI * phase);
+      head.rotation.x = ease * (current?.pitch ?? 0);
+      head.rotation.z = ease * (current?.roll ?? 0);
+      head.rotation.y = Math.sin(idleTime * 1.05) * 0.13 + ease * (current?.yaw ?? 0);
+      const fold = ease * (current?.fold ?? 0);
+      ears[0].rotation.z = 0.22 + Math.sin(idleTime * 2.3) * 0.065 + fold + twitch;
+      ears[1].rotation.z = -0.22 + Math.sin(idleTime * 2.3 + 1.2) * 0.055 - fold + twitch * 0.5;
+      const blinkTime = Math.abs(idleTime % 4.3 - 3.5);
+      const openness = Math.min(1, 0.12 + blinkTime * 12) * (1 - ease * (current?.squint ?? 0));
       for (const eye of eyes) eye.scale.y = 0.017 * openness;
     },
   };
