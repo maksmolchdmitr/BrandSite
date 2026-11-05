@@ -1,11 +1,66 @@
-import { Group, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
+import { Group, Mesh, MathUtils, MeshStandardMaterial, SphereGeometry } from 'three';
+
+const RING_STOPS = 24;
+const RING_RADIUS = 0.93;
+const RABBIT_SCALE = 0.58;
+
+function polarPoint(index, radius) {
+  const angle = index * 2 * Math.PI / RING_STOPS;
+  return [Math.sin(angle) * radius, Math.cos(angle) * radius];
+}
+
+const RING = Array.from({ length: RING_STOPS + 1 }, (_, i) => polarPoint(i, RING_RADIUS));
+const HOME = RING[0];
+const BYPASSES = [
+  { start: 1, end: 5, radius: 0.75 },
+  { start: 8, end: 12, radius: 0.75 },
+  { start: 14, end: 18, radius: 0.75 },
+  { start: 19, end: 23, radius: 0.75 },
+].map(({ start, end, radius }) => ({
+  start,
+  end,
+  points: [RING[start], polarPoint(start + 1, radius), polarPoint(end - 1, radius), RING[end]],
+}));
+export const WALKWAYS = [RING, ...BYPASSES.map(({ points }) => points)];
+
+function alternateLoop(bypasses) {
+  const loop = [...RING];
+  for (const { start, end, points } of [...bypasses].reverse()) {
+    loop.splice(start, end - start + 1, ...points);
+  }
+  return loop;
+}
+
+function hopStops(path) {
+  const stops = [path[0]];
+  for (let i = 1; i < path.length; i++) {
+    const [x, z] = path[i - 1];
+    const [nextX, nextZ] = path[i];
+    const hops = Math.ceil(Math.hypot(nextX - x, nextZ - z) / 0.26);
+    for (let hop = 1; hop <= hops; hop++) {
+      const t = hop / hops;
+      stops.push([MathUtils.lerp(x, nextX, t), MathUtils.lerp(z, nextZ, t)]);
+    }
+  }
+  return stops;
+}
+
+const ROUTES = [
+  hopStops(RING),
+  hopStops(alternateLoop([BYPASSES[0], BYPASSES[2]])),
+  hopStops(alternateLoop([BYPASSES[1], BYPASSES[3]]).reverse()),
+];
+const SOIL_HEIGHT = 0.84;
+const REST_HEADING = 0.22;
+const HOP_SECONDS = 0.42;
+const TURN_SECONDS = 0.18;
 
 export function createGardenRabbit() {
   const rabbit = new Group();
   rabbit.name = 'Garden rabbit';
-  rabbit.position.set(-0.48, 0.72, 0.64);
-  rabbit.rotation.y = 0.22;
-  rabbit.scale.setScalar(1.35);
+  rabbit.position.set(HOME[0], SOIL_HEIGHT, HOME[1]);
+  rabbit.rotation.y = REST_HEADING;
+  rabbit.scale.setScalar(RABBIT_SCALE);
 
   const sphere = new SphereGeometry(1, 20, 14);
   const clay = new MeshStandardMaterial({ color: 0xcc976e, roughness: 0.73 });
@@ -51,9 +106,59 @@ export function createGardenRabbit() {
     ears.push(ear);
   }
 
+  let routeIndex = -1;
+  let routeStart = 2;
+  let lastHeading = REST_HEADING;
+
+  function turnToward(heading, progress) {
+    const difference = Math.atan2(Math.sin(heading - lastHeading), Math.cos(heading - lastHeading));
+    rabbit.rotation.y = lastHeading + difference * MathUtils.smoothstep(progress, 0, 1);
+  }
+
+  function move(time) {
+    if (time < routeStart) return;
+    if (routeIndex === -1) routeIndex = Math.floor(Math.random() * ROUTES.length);
+    const route = ROUTES[routeIndex];
+    const elapsed = time - routeStart;
+    const hopDuration = HOP_SECONDS + TURN_SECONDS;
+    const step = Math.floor(elapsed / hopDuration);
+
+    if (step >= route.length - 1) {
+      rabbit.position.set(HOME[0], SOIL_HEIGHT, HOME[1]);
+      rabbit.scale.y = RABBIT_SCALE;
+      const endTurn = (elapsed - (route.length - 1) * hopDuration) / TURN_SECONDS;
+      turnToward(REST_HEADING, endTurn);
+      if (endTurn >= 1) {
+        lastHeading = REST_HEADING;
+        // Choose uniformly from the other two routes after each rest.
+        routeIndex = (routeIndex + 1 + Math.floor(Math.random() * (ROUTES.length - 1))) % ROUTES.length;
+        routeStart = time + 1.3 + Math.random() * 1.1;
+      }
+      return;
+    }
+
+    const [fromX, fromZ] = route[step];
+    const [toX, toZ] = route[step + 1];
+    const heading = Math.atan2(toX - fromX, toZ - fromZ);
+    const hopTime = elapsed - step * hopDuration;
+    const progress = MathUtils.clamp((hopTime - TURN_SECONDS) / HOP_SECONDS, 0, 1);
+    turnToward(heading, hopTime / TURN_SECONDS);
+    if (hopTime >= TURN_SECONDS) lastHeading = heading;
+
+    const lift = Math.sin(Math.PI * progress);
+    rabbit.position.set(
+      MathUtils.lerp(fromX, toX, progress),
+      SOIL_HEIGHT + 0.075 * lift,
+      MathUtils.lerp(fromZ, toZ, progress),
+    );
+    const crouch = Math.sin(Math.PI * Math.min(1, hopTime / TURN_SECONDS));
+    rabbit.scale.y = RABBIT_SCALE * (1 - 0.12 * crouch + 0.09 * lift);
+  }
+
   return {
     rabbit,
     animate(time) {
+      move(time);
       head.rotation.y = Math.sin(time * 1.05) * 0.13;
       ears[0].rotation.z = 0.22 + Math.sin(time * 2.3) * 0.065;
       ears[1].rotation.z = -0.22 + Math.sin(time * 2.3 + 1.2) * 0.055;

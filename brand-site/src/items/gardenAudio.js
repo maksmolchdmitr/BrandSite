@@ -3,7 +3,7 @@ const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
 export function createGardenAudio({ getTime, getSpeed, onError }) {
   let context;
   let master;
-  let volume = 0.2;
+  let volume = 1;
   let ambientGain;
   let buffers;
   let loading;
