@@ -103,7 +103,7 @@ export default defineComponent({
       viewer: null,
       destroyed: false,
       loadAttempt: 0,
-      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, volume: 20, dragging: false },
+      viewerState: { ready: false, speed: 1, playing: true, soundEnabled: true, volume: 100, dragging: false },
     };
   },
   computed: {

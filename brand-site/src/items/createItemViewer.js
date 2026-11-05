@@ -5,6 +5,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clampSpeed, DETENT, pointerDialDelta, speedAfterTurn } from './dialControl.js';
 import { createGardenAudio } from './gardenAudio.js';
+import { addGardenPaths } from './gardenPaths.js';
 import { createGardenRabbit } from './gardenRabbit.js';
 import { normalizeClipOrigin } from './modelTime.js';
 
@@ -22,7 +23,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   let frame;
   let lastFrame = performance.now();
   let lastHover = 0;
-  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, volume: 20, dragging: false, ready: false };
+  const state = { speed: 1, playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, soundEnabled: true, volume: 100, dragging: false, ready: false };
   const abort = new AbortController();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
@@ -34,6 +35,7 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const canvas = renderer.domElement;
+  canvas.tabIndex = 0;
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', label);
   canvas.style.touchAction = 'none';
@@ -81,6 +83,11 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   const worldAxis = new THREE.Vector3();
   const quaternion = new THREE.Quaternion();
   const pickables = [];
+  const movementKeys = new Set();
+  const movementCodes = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD']);
+  const cameraOffset = new THREE.Vector3();
+  const verticalAxis = new THREE.Vector3(0, 1, 0);
+  let readGamepads = navigator.getGamepads?.bind(navigator);
   const draco = new DRACOLoader();
   draco.setDecoderPath(`${import.meta.env.BASE_URL}items/draco/`);
   draco.setWorkerLimit(2);
@@ -208,6 +215,64 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
   const observer = new ResizeObserver(resize);
   observer.observe(host);
 
+  function focusScene(event) {
+    if (event.button === 0) canvas.focus({ preventScroll: true });
+  }
+
+  function pressMovementKey(event) {
+    if (!movementCodes.has(event.code) || event.ctrlKey || event.altKey || event.metaKey) return;
+    event.preventDefault();
+    movementKeys.add(event.code);
+  }
+
+  function releaseMovementKey(event) {
+    movementKeys.delete(event.code);
+  }
+
+  function stickAxis(value = 0) {
+    const deadZone = 0.2;
+    return Math.sign(value) * Math.max(0, Math.abs(value) - deadZone) / (1 - deadZone);
+  }
+
+  function moveCamera(delta) {
+    if (!state.ready || drag || orbiting || !document.hasFocus()) return;
+    let turn = Number(movementKeys.has('KeyD')) - Number(movementKeys.has('KeyA'));
+    let zoom = Number(movementKeys.has('KeyW')) - Number(movementKeys.has('KeyS'));
+    if (readGamepads) {
+      try {
+        const pad = Array.from(readGamepads()).find(gamepad => gamepad?.connected && gamepad.axes.length >= 2);
+        if (pad) {
+          turn += stickAxis(pad.axes[0]);
+          zoom -= stickAxis(pad.axes[1]);
+        }
+      } catch {
+        // Embedded viewers can be denied gamepad access by the host.
+        readGamepads = undefined;
+      }
+    }
+    if (!turn && !zoom) return;
+
+    cameraOffset.copy(camera.position).sub(controls.target);
+    cameraOffset.applyAxisAngle(verticalAxis, THREE.MathUtils.clamp(turn, -1, 1) * delta * 1.45);
+    if (zoom) {
+      const distance = cameraOffset.length();
+      const minDistance = Math.min(distance, 1.75);
+      cameraOffset.setLength(THREE.MathUtils.clamp(
+        distance * Math.exp(-THREE.MathUtils.clamp(zoom, -1, 1) * delta * 1.35),
+        minDistance,
+        controls.maxDistance,
+      ));
+    }
+    camera.position.copy(controls.target).add(cameraOffset);
+  }
+
+  const clearMovementKeys = () => movementKeys.clear();
+  canvas.addEventListener('pointerdown', focusScene);
+  canvas.addEventListener('keydown', pressMovementKey);
+  canvas.addEventListener('keyup', releaseMovementKey);
+  canvas.addEventListener('blur', clearMovementKeys);
+  window.addEventListener('blur', clearMovementKeys);
+
   function tick(now) {
     if (disposed) return;
     const delta = Math.min((now - lastFrame) / 1000, 0.1);
@@ -216,12 +281,14 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
     if (rabbit) rabbit.animate(mixer.time);
     // The scene clip may contain static transforms. Apply the user-controlled pose last.
     if (dial && dialRest) dial.quaternion.copy(dialRest).multiply(quaternion.setFromAxisAngle(dialAxis, dialAngle));
+    moveCamera(delta);
     controls.update(delta);
     renderer.render(scene, camera);
     frame = requestAnimationFrame(tick);
   }
 
   function visibilityChanged() {
+    clearMovementKeys();
     endDrag();
     cancelAnimationFrame(frame);
     audio.setActive(!document.hidden);
@@ -295,7 +362,8 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
             object.renderOrder = 2;
           } else pickables.push(object);
         });
-        rabbit = createGardenRabbit();
+        addGardenPaths(model);
+        rabbit = createGardenRabbit(() => audio.land());
         model.add(rabbit.rabbit);
         mixer = new THREE.AnimationMixer(model);
         // Scene exports can use absolute frame times. Normalise the common origin once.
@@ -365,6 +433,11 @@ export function createItemViewer(host, { label, onState, onProgress, onError, on
       canvas.removeEventListener('lostpointercapture', endDrag);
       controls.removeEventListener('start', orbitStart);
       controls.removeEventListener('end', orbitEnd);
+      canvas.removeEventListener('pointerdown', focusScene);
+      canvas.removeEventListener('keydown', pressMovementKey);
+      canvas.removeEventListener('keyup', releaseMovementKey);
+      canvas.removeEventListener('blur', clearMovementKeys);
+      window.removeEventListener('blur', clearMovementKeys);
       controls.dispose();
       audio.dispose();
       draco.dispose();

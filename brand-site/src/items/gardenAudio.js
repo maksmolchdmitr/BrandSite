@@ -3,7 +3,7 @@ const TRACKS = ['rain.wav', 'drops.wav', 'leaves.wav'];
 export function createGardenAudio({ getTime, getSpeed, onError }) {
   let context;
   let master;
-  let volume = 0.2;
+  let volume = 1;
   let ambientGain;
   let buffers;
   let loading;
@@ -12,6 +12,7 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
   let active = true;
   let disposed = false;
   let lastClick = -Infinity;
+  let landingBuffer;
   const abort = new AbortController();
 
   function stopSources() {
@@ -110,6 +111,26 @@ export function createGardenAudio({ getTime, getSpeed, onError }) {
       gain.gain.value = 0.025;
       source.connect(filter).connect(gain).connect(master);
       source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+      source.start();
+    },
+    land() {
+      if (!enabled || !active || volume <= 0 || context?.state !== 'running') return;
+      if (!landingBuffer) {
+        landingBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.09), context.sampleRate);
+        const samples = landingBuffer.getChannelData(0);
+        let gravel = 0;
+        for (let i = 0; i < samples.length; i++) {
+          const time = i / context.sampleRate;
+          gravel = gravel * 0.92 + (Math.random() * 2 - 1) * 0.08;
+          const envelope = Math.sin(Math.PI * i / samples.length) ** 2 * Math.exp(-time * 21);
+          samples[i] = (Math.sin(2 * Math.PI * 145 * time) * 0.005 + gravel * 0.022) * envelope;
+        }
+      }
+      const source = context.createBufferSource();
+      source.buffer = landingBuffer;
+      source.playbackRate.value = 0.92 + Math.random() * 0.16;
+      source.connect(master);
+      source.onended = () => source.disconnect();
       source.start();
     },
     dispose() {
